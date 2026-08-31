@@ -57,7 +57,7 @@ V rámci zadania sa uvažuje o hodnotení viacerých javov:
 ## 4. Štruktúra projektu
 
 ```text
-BP/
+Automaticka-analyza-online-pohovorov/
 ├── README.md
 ├── ZP-clenenie-pokyny_2022.pdf
 ├── téma.pdf
