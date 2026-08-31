@@ -13,7 +13,7 @@ def spusti_priamo():
     print("ROZPOZNÁVANIE REČI - KOMPLETNÝ PROCES")
     print("=" * 80)
     
-    print("\n[FÁZA 1] Extrakcia audio z videa...")
+    print("\n[FÁZA 1] Extrakcia audia z videa...")
     skript1 = os.path.join(aktualny_adresar, "extrakcia_audio.py")
     print(f"[DEBUG] Spúšťam: {skript1}")
     
@@ -26,7 +26,7 @@ def spusti_priamo():
     
     input("\n[INFO] Stlačte ENTER pre pokračovanie na rozpoznávanie reči...")
     
-    print("\n[FÁZA 2] Rozpoznávanie reči z audio...")
+    print("\n[FÁZA 2] Rozpoznávanie reči z audia...")
     skript2 = os.path.join(aktualny_adresar, "rozpoznavanie_reci.py")
     print(f"[DEBUG] Spúšťam: {skript2}")
     
@@ -36,7 +36,20 @@ def spusti_priamo():
         print(f"\n[ERROR] Rozpoznávanie zlyhalo s kódom: {result2.returncode}")
         input("Stlačte ENTER pre ukončenie...")
         return
+
+    input("\n[INFO] Stlačte ENTER pre pokračovanie na hodnotenie textu...")
+
+    print("\n[FÁZA 3] Hodnotenie textu a zhoda slov...")
+    skript3 = os.path.join(aktualny_adresar, "hodnotenie_textu.py")
+    print(f"[DEBUG] Spúšťam: {skript3}")
     
+    result3 = subprocess.run([sys.executable, skript3], capture_output=False)
+    
+    if result3.returncode != 0:
+        print(f"\n[ERROR] Hodnotenie zlyhalo s kódom: {result3.returncode}")
+        input("Stlačte ENTER pre ukončenie...")
+        return
+
     print("\n[OK] Proces dokončený!")
 
 

@@ -24,7 +24,7 @@ def rozpoznavanie_reci():
         rozpoznavac = sr.Recognizer()
         vysledky = []
         
-        # Načítanie audio
+        # Načítanie audia
         print("  Načítavam audio...")
         with sr.AudioFile(audio_subor) as zdroj:
             audio = rozpoznavac.record(zdroj)
