@@ -68,6 +68,7 @@ Automaticka-analyza-online-pohovorov/
 ├── rozpoznavanie_reci/
 │   ├── extrakcia_audio.py
 │   ├── rozpoznavanie_reci.py
+│   ├── hodnotenie_textu.py
 │   └── spusti_vsetko.py
 ```
 
@@ -95,14 +96,28 @@ Táto časť:
 - použije Google speech recognition s jazykovým nastavením `sk-SK`,
 - extrahuje audio do formátu `.txt`.
 
-### 5.3 Spustenie celého procesu
+### 5.3 Hodnorenie reči
+Súbor: `rozpoznavanie_reci/hodnotenie_textu.py`
+
+Táto časť:
+
+- načítava textový súbor,
+- zistí počet všetkých slov
+- zistí počet unikátnych slov,
+- zistí počet výplňových slov,
+- vypočíta percento výplňových slov
+- uloží dáta do formátu `.txt`.
+
+### 5.4 Spustenie celého procesu
 Súbor: `rozpoznavanie_reci/spusti_vsetko.py`
 
 Tento skript spustí celý pipeline v poradí:
 
 1. extrakcia audio z videa,
 2. rozpoznanie reči z audio,
-3. ukladanie výsledku do textového súboru.
+3. ukladanie výsledku do textového súboru,
+4. hodnotenie textu z textového súboru,
+5. uloženie hodnotenia do súboru.
 
 ## 6. Použitie
 
@@ -128,6 +143,7 @@ python spusti_vsetko.py
 ```bash
 python extrakcia_audio.py
 python rozpoznavanie_reci.py
+python hodnotenie_textu.py
 ```
 
 ## 7. Výstup
