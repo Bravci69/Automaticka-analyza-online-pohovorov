@@ -69,7 +69,8 @@ Automaticka-analyza-online-pohovorov/
 │   ├── extrakcia_audio.py
 │   ├── rozpoznavanie_reci.py
 │   ├── hodnotenie_textu.py
-│   └── spusti_vsetko.py
+│   ├── spusti_vsetko.py
+│   └── vyplnove-slova.voxlens
 ```
 
 ## 5. Aktuálna implementácia
