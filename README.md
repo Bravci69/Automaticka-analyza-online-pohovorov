@@ -70,6 +70,8 @@ Automaticka-analyza-online-pohovorov/
 │   ├── rozpoznavanie_reci.py
 │   ├── hodnotenie_textu.py
 │   ├── spusti_vsetko.py
+│   ├── pridanie_vyplnovych_slov.py
+│   ├── odstranenie_vyplnovych_slov.py
 │   └── vyplnove-slova.voxlens
 ```
 
