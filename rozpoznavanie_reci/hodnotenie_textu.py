@@ -2,16 +2,25 @@ import os
 import re
 import sys
 from datetime import datetime
+from pathlib import Path
 import easygui
 
+def prepis_vyplnove_slova_subor():
+    """Vráti zoznam výplňových slov a fráz používaných pri hodnotení textu."""
+    return [
+        "ee", "eem", "eeem", "uh", "uhm", "ehm", "hmm", "hm", "eee", "aaa", "mmm",
+        "akoby", "ináč", "oné", "teda", "tak", "vlastne", "jednoducho",
+        "proste", "akože", "práve", "nejako", "trochu", "myslím", "možno",
+        "asi", "skrátka", "samozrejme", "povedzme", "takpovediac",
+        "v zásade", "v podstate", "že jo", "že áno", "ja neviem",
+        "podľa mňa", "myslím si", "na jednej strane", "na druhej strane",
+    ]
+
+
 def vyplnove_slovo(slovo):
-    patern = r"""
-        (?: ee*m|uh*m|ehm|hmm|hm|eee|aaa|mmm|akoby|ináč|oné|teda|tak|vlastne|
-            jednoducho|proste|akože|práve|nejako|trochu|myslím|možno|asi|skrátka|
-            samozrejme|povedzme|takpovediac|v\ zásade|v\ podstate|že\ jo|že\ áno|
-            ja\ neviem|podľa\ mňa|myslím\ si|na\ jednej\ strane|na\ druhej\ strane
-        )"""
-    return bool(re.match(patern,slovo,re.IGNORECASE|re.VERBOSE))
+    slova = prepis_vyplnove_slova_subor()
+    pattern = r"^(?:" + "|".join(re.escape(slovo) for slovo in slova) + r")$"
+    return bool(re.match(pattern, slovo, re.IGNORECASE))
 
 def hodnotenie_textu():
     subor_nazov=easygui.fileopenbox(
@@ -62,7 +71,7 @@ def hodnotenie_textu():
     print("\n[KROK 5] Uloženie výsledkov...")
     try:
         cas = datetime.now().strftime("%Y%m%d_%H%M%S")
-        vystupny_subor = f"hodnotenie_{cas}.txt"
+        vystupny_subor = Path(__file__).resolve().parent / f"hodnotenie_{cas}.txt"
 
         output_text = "\n".join([
             "HODNOTENIE VÝSLEDKOV",
@@ -76,7 +85,7 @@ def hodnotenie_textu():
             "="*80,
         ])
 
-        with open(vystupny_subor,'w',encoding='utf-8') as f:
+        with open(vystupny_subor, 'w', encoding='utf-8') as f:
             f.write(output_text)
             f.write("\n")
 
