@@ -1,4 +1,3 @@
-import os
 import re
 import sys
 from datetime import datetime
@@ -6,21 +5,26 @@ from pathlib import Path
 import easygui
 
 def prepis_vyplnove_slova_subor():
-    """Vráti zoznam výplňových slov a fráz používaných pri hodnotení textu."""
-    return [
-        "ee", "eem", "eeem", "uh", "uhm", "ehm", "hmm", "hm", "eee", "aaa", "mmm",
-        "akoby", "ináč", "oné", "teda", "tak", "vlastne", "jednoducho",
-        "proste", "akože", "práve", "nejako", "trochu", "myslím", "možno",
-        "asi", "skrátka", "samozrejme", "povedzme", "takpovediac",
-        "v zásade", "v podstate", "že jo", "že áno", "ja neviem",
-        "podľa mňa", "myslím si", "na jednej strane", "na druhej strane",
-    ]
+    """Načíta výplňové slová zo súboru 'vyplnove-slova.voxlens' a vráti ich ako zoznam."""
+    subor = Path(__file__).resolve().parent / "vyplnove-slova.voxlens"
+    try:
+        with subor.open("r", encoding="utf-8") as subor_text:
+            slova = []
+            for riadok in subor_text:
+                riadok = riadok.strip().lower()
+                if not riadok:
+                    continue
+                slova.append(re.sub(r"(?<!\\) ", r"\\ ", riadok))
+            return slova
+    except OSError as exc:
+        raise SystemExit(f"Nepodarilo sa načítať súbor '{subor}'.") from exc
 
 
-def vyplnove_slovo(slovo):
-    slova = prepis_vyplnove_slova_subor()
-    pattern = r"^(?:" + "|".join(re.escape(slovo) for slovo in slova) + r")$"
-    return bool(re.match(pattern, slovo, re.IGNORECASE))
+
+def pocet_vyplnovych_slov(text):
+    slova = sorted(prepis_vyplnove_slova_subor(), key=len, reverse=True)
+    pattern = r"(?<!\w)(?:" + "|".join(slova) + r")(?!\w)"
+    return len(re.findall(pattern, text, re.IGNORECASE))
 
 def hodnotenie_textu():
     subor_nazov=easygui.fileopenbox(
@@ -53,14 +57,7 @@ def hodnotenie_textu():
     for slovo, pocet in slova.items():
         print(f"{slovo}: {pocet}")
 
-    pocet_slov = 0
-    with open(subor_nazov,'r',encoding='utf-8') as f:
-        for line in f:
-            cisty_riadok = re.sub(r'[^\w\s]','',line)
-            slova_v_riadku = cisty_riadok.split()
-            for slovo in slova_v_riadku:
-                if vyplnove_slovo(slovo):
-                    pocet_slov+=1
+    pocet_slov = pocet_vyplnovych_slov(text)
 
     print(f"Celkový počet výplňových slov: {pocet_slov}")
     print(f"Celkový počet všetkých slov: {vsetky_slova}")
