@@ -3,6 +3,7 @@ import easygui
 from extrakcia_audio import extrahovanie_audio
 from rozpoznavanie_reci import rozpoznavanie_reci
 from hodnotenie_textu import hodnotenie_textu
+from graf_hodnotenia_reci import graf_hodnotenia_reci
 
 
 def spusti_priamo():
@@ -35,10 +36,17 @@ def spusti_priamo():
         return
 
     print("\n[FÁZA 3] Hodnotenie textu a zhoda slov...")
-    result3 = hodnotenie_textu(text_subor)
+    result3 = hodnotenie_textu(text_subor, vrat_subor=True)
 
-    if result3 != 0:
+    if not isinstance(result3, str):
         print(f"\n[ERROR] Hodnotenie zlyhalo s kódom: {result3}")
+        return
+
+    print("\n[FÁZA 4] Vytvorenie grafu hodnotenia...")
+    result4 = graf_hodnotenia_reci(result3)
+
+    if result4 != 0:
+        print(f"\n[ERROR] Vytvorenie grafu zlyhalo s kódom: {result4}")
         return
 
     print("\n[OK] Proces dokončený!")

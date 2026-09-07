@@ -5,13 +5,14 @@ import sys
 from datetime import datetime
 
 
-def rozpoznavanie_reci():
+def rozpoznavanie_reci(audio_subor=None, vrat_subor=False):
     """Rozpoznáva reč z audio súboru."""
-    
-    audio_subor = easygui.fileopenbox(
-        title="Vyberte audio súbor", 
-        filetypes=["*.wav", "*.mp3"]
-    )
+
+    if audio_subor is None:
+        audio_subor = easygui.fileopenbox(
+            title="Vyberte audio súbor",
+            filetypes=["*.wav", "*.mp3"]
+        )
     
     if not audio_subor:
         print("[INFO] Žiadny audio súbor nebolo vybraný")
@@ -91,7 +92,7 @@ def rozpoznavanie_reci():
             print(finalny_text)
         
         print("=" * 80)
-        return 0
+        return vystupny_subor if vrat_subor else 0
         
     except Exception as e:
         print(f"[ERROR] {e}")

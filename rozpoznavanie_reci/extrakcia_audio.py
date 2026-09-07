@@ -5,23 +5,24 @@ import sys
 from datetime import datetime
 
 
-def extrahovanie_audio():
+def extrahovanie_audio(video_subor=None, vrat_subor=False):
     """Extrahuje audio z videosúboru."""
-    
-    video = easygui.fileopenbox(
-        title="Vyberte videonahrávku", 
-        filetypes=["*.mp4", "*.avi", "*.mov"]
-    )
-    
-    if not video:
+
+    if video_subor is None:
+        video_subor = easygui.fileopenbox(
+            title="Vyberte videonahrávku",
+            filetypes=["*.mp4", "*.avi", "*.mov"]
+        )
+
+    if not video_subor:
         print("[INFO] Žiadne video nebolo vybrané")
         return 1
-    
-    print(f"[INFO] Video: {video}")
+
+    print(f"[INFO] Video: {video_subor}")
     print("\n[KROK 1] Extrakcia audio z videa...")
     
     try:
-        vid = mp.VideoFileClip(video)
+        vid = mp.VideoFileClip(video_subor)
         
         if not vid.audio:
             print("[ERROR] Videá nemá audio stopu")
@@ -43,7 +44,7 @@ def extrahovanie_audio():
         print(f"\n[OK] Audio extrahované!")
         print(f"     Súbor: {audio_subor}")
         print(f"     Veľkosť: {os.path.getsize(audio_subor) / (1024*1024):.2f} MB")
-        return 0
+        return audio_subor if vrat_subor else 0
         
     except Exception as e:
         print(f"[ERROR] {e}")

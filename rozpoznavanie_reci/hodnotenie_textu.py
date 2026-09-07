@@ -26,11 +26,35 @@ def pocet_vyplnovych_slov(text):
     pattern = r"(?<!\w)(?:" + "|".join(slova) + r")(?!\w)"
     return len(re.findall(pattern, text, re.IGNORECASE))
 
-def hodnotenie_textu():
-    subor_nazov=easygui.fileopenbox(
-        title="Vyberte textový súbor", 
-        filetypes=["*.txt"]
-    )
+
+def prepis_vyhladavanych_slov_subor():
+    """Načíta slová zo súboru vyhladavane-slova.voxlens."""
+    subor = Path(__file__).resolve().parent / "vyhladavane-slova.voxlens"
+    try:
+        with subor.open("r", encoding="utf-8") as subor_text:
+            slova = []
+            for riadok in subor_text:
+                riadok = riadok.strip().lower()
+                if riadok:
+                    slova.append(re.escape(riadok))
+            return slova
+    except OSError as exc:
+        raise SystemExit(f"Nepodarilo sa načítať súbor '{subor}'.") from exc
+
+
+def pocet_vyhladavanych_slov(text):
+    slova = sorted(prepis_vyhladavanych_slov_subor(), key=len, reverse=True)
+    if not slova:
+        return 0
+    pattern = r"(?<!\w)(?:" + "|".join(slova) + r")(?!\w)"
+    return len(re.findall(pattern, text, re.IGNORECASE))
+
+def hodnotenie_textu(subor_nazov=None, vrat_subor=False):
+    if subor_nazov is None:
+        subor_nazov = easygui.fileopenbox(
+            title="Vyberte textový súbor",
+            filetypes=["*.txt"]
+        )
 
     if not subor_nazov:
             print("[INFO] Žiadny textový súbor nebolo vybraný")
@@ -58,11 +82,17 @@ def hodnotenie_textu():
         print(f"{slovo}: {pocet}")
 
     pocet_slov = pocet_vyplnovych_slov(text)
+    pocet_vyhladavanych = pocet_vyhladavanych_slov(text)
 
     print(f"Celkový počet výplňových slov: {pocet_slov}")
     print(f"Celkový počet všetkých slov: {vsetky_slova}")
+    print(f"Celkovy počet vyplňových slov: {pocet_slov}")
+    print(f"Celkový počet zvyšných slov: {vsetky_slova - pocet_slov - pocet_vyhladavanych}")
     percento_vyplnovych_slov = (pocet_slov/vsetky_slova)*100 if vsetky_slova>0 else 0
+    percento_vyhladavanych_slov = (pocet_vyhladavanych/vsetky_slova)*100 if vsetky_slova>0 else 0
     print(f"Percento výplňových slov: {percento_vyplnovych_slov:.2f}%")
+    print(f"Celkový počet vyhľadávaných slov: {pocet_vyhladavanych}")
+    print(f"Percento vyhľadávaných slov: {percento_vyhladavanych_slov:.2f}%")
 
     # Uloženie
     print("\n[KROK 5] Uloženie výsledkov...")
@@ -76,6 +106,8 @@ def hodnotenie_textu():
             f"Celkový počet výplňových slov: {pocet_slov}",
             f"Celkový počet všetkých slov: {vsetky_slova}",
             f"Percento výplňových slov: {percento_vyplnovych_slov:.2f}%",
+            f"Celkový počet vyhľadávaných slov: {pocet_vyhladavanych}",
+            f"Percento vyhľadávaných slov: {percento_vyhladavanych_slov:.2f}%",
             "="*80,
             *[f"{slovo}: {pocet}" for slovo,pocet in slova.items()],
             "",
@@ -88,7 +120,7 @@ def hodnotenie_textu():
 
         print(f"[OK] Uložené do: {vystupny_subor}")
         print(output_text)
-        return 0
+        return str(vystupny_subor) if vrat_subor else 0
 
     except Exception as e:
         print(f"[ERROR] {e}")
