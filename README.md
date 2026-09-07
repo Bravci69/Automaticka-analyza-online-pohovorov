@@ -207,7 +207,21 @@ Táto časť:
 - zobrazí počty aj percentá,
 - nastaví názov okna podľa vybraného súboru.
 
-### 5.12 Spustenie celého procesu
+### 5.12 Spustenie celého procesu rozpoznávania emócií
+Súbor: `rozpoznanie_tvare/spusti_vsetko.py`
+
+Tento skript spustí celý proces analýzy emócií v poradí:
+
+1. výber videa používateľom,
+2. rozpoznanie tvárí a emócií vo videu,
+3. uloženie rozpoznaných emócií do súboru `emocie_*.txt`,
+4. vyhodnotenie počtu a percentuálneho podielu emócií,
+5. uloženie výsledku do súboru `hodnotenie_emocii_*.txt`,
+6. automatické otvorenie grafu hodnotenia emócií.
+
+Video sa vyberá iba na začiatku. Ostatné súbory sa medzi jednotlivými fázami odovzdávajú automaticky, takže používateľ nemusí vyberať vstup opakovane.
+
+### 5.13 Spustenie celého procesu rozpoznávania reči
 Súbor: `rozpoznavanie_reci/spusti_vsetko.py`
 
 Tento skript spustí celý pipeline v poradí:
@@ -254,6 +268,7 @@ Skripty v priečinku `rozpoznanie_tvare` sa spúšťajú takto:
 
 ```bash
 cd ..\rozpoznanie_tvare
+python spusti_vsetko.py
 python zistenie_emocii.py
 python hodnotenie_emocie.py
 python graf_hodnotenia_tvare.py
