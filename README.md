@@ -69,7 +69,8 @@ Automaticka-analyza-online-pohovorov/
 │   ├── graf_hodnotenia_tvare.py
 │   ├── hodnotenie_emocie.py
 │   ├── spusti_vsetko.py
-│   └── vsetky_emocie.voxlens
+│   ├── vsetky_emocie.voxlens
+|   └── zistenie_emocii.py
 ├── rozpoznavanie_reci/
 │	├── extrakcia_audio.py
 │	├── graf_hodnotenia_reci.py
@@ -249,7 +250,7 @@ Knižnice `sys`, `os`, `re`, `datetime`, `pathlib`, `collections` a `array` sú 
 Skripty v priečinku `rozpoznavanie_reci` sa spúšťajú pomocou PowerShellu takto:
 
 ```bash
-cd kod\rozpoznavanie_reci
+cd rozpoznavanie_reci
 python spusti_vsetko.py
 python extrakcia_audio.py
 python rozpoznavanie_reci.py
@@ -264,7 +265,7 @@ python odstranenie_vyhladavanch_slov.py
 Skripty v priečinku `rozpoznanie_tvare` sa spúšťajú takto:
 
 ```bash
-cd ..\rozpoznanie_tvare
+cd rozpoznanie_tvare
 python spusti_vsetko.py
 python zistenie_emocii.py
 python hodnotenie_emocie.py
