@@ -42,7 +42,7 @@ def ulozenie_unikatnych_emocii(emocie, priecinok):
                 subor.write(f"{emocia}\n")
         print(f"[OK] Nové emócie boli uložené do: {zoznam_emocii}")
 
-def hodnotenie_emocii(subor_nazov=None):
+def hodnotenie_emocii(subor_nazov=None, vrat_subor=False):
     """Spočíta počet a percentuálne zastúpenie emócií v textovom súbore."""
     if subor_nazov is None:
         subor_nazov = easygui.fileopenbox(
@@ -100,7 +100,7 @@ def hodnotenie_emocii(subor_nazov=None):
 
     print(output_text)
     print(f"[OK] Výsledky boli uložené do: {vystupny_subor}")
-    return 0
+    return str(vystupny_subor) if vrat_subor else 0
 
 
 if __name__ == "__main__":

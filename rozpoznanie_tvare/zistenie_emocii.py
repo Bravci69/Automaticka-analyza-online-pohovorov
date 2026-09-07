@@ -17,8 +17,17 @@ def ulozenie_emocii_do_suboru(emocie, subor):
     except Exception as e:
         print(f"[ERROR] Nepodarilo sa uložiť emócie do súboru: {e}")
 
-def zistenie_emocii():
-    video_path=easygui.fileopenbox(title="Vyberte videonahrávku", filetypes=["*.mp4", "*.avi", "*.mov"])
+def zistenie_emocii(video_path=None, vrat_subor=False):
+    if video_path is None:
+        video_path = easygui.fileopenbox(
+            title="Vyberte videonahrávku",
+            filetypes=["*.mp4", "*.avi", "*.mov"],
+        )
+
+    if not video_path:
+        print("[INFO] Žiadne video nebolo vybrané.")
+        return 1
+
     print(video_path)
     cas = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     vystupny_subor = Path(__file__).resolve().parent / f"emocie_{cas}.txt"
@@ -60,7 +69,7 @@ def zistenie_emocii():
 
     cap.release()
     cv2.destroyAllWindows()
-    return 0
+    return str(vystupny_subor) if vrat_subor else 0
 
 if __name__ == "__main__":
     exit_code = zistenie_emocii()
