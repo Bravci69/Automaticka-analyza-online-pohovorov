@@ -65,14 +65,11 @@ Automaticka-analyza-online-pohovorov/
 |   ├──BP-osnova.txt
 |   ├──BP-zadanie.txt
 |   └──zdroje.txt
-├── rozpoznavanie_reci/
-│   ├── extrakcia_audio.py
-│   ├── rozpoznavanie_reci.py
-│   ├── hodnotenie_textu.py
+├── rozpoznavanie_tvare/
+│   ├── graf_hodnotenia_tvare.py
+│   ├── hodnotenie_emocie.py
 │   ├── spusti_vsetko.py
-│   ├── pridanie_vyplnovych_slov.py
-│   ├── odstranenie_vyplnovych_slov.py
-│   └── vyplnove-slova.voxlens
+│   └── vsetky_emocie.voxlens
 ├── rozpoznavanie_reci/
 │	├── extrakcia_audio.py
 │	├── graf_hodnotenia_reci.py
