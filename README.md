@@ -73,11 +73,23 @@ Automaticka-analyza-online-pohovorov/
 │   ├── pridanie_vyplnovych_slov.py
 │   ├── odstranenie_vyplnovych_slov.py
 │   └── vyplnove-slova.voxlens
+├── rozpoznavanie_reci/
+│	├── extrakcia_audio.py
+│	├── graf_hodnotenia_reci.py
+│	├── hodnotenie_textu.py
+│	├── odstranenie_vyhladavanch_slov.py
+│	├── odstranenie_vyplnovych_slov.py
+│	├── pridanie_vyhladavanych_slov.py
+│	├── pridanie_vyplnovych_slov.py
+│	├── rozpoznavanie_reci.py
+│	├── spusti_vsetko.py
+│	├── vyhladavane-slova.voxlens
+│	└── vyplnove-slova.voxlens
 ```
 
 ## 5. Aktuálna implementácia
 
-V súčasnej verzii projekt obsahuje prototyp pre spracovanie zvuku a rozpoznávanie reči z nahrávky.
+V súčasnej verzii projekt obsahuje prototyp na spracovanie videa, extrakciu audia, rozpoznávanie slov, hodnotenie textu a analýzu emócií tváre.
 
 ### 5.1 Extrakcia audia z videa
 Súbor: `rozpoznavanie_reci/extrakcia_audio.py`
@@ -87,6 +99,7 @@ Táto časť:
 - otvorí video súbor,
 - overí, či video obsahuje zvukovú stopu,
 - extrahuje audio do formátu `.wav`,
+- zobrazí dĺžku a veľkosť vytvoreného súboru,
 - uloží výsledok do aktuálneho pracovného priečinka.
 
 ### 5.2 Rozpoznávanie reči
@@ -97,7 +110,8 @@ Táto časť:
 - načíta audio súbor,
 - rozdelí ho na časti po 60 sekúnd,
 - použije Google speech recognition s jazykovým nastavením `sk-SK`,
-- uloží rozpoznaný text do formátu `.txt`.
+- spojí výsledky rozpoznávania,
+- uloží rozpoznaný text a základné informácie o spracovaní do formátu `.txt`.
 
 ### 5.3 Hodnotenie reči
 Súbor: `rozpoznavanie_reci/hodnotenie_textu.py`
@@ -105,11 +119,11 @@ Súbor: `rozpoznavanie_reci/hodnotenie_textu.py`
 Táto časť:
 
 - načítava textový súbor,
-- zistí počet všetkých slov
-- zistí počet unikátnych slov,
+- zistí počet všetkých a jednotlivých slov,
 - zistí počet výplňových slov,
-- vypočíta percento výplňových slov,
-- uloží dáta do formátu `.txt`.
+- zistí počet vyhľadávaných slov zo súboru `vyhladavane-slova.voxlens`,
+- vypočíta percento výplňových a vyhľadávaných slov,
+- uloží výsledky do súboru `hodnotenie_*.txt`.
 
 
 ### 5.4 Pridanie vyplňových slov
@@ -126,11 +140,74 @@ Súbor: `rozpoznavanie_reci/odstranenie_vyplnovych_slov.py`
 
 Táto časť:
 
-- pridanie nového slova,
-- neuloženie duplicitného slova,
-- zápis slova do súboru formátu `.voxlens`. 
+- načíta slová zo súboru `vyplnove-slova.voxlens`,
+- zobrazí ich vo výberovom okne,
+- odstráni používateľom vybrané slová zo zoznamu.
 
-### 5.6 Spustenie celého procesu
+### 5.6 Pridanie vyhľadávaných slov
+Súbor: `rozpoznavanie_reci/pridanie_vyhladavanych_slov.py`
+
+Táto časť:
+
+- umožní zadať viac slov naraz,
+- odstráni duplicitné riadky,
+- uloží slová do súboru `vyhladavane-slova.voxlens`.
+
+### 5.7 Odstránenie vyhľadávaných slov
+Súbor: `rozpoznavanie_reci/odstranenie_vyhladavanch_slov.py`
+
+Táto časť:
+
+- načíta vyhľadávané slová zo súboru `vyhladavane-slova.voxlens`,
+- umožní označiť slová na odstránenie,
+- zapíše aktualizovaný zoznam späť do súboru.
+
+### 5.8 Graf hodnotenia reči
+Súbor: `rozpoznavanie_reci/graf_hodnotenia_reci.py`
+
+Táto časť:
+
+- načíta súbor `hodnotenie_*.txt`,
+- vytvorí graf podielu vyhľadávaných, výplňových a zvyšných slov,
+- vypíše percentá a počty jednotlivých kategórií,
+- automaticky vyberie farby grafu,
+- nastaví názov okna podľa otvoreného súboru.
+
+### 5.9 Zistenie emócií z tváre
+Súbor: `rozpoznanie_tvare/zistenie_emocii.py`
+
+Táto časť:
+
+- umožní vybrať video,
+- pomocou OpenCV vyhľadá tváre vo videu,
+- pomocou DeepFace určí dominantnú emóciu,
+- preloží emóciu do slovenčiny,
+- uloží rozpoznané emócie do súboru `emocie_*.txt`,
+- nové unikátne emócie uloží do `vsetky_emocie.voxlens`.
+
+### 5.10 Hodnotenie emócií
+Súbor: `rozpoznanie_tvare/hodnotenie_emocie.py`
+
+Táto časť:
+
+- umožní vybrať súbor s rozpoznanými emóciami,
+- spočíta počet a percentuálny podiel jednotlivých emócií,
+- preloží staršie anglické názvy emócií do slovenčiny,
+- doplní nové unikátne emócie do `vsetky_emocie.voxlens`,
+- uloží výsledky do súboru `hodnotenie_emocii_*.txt`.
+
+### 5.11 Graf hodnotenia emócií
+Súbor: `rozpoznanie_tvare/graf_hodnotenia_tvare.py`
+
+Táto časť:
+
+- načíta súbor `hodnotenie_emocii_*.txt`,
+- vytvorí koláčový graf percentuálneho podielu emócií,
+- farby vyberie automaticky podľa počtu emócií,
+- zobrazí počty aj percentá,
+- nastaví názov okna podľa vybraného súboru.
+
+### 5.12 Spustenie celého procesu
 Súbor: `rozpoznavanie_reci/spusti_vsetko.py`
 
 Tento skript spustí celý pipeline v poradí:
@@ -139,7 +216,8 @@ Tento skript spustí celý pipeline v poradí:
 2. extrakcia audia z videa,
 3. ukladanie výsledku do textového súboru,
 4. hodnotenie textu z textového súboru,
-5. uloženie hodnotenia do súboru.
+5. uloženie hodnotenia do súboru,
+6. automatické otvorenie grafu hodnotenia bez ďalšieho výberu súboru.
 
 ## 6. Použitie
 
@@ -150,20 +228,35 @@ Vytvorte virtuálne prostredie a nainštalujte potrebné balíky:
 ```bash
 python -m venv .venv
 .venv\Scripts\activate
-pip install moviepy SpeechRecognition easygui
+python -m pip install "moviepy<2" SpeechRecognition easygui matplotlib numpy opencv-python deepface
 ```
+
+Knižnice `sys`, `os`, `re`, `datetime`, `pathlib`, `collections` a `array` sú súčasťou štandardnej knižnice Pythonu a neinštalujú sa cez `pip`.
 
 ### Spustenie skriptov
 
-Všetky skripty sa spúšťajú z koreňového priečinka projektu pomocou PowerShellu:
+Skripty v priečinku `rozpoznavanie_reci` sa spúšťajú pomocou PowerShellu takto:
 
 ```bash
+cd kod\rozpoznavanie_reci
 python spusti_vsetko.py
 python extrakcia_audio.py
 python rozpoznavanie_reci.py
 python hodnotenie_textu.py
+python graf_hodnotenia_reci.py
 python pridanie_vyplnovych_slov.py
 python odstranenie_vyplnovych_slov.py
+python pridanie_vyhladavanych_slov.py
+python odstranenie_vyhladavanch_slov.py
+```
+
+Skripty v priečinku `rozpoznanie_tvare` sa spúšťajú takto:
+
+```bash
+cd ..\rozpoznanie_tvare
+python zistenie_emocii.py
+python hodnotenie_emocie.py
+python graf_hodnotenia_tvare.py
 ```
 
 ## 7. Výstup
