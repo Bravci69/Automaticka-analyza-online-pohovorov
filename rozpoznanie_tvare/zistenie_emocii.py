@@ -1,10 +1,23 @@
-import cv2
-import sys
-import easygui
 import datetime
+import logging
+import os
+import sys
 from pathlib import Path
+
+import cv2
+import easygui
+
+
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+logging.getLogger("tensorflow").setLevel(logging.ERROR)
+
 from deepface import DeepFace
-from hodnotenie_emocie import prelozenie_emocii, ulozenie_unikatnych_emocii
+
+try:
+    from .hodnotenie_emocie import prelozenie_emocii, ulozenie_unikatnych_emocii
+except ImportError:
+    from hodnotenie_emocie import prelozenie_emocii, ulozenie_unikatnych_emocii
 
 
 def ulozenie_emocii_do_suboru(emocie, subor):
@@ -17,7 +30,8 @@ def ulozenie_emocii_do_suboru(emocie, subor):
     except Exception as e:
         print(f"[ERROR] Nepodarilo sa uložiť emócie do súboru: {e}")
 
-def zistenie_emocii(video_path=None, vrat_subor=False):
+def zistenie_emocii(video_path=None, vrat_subor=False, progress_callback=None):
+    progress_callback = progress_callback or (lambda message, percent: None)
     if video_path is None:
         video_path = easygui.fileopenbox(
             title="Vyberte videonahrávku",
@@ -38,10 +52,21 @@ def zistenie_emocii(video_path=None, vrat_subor=False):
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video file: {video_path}")
 
+    celkovo_snimok = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    spracovanych_snimok = 0
+    progress_callback("Rozpoznávanie tváre: načítavanie videa", 0)
+
     while True:
         ret, frame=cap.read()
         if not ret:
             break
+
+        spracovanych_snimok += 1
+        progress_callback(
+            f"Rozpoznávanie tváre: snímka {spracovanych_snimok}",
+            spracovanych_snimok / celkovo_snimok * 100
+            if celkovo_snimok else 0,
+        )
 
         gray=cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces=face_cascade.detectMultiScale(gray,scaleFactor=1.1,minNeighbors=5,minSize=(30,30))

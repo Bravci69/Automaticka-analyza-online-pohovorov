@@ -1,4 +1,7 @@
-import moviepy.editor as mp
+try:
+    import moviepy.editor as mp
+except ModuleNotFoundError:
+    import moviepy as mp
 import easygui
 import os
 import sys
@@ -38,7 +41,10 @@ def extrahovanie_audio(video_subor=None, vrat_subor=False):
         audio_subor = f"audio_{cas}.wav"
         
         print(f"  Ukladám do: {audio_subor}...")
-        vid.audio.write_audiofile(audio_subor, verbose=False, logger=None)
+        try:
+            vid.audio.write_audiofile(audio_subor, logger=None)
+        except TypeError:
+            vid.audio.write_audiofile(audio_subor, verbose=False, logger=None)
         vid.close()
         
         print(f"\n[OK] Audio extrahované!")

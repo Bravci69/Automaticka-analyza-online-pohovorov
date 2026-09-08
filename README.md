@@ -71,6 +71,9 @@ Automaticka-analyza-online-pohovorov/
 │   ├── spusti_vsetko.py
 │   ├── vsetky_emocie.voxlens
 |   └── zistenie_emocii.py
+├── graficke_rozhranie/
+│   ├── main.py
+│   └── progress.py
 ├── rozpoznavanie_reci/
 │	├── extrakcia_audio.py
 │	├── graf_hodnotenia_reci.py
@@ -231,6 +234,19 @@ Tento skript spustí celý pipeline v poradí:
 5. uloženie hodnotenia do súboru,
 6. automatické otvorenie grafu hodnotenia bez ďalšieho výberu súboru.
 
+### 5.14 Grafické rozhranie
+Súbor: `graficke_rozhranie/main.py`
+
+Grafické rozhranie je vytvorené pomocou knižnice Tkinter a umožňuje spustiť oba hlavné procesy z jedného okna. Obsahuje:
+
+- výber vstupného videa vo formátoch `.mp4`, `.avi` a `.mov`,
+- samostatné spustenie rozpoznávania reči alebo rozpoznávania tváre,
+- automatické odovzdanie výstupných súborov medzi jednotlivými fázami,
+- zobrazenie grafu hodnotenia po dokončení spracovania,
+- menu na ukončenie aplikácie a zobrazenie informácií o programe.
+
+Dlhé operácie sa vykonávajú v samostatnom vlákne pomocou `graficke_rozhranie/progress.py`. Používateľ tak vidí aktuálny stav a percentuálny priebeh spracovania a hlavné tlačidlá sú počas práce dočasne deaktivované. Ak v prostredí chýba knižnica DeepFace, rozhranie zobrazí upozornenie.
+
 ## 6. Použitie
 
 ### Inštalácia závislostí
@@ -240,12 +256,18 @@ Vytvorte virtuálne prostredie a nainštalujte potrebné balíky:
 ```bash
 python -m venv .venv
 .venv\Scripts\activate
-python -m pip install "moviepy<2" SpeechRecognition easygui matplotlib numpy opencv-python deepface
+python -m pip install "moviepy<2" SpeechRecognition easygui matplotlib numpy opencv-python deepface tf-keras
 ```
 
 Knižnice `sys`, `os`, `re`, `datetime`, `pathlib`, `collections` a `array` sú súčasťou štandardnej knižnice Pythonu a neinštalujú sa cez `pip`.
 
 ### Spustenie skriptov
+
+Skripty v priečinku `graficke_rozhranie` sa spúšťajú pomocou PowerShellu takto:
+
+```bash
+python graficke_rozhranie/main.py
+```
 
 Skripty v priečinku `rozpoznavanie_reci` sa spúšťajú pomocou PowerShellu takto:
 

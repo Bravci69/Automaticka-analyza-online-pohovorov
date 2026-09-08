@@ -5,8 +5,10 @@ import sys
 from datetime import datetime
 
 
-def rozpoznavanie_reci(audio_subor=None, vrat_subor=False):
+def rozpoznavanie_reci(audio_subor=None, vrat_subor=False, progress_callback=None):
     """Rozpoznáva reč z audio súboru."""
+
+    progress_callback = progress_callback or (lambda message, percent: None)
 
     if audio_subor is None:
         audio_subor = easygui.fileopenbox(
@@ -34,11 +36,16 @@ def rozpoznavanie_reci(audio_subor=None, vrat_subor=False):
         audio_data = audio.get_wav_data()
         fps = audio.sample_rate
         bytes_kus = 60 * fps * 2
+        celkovo_dat = len(audio_data)
         
         # Rozpoznávanie po kusoch
         pocet_kusov = 0
         for i in range(0, len(audio_data), bytes_kus):
             pocet_kusov += 1
+            progress_callback(
+                f"Rozpoznávanie reči: kus {pocet_kusov}",
+                i / celkovo_dat * 100 if celkovo_dat else 100,
+            )
             kusok = audio_data[i:i + bytes_kus]
             audio_kus = sr.AudioData(kusok, fps, 2)
             
@@ -53,6 +60,12 @@ def rozpoznavanie_reci(audio_subor=None, vrat_subor=False):
             except sr.RequestError as e:
                 print(f"[ERROR: {str(e)[:20]}...]")
                 vysledky.append(f"[ERROR]")
+
+            progress_callback(
+                f"Rozpoznávanie reči: kus {pocet_kusov} dokončený",
+                min(100, (i + len(kusok)) / celkovo_dat * 100)
+                if celkovo_dat else 100,
+            )
         
         finalny_text = " ".join(vysledky)
         
