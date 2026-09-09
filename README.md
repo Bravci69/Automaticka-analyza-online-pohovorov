@@ -65,7 +65,10 @@ Automaticka-analyza-online-pohovorov/
 |   ├──BP-osnova.txt
 |   ├──BP-zadanie.txt
 |   └──zdroje.txt
-├── rozpoznavanie_tvare/
+├── hodnotenia/
+│   ├── hodnotenie_reci/
+│   └── hodnotenie_tvare/
+├── rozpoznanie_tvare/
 │   ├── graf_hodnotenia_tvare.py
 │   ├── hodnotenie_emocie.py
 │   ├── spusti_vsetko.py
@@ -246,6 +249,25 @@ Grafické rozhranie je vytvorené pomocou knižnice Tkinter a umožňuje spusti�
 - menu na ukončenie aplikácie a zobrazenie informácií o programe.
 
 Dlhé operácie sa vykonávajú v samostatnom vlákne pomocou `graficke_rozhranie/progress.py`. Používateľ tak vidí aktuálny stav a percentuálny priebeh spracovania a hlavné tlačidlá sú počas práce dočasne deaktivované. Ak v prostredí chýba knižnica DeepFace, rozhranie zobrazí upozornenie.
+
+### 5.15 Zobrazenie priebehu
+Súbor: `graficke_rozhranie/progress.py`
+
+Táto časť:
+
+- obsahuje triedu `ProgressRunner`,
+- zabezpečuje zobrazenie okna s postupom spracovania,
+- spúšťa dlhotrvajúce úlohy v samostatnom vlákne na pozadí,
+- zabraňuje zamrznutiu hlavného grafického rozhrania počas spracovania,
+- dynamicky aktualizuje informácie o stave a percentuálnom priebehu.
+
+### 5.16 Hodnotenia
+Priečinky: `hodnotenia/hodnotenie_reci/`, `hodnotenia/hodnotenie_tvare/`
+
+Táto časť:
+
+- slúži ako vyhradený priestor na ukladanie budúcich výsledkov a vyhodnotení,
+- momentálne sú tieto podpriečinky prázdne a pripravené na ďalšie rozšírenie projektu.
 
 ## 6. Použitie
 
