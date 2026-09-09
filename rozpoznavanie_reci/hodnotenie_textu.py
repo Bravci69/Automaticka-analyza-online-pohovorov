@@ -98,7 +98,9 @@ def hodnotenie_textu(subor_nazov=None, vrat_subor=False):
     print("\n[KROK 5] Uloženie výsledkov...")
     try:
         cas = datetime.now().strftime("%Y%m%d_%H%M%S")
-        vystupny_subor = Path(__file__).resolve().parent / f"hodnotenie_{cas}.txt"
+        vystupny_priecinok = Path(__file__).resolve().parent.parent / "hodnotenia" / "hodnotenie_reci"
+        vystupny_priecinok.mkdir(parents=True, exist_ok=True)
+        vystupny_subor = vystupny_priecinok / f"hodnotenie_{cas}.txt"
 
         output_text = "\n".join([
             "HODNOTENIE VÝSLEDKOV",

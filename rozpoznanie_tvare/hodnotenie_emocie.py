@@ -79,7 +79,9 @@ def hodnotenie_emocii(subor_nazov=None, vrat_subor=False):
         vysledky.append(f"{emocia}: {pocet} ({percento:.2f} %)")
 
     cas = datetime.now().strftime("%Y%m%d_%H%M%S")
-    vystupny_subor = Path(subor_nazov).resolve().parent / f"hodnotenie_emocii_{cas}.txt"
+    vystupny_priecinok = Path(__file__).resolve().parent.parent / "hodnotenia" / "hodnotenie_tvare"
+    vystupny_priecinok.mkdir(parents=True, exist_ok=True)
+    vystupny_subor = vystupny_priecinok / f"hodnotenie_emocii_{cas}.txt"
     output_text = "\n".join(
         [
             "HODNOTENIE EMÓCIÍ",

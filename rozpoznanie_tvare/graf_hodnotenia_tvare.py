@@ -27,9 +27,15 @@ def nacitaj_hodnotenie(subor_nazov):
 def graf_hodnotenia_tvare(subor_nazov=None):
     try:
         if subor_nazov is None:
+            priecinok_hodnotenia = (
+                Path(__file__).resolve().parent.parent
+                / "hodnotenia"
+                / "hodnotenie_tvare"
+            )
             subor_nazov = easygui.fileopenbox(
                 title="Vyberte hodnotenie emócií",
                 filetypes=["hodnotenie_emocii_*.txt", "*.txt"],
+                default=str(priecinok_hodnotenia / "*.txt"),
             )
 
         if not subor_nazov:
