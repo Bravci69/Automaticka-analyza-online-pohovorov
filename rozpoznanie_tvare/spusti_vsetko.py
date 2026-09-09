@@ -63,4 +63,5 @@ def spusti_priamo(video_subor=None, progress_callback=None, show_graph=True):
 
 if __name__ == "__main__":
     video_argument = sys.argv[1] if len(sys.argv) > 1 else None
-    sys.exit(spusti_priamo(video_argument))
+    vysledok = spusti_priamo(video_argument)
+    sys.exit(0 if isinstance(vysledok, str) else 1)

@@ -67,16 +67,17 @@ Automaticka-analyza-online-pohovorov/
 |   └──zdroje.txt
 ├── hodnotenia/
 │   ├── hodnotenie_reci/
-│   └── hodnotenie_tvare/
+│   ├── hodnotenie_tvare/
+│   └── kombinovane_hodnotenia/
+├── graficke_rozhranie/
+│   ├── main.py
+│   └── progress.py
 ├── rozpoznanie_tvare/
 │   ├── graf_hodnotenia_tvare.py
 │   ├── hodnotenie_emocie.py
 │   ├── spusti_vsetko.py
 │   ├── vsetky_emocie.voxlens
 |   └── zistenie_emocii.py
-├── graficke_rozhranie/
-│   ├── main.py
-│   └── progress.py
 ├── rozpoznavanie_reci/
 │	├── extrakcia_audio.py
 │	├── graf_hodnotenia_reci.py
@@ -89,6 +90,10 @@ Automaticka-analyza-online-pohovorov/
 │	├── spusti_vsetko.py
 │	├── vyhladavane-slova.voxlens
 │	└── vyplnove-slova.voxlens
+└── spustenie_vsetkeho/
+    ├── kombinovanie_hodnoteni.py
+    ├── spusti_hodnotenia.py
+    └── vsetky_grafy.py
 ```
 
 ## 5. Aktuálna implementácia
@@ -262,12 +267,40 @@ Táto časť:
 - dynamicky aktualizuje informácie o stave a percentuálnom priebehu.
 
 ### 5.16 Hodnotenia
-Priečinky: `hodnotenia/hodnotenie_reci/`, `hodnotenia/hodnotenie_tvare/`
+Priečinky: `hodnotenia/hodnotenie_reci/`, `hodnotenia/hodnotenie_tvare/`, `hodnotenia/kombinovane_hodnotenia/`
 
 Táto časť:
 
-- slúži ako vyhradený priestor na ukladanie budúcich výsledkov a vyhodnotení,
-- momentálne sú tieto podpriečinky prázdne a pripravené na ďalšie rozšírenie projektu.
+- slúži ako vyhradený priestor na ukladanie výsledkov a vyhodnotení z jednotlivých fáz,
+- v podpriečinku `kombinovane_hodnotenia` sa ukladajú spoločné reporty generované paralelným spustením.
+
+### 5.17 Paralelné spustenie analýz
+Súbor: `spustenie_vsetkeho/spusti_hodnotenia.py`
+
+Táto časť:
+
+- umožňuje spustiť obidve analýzy (reč a tvár) naraz vo viacerých vláknach,
+- komunikuje s grafickým progress barom (`main.py`) na sledovanie priebehu oboch úloh súčasne,
+- na konci spracovania zavolá logiku na vytvorenie spoločného reportu z oboch fáz.
+
+### 5.18 Kombinovanie hodnotení
+Súbor: `spustenie_vsetkeho/kombinovanie_hodnoteni.py`
+
+Táto časť:
+
+- zlúči výsledné textové reporty z oboch analytických nástrojov (reč a tvár) do jedného súboru,
+- označí súbor časovou pečiatkou,
+- uloží dokument do vyhradeného priečinka pre kombinované hodnotenia.
+
+### 5.19 Zobrazenie spoločných grafov
+Súbor: `spustenie_vsetkeho/vsetky_grafy.py`
+
+Táto časť:
+
+- slúži na načítanie spoločného textového reportu (kombinácie hodnotení),
+- z jedného súboru dokáže extrahovať dáta o reči aj emóciách tváre,
+- vykreslí obidva koláčové grafy prehľadne vedľa seba v rámci jedného okna,
+- integrované do grafického rozhrania v menu "Všetky grafy".
 
 ## 6. Použitie
 
@@ -314,6 +347,14 @@ python spusti_vsetko.py
 python zistenie_emocii.py
 python hodnotenie_emocie.py
 python graf_hodnotenia_tvare.py
+```
+
+Skripty v priečinku `spustenie_vsetkeho` sa spúšťajú takto:
+
+```bash
+cd spustenie_vsetkeho
+python spusti_hodnotenia.py
+python vsetky_grafy.py
 ```
 
 ## 7. Výstup

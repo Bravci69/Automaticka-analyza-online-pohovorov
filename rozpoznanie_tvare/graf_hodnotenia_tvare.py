@@ -82,7 +82,7 @@ def graf_hodnotenia_tvare(subor_nazov=None):
         ax.axis("equal")
         plt.setp(autotexts, size=9, weight="bold")
         plt.tight_layout()
-        plt.show(block=False)
+        plt.show()
         return 0
     except (OSError, ValueError) as exc:
         print(f"\n[ERROR] Vytvorenie grafu zlyhalo s chybou: {exc}")
