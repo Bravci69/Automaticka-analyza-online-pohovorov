@@ -1,3 +1,4 @@
+from rozpoznavanie_reci import odstranenie_vyhladavanch_slov
 try:
     import moviepy.editor as mp
 except ModuleNotFoundError:
@@ -6,6 +7,7 @@ import easygui
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 
 
 def extrahovanie_audio(video_subor=None, vrat_subor=False):
@@ -38,7 +40,9 @@ def extrahovanie_audio(video_subor=None, vrat_subor=False):
         
         # Uloženie audio
         cas = datetime.now().strftime("%Y%m%d_%H%M%S")
-        audio_subor = f"audio_{cas}.wav"
+        vystupny_priecinok = Path(__file__).resolve().parent.parent / "docastne_vypocty" / "docastne_vypocty_reci"
+        vystupny_priecinok.mkdir(parents=True, exist_ok=True)   
+        audio_subor =vystupny_priecinok/ f"audio_{cas}.wav"
         
         print(f"  Ukladám do: {audio_subor}...")
         try:
@@ -49,9 +53,7 @@ def extrahovanie_audio(video_subor=None, vrat_subor=False):
         
         print(f"\n[OK] Audio extrahované!")
         print(f"     Súbor: {audio_subor}")
-        print(f"     Veľkosť: {os.path.getsize(audio_subor) / (1024*1024):.2f} MB")
-        return audio_subor if vrat_subor else 0
-        
+        return str(audio_subor) if vrat_subor else 0
     except Exception as e:
         print(f"[ERROR] {e}")
         return 1

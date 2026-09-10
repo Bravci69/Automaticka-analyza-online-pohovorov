@@ -44,7 +44,9 @@ def zistenie_emocii(video_path=None, vrat_subor=False, progress_callback=None):
 
     print(video_path)
     cas = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    vystupny_subor = Path(__file__).resolve().parent / f"emocie_{cas}.txt"
+    vystupny_priecinok = Path(__file__).resolve().parent.parent / "docastne_vypocty" / "docastne_vypocty_tvare"
+    vystupny_priecinok.mkdir(parents=True, exist_ok=True)
+    vystupny_subor = vystupny_priecinok / f"emocie_{cas}.txt"
     cascade_path=cv2.data.haarcascades+"haarcascade_frontalface_default.xml"
     face_cascade=cv2.CascadeClassifier(cascade_path)
 

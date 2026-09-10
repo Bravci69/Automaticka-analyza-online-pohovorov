@@ -69,6 +69,10 @@ Automaticka-analyza-online-pohovorov/
 │   ├── hodnotenie_reci/
 │   ├── hodnotenie_tvare/
 │   └── kombinovane_hodnotenia/
+├── docastne_vypocty/
+│   ├── docastne_vypocty_reci/
+│   ├── docastne_vypocty_tvare/
+│   └── docastne_vypocty_hodnotenia/
 ├── graficke_rozhranie/
 │   ├── main.py
 │   └── progress.py

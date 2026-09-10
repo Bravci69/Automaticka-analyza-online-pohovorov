@@ -3,7 +3,7 @@ import easygui
 import os
 import sys
 from datetime import datetime
-
+from pathlib import Path
 
 def rozpoznavanie_reci(audio_subor=None, vrat_subor=False, progress_callback=None):
     """Rozpoznáva reč z audio súboru."""
@@ -79,7 +79,9 @@ def rozpoznavanie_reci(audio_subor=None, vrat_subor=False, progress_callback=Non
     print("\n[KROK 3] Uloženie výsledkov...")
     try:
         cas = datetime.now().strftime("%Y%m%d_%H%M%S")
-        vystupny_subor = f"preklad_{cas}.txt"
+        vystupny_priecinok = Path(__file__).resolve().parent.parent / "docastne_vypocty" / "docastne_vypocty_reci"
+        vystupny_priecinok.mkdir(parents=True, exist_ok=True)
+        vystupny_subor = vystupny_priecinok / f"preklad_{cas}.txt"
         
         with open(vystupny_subor, 'w', encoding='utf-8') as f:
             f.write("ROZPOZNÁVANIE REČI Z AUDIA\n")
@@ -105,7 +107,7 @@ def rozpoznavanie_reci(audio_subor=None, vrat_subor=False, progress_callback=Non
             print(finalny_text)
         
         print("=" * 80)
-        return vystupny_subor if vrat_subor else 0
+        return str(vystupny_subor) if vrat_subor else 0
         
     except Exception as e:
         print(f"[ERROR] {e}")

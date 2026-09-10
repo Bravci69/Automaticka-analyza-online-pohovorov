@@ -210,6 +210,8 @@ tlacitkoRozpoznanieReci = tk.Button(ovladaci_panel,text="Spustiť proces rozpozn
 tlacitkoRozpoznanieReci.pack(side=tk.LEFT, padx=(0, 5))
 tlacitkoRozpoznanieTvare = tk.Button(ovladaci_panel,text="Spustiť proces rozpoznávania tvár",command=spusti_rozpoznavanie_tvare,)
 tlacitkoRozpoznanieTvare.pack(side=tk.LEFT, padx=5)
+tlacitkoSpustiVsetko=tk.Button(ovladaci_panel,text="Spusti oba procesy",command=spusti_paralelne,)
+tlacitkoSpustiVsetko.pack(side=tk.LEFT)
 tlacitkoZavriGraf = tk.Button(ovladaci_panel, text="Zavri graf", command=zavri_graf)
 
 graf_frame = tk.Frame(root)
