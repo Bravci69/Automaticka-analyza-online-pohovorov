@@ -66,7 +66,8 @@ def hodnotenie_textu(subor_nazov=None, vrat_subor=False):
     print("\n[KROK 4] Hodnotenie výsledkov...")
 
     with open(subor_nazov, 'r', encoding='utf-8') as f:
-        text = f.read().lower()
+        lines = f.readlines()
+        text = "".join(lines[10:]).lower()
 
     zoznam_slov = re.findall(
         r"\b[\wáäčďéěíĺľňóôŕšťúýž]+\b",
