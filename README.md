@@ -81,7 +81,8 @@ Automaticka-analyza-online-pohovorov/
 │   ├── hodnotenie_emocie.py
 │   ├── spusti_vsetko.py
 │   ├── vsetky_emocie.voxlens
-|   └── zistenie_emocii.py
+│   ├── rozdelenie_tvari.py
+│   └── zistenie_emocii.py
 ├── rozpoznavanie_reci/
 │	├── extrakcia_audio.py
 │	├── graf_hodnotenia_reci.py
@@ -220,7 +221,16 @@ Táto časť:
 - zobrazí počty aj percentá,
 - nastaví názov okna podľa vybraného súboru.
 
-### 5.12 Spustenie celého procesu rozpoznávania emócií
+### 5.12 Rozdelenie videa na tváre
+Súbor: `rozpoznanie_tvare/rozdelenie_tvari.py`
+
+Táto časť:
+
+- pomocou knižnice MoviePy rozdelí video zvislo na dve polovice,
+- umožní vybrať vstupné video vo formátoch `.mp4`, `.avi`, `.mov`,
+- uloží ľavú a pravú polovicu ako samostatné videá (s príponami `_lave.mp4` a `_prave.mp4`).
+
+### 5.13 Spustenie celého procesu rozpoznávania emócií
 Súbor: `rozpoznanie_tvare/spusti_vsetko.py`
 
 Tento skript spustí celý proces analýzy emócií v poradí:
@@ -234,7 +244,7 @@ Tento skript spustí celý proces analýzy emócií v poradí:
 
 Video sa vyberá iba na začiatku. Ostatné súbory sa medzi jednotlivými fázami odovzdávajú automaticky, takže používateľ nemusí vyberať vstup opakovane.
 
-### 5.13 Spustenie celého procesu rozpoznávania reči
+### 5.14 Spustenie celého procesu rozpoznávania reči
 Súbor: `rozpoznavanie_reci/spusti_vsetko.py`
 
 Tento skript spustí celý pipeline v poradí:
@@ -246,7 +256,7 @@ Tento skript spustí celý pipeline v poradí:
 5. uloženie hodnotenia do súboru,
 6. automatické otvorenie grafu hodnotenia bez ďalšieho výberu súboru.
 
-### 5.14 Grafické rozhranie
+### 5.15 Grafické rozhranie
 Súbor: `graficke_rozhranie/main.py`
 
 Grafické rozhranie je vytvorené pomocou knižnice Tkinter a umožňuje spustiť oba hlavné procesy z jedného okna. Obsahuje:
@@ -259,7 +269,7 @@ Grafické rozhranie je vytvorené pomocou knižnice Tkinter a umožňuje spusti�
 
 Dlhé operácie sa vykonávajú v samostatnom vlákne pomocou `graficke_rozhranie/progress.py`. Používateľ tak vidí aktuálny stav a percentuálny priebeh spracovania a hlavné tlačidlá sú počas práce dočasne deaktivované. Ak v prostredí chýba knižnica DeepFace, rozhranie zobrazí upozornenie.
 
-### 5.15 Zobrazenie priebehu
+### 5.16 Zobrazenie priebehu
 Súbor: `graficke_rozhranie/progress.py`
 
 Táto časť:
@@ -270,7 +280,7 @@ Táto časť:
 - zabraňuje zamrznutiu hlavného grafického rozhrania počas spracovania,
 - dynamicky aktualizuje informácie o stave a percentuálnom priebehu.
 
-### 5.16 Hodnotenia
+### 5.17 Hodnotenia
 Priečinky: `hodnotenia/hodnotenie_reci/`, `hodnotenia/hodnotenie_tvare/`, `hodnotenia/kombinovane_hodnotenia/`
 
 Táto časť:
@@ -278,7 +288,15 @@ Táto časť:
 - slúži ako vyhradený priestor na ukladanie výsledkov a vyhodnotení z jednotlivých fáz,
 - v podpriečinku `kombinovane_hodnotenia` sa ukladajú spoločné reporty generované paralelným spustením.
 
-### 5.17 Paralelné spustenie analýz
+### 5.18 Dočasné výpočty
+Priečinky: `docastne_vypocty/docastne_vypocty_reci/`, `docastne_vypocty/docastne_vypocty_tvare/`, `docastne_vypocty/docastne_vypocty_hodnotenia/`
+
+Táto časť:
+
+- slúži ako vyhradený priestor na ukladanie medzivýsledkov a dočasných súborov vytvorených počas spracovania,
+- zabezpečuje oddelenie dočasných dát od finálnych výsledkov.
+
+### 5.19 Paralelné spustenie analýz
 Súbor: `spustenie_vsetkeho/spusti_hodnotenia.py`
 
 Táto časť:
@@ -287,7 +305,7 @@ Táto časť:
 - komunikuje s grafickým progress barom (`main.py`) na sledovanie priebehu oboch úloh súčasne,
 - na konci spracovania zavolá logiku na vytvorenie spoločného reportu z oboch fáz.
 
-### 5.18 Kombinovanie hodnotení
+### 5.20 Kombinovanie hodnotení
 Súbor: `spustenie_vsetkeho/kombinovanie_hodnoteni.py`
 
 Táto časť:
@@ -296,7 +314,7 @@ Táto časť:
 - označí súbor časovou pečiatkou,
 - uloží dokument do vyhradeného priečinka pre kombinované hodnotenia.
 
-### 5.19 Zobrazenie spoločných grafov
+### 5.21 Zobrazenie spoločných grafov
 Súbor: `spustenie_vsetkeho/vsetky_grafy.py`
 
 Táto časť:
@@ -315,7 +333,7 @@ Vytvorte virtuálne prostredie a nainštalujte potrebné balíky:
 ```bash
 python -m venv .venv
 .venv\Scripts\activate
-python -m pip install "moviepy<2" SpeechRecognition easygui matplotlib numpy opencv-python deepface tf-keras
+python -m pip install "moviepy<2" SpeechRecognition easygui matplotlib numpy opencv-python deepface tf-keras faster-whisper
 ```
 
 Knižnice `sys`, `os`, `re`, `datetime`, `pathlib`, `collections` a `array` sú súčasťou štandardnej knižnice Pythonu a neinštalujú sa cez `pip`.
@@ -351,6 +369,7 @@ python spusti_vsetko.py
 python zistenie_emocii.py
 python hodnotenie_emocie.py
 python graf_hodnotenia_tvare.py
+python rozdelenie_tvari.py
 ```
 
 Skripty v priečinku `spustenie_vsetkeho` sa spúšťajú takto:

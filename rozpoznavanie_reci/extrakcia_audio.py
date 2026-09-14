@@ -1,5 +1,6 @@
 from rozpoznavanie_reci import odstranenie_vyhladavanch_slov
 try:
+    # pyrefly: ignore [missing-import]
     import moviepy.editor as mp
 except ModuleNotFoundError:
     import moviepy as mp

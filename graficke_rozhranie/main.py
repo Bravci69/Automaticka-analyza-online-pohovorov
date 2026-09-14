@@ -24,6 +24,7 @@ from rozpoznavanie_reci import odstranenie_vyhladavanch_slov
 from rozpoznavanie_reci import pridanie_vyhladavanych_slov
 from spustenie_vsetkeho import spusti_hodnotenia
 from spustenie_vsetkeho import vsetky_grafy
+from rozpoznanie_tvare.rozdelenie_tvari import spusti_rozdelenie
 
 
 graf_canvas = None
@@ -170,6 +171,10 @@ def odstranit_vyhladavane_slova() -> None:
 def pridat_vyhladavane_slova() -> None:
 	pridanie_vyhladavanych_slov.main()
 
+def rozdel_tvare() -> None:
+	spusti_rozdelenie()
+	
+
 def spusti_paralelne() -> None:
 	video_subor = easygui.fileopenbox(
 		title="Vyberte video na paralelné spracovanie",
@@ -213,6 +218,8 @@ tlacitkoRozpoznanieTvare.pack(side=tk.LEFT, padx=5)
 tlacitkoSpustiVsetko=tk.Button(ovladaci_panel,text="Spusti oba procesy",command=spusti_paralelne,)
 tlacitkoSpustiVsetko.pack(side=tk.LEFT)
 tlacitkoZavriGraf = tk.Button(ovladaci_panel, text="Zavri graf", command=zavri_graf)
+tlacitkoRozdelenieTvari=tk.Button(ovladaci_panel,text="Rozdelenie tvári",command=rozdel_tvare,)
+tlacitkoRozdelenieTvari.pack(side=tk.LEFT, padx=5)
 
 graf_frame = tk.Frame(root)
 graf_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
