@@ -15,6 +15,11 @@ pypi.org/project/pytranscript/
 https://www.geeksforgeeks.org/python/extract-speech-text-from-video-in-python/
 https://youtu.be/FOZKndlfXQc?si=cDOCwie9eDRUqpi3
 https://www.youtube.com/watch?v=rTWM5WuPhlQ
+https://pypi.org/project/whisperx/
+https://github.com/pyannote/pyannote-audio
+https://github.com/pyannote/pyannote-video
+https://pypi.org/project/faster-whisper/
+https://pypi.org/project/videoslice/
 
 /--------------ODBORNÉ-ČLÁNKY--------------\
 https://arxiv.org/pdf/2203.15135
