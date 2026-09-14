@@ -9,6 +9,11 @@ class MultilineTextDialog(simpledialog.Dialog):
         self.result_text = None
         super().__init__(parent, title)
 
+    def bind(self, sequence=None, func=None, add=None):
+        if sequence == "<Return>":
+            return
+        super().bind(sequence, func, add)
+
     def body(self, master):
         tk.Label(master, text=self.msg).pack(padx=10, pady=5)
         self.text_widget = tk.Text(master, width=40, height=10)
