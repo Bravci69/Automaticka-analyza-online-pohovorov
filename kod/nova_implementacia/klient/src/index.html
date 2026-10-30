@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emulátor Pracovného Prostredia</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Horná lišta aplikácie */
+        header {
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        .status-badge {
+            font-size: 0.78rem;
+            font-weight: 500;
+            background-color: #334155;
+            color: #94a3b8;
+            padding: 4px 10px;
+            border-radius: 9999px;
+        }
+
+        /* Hlavný kontajner */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Bočný panel nástrojov */
+        aside {
+            width: 250px;
+            background-color: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        aside h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .tools-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .tool-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 12px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            color: #334155;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .tool-btn:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .tool-btn.active {
+            background-color: #3b82f6;
+            color: #ffffff;
+            border-color: #3b82f6;
+        }
+
+        /* Hlavná oblasť prehliadača */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* Navigačný panel */
+        .browser-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background-color: #f1f5f9;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        .nav-btn {
+            background: none;
+            border: 1px solid #cbd5e1;
+            background-color: #ffffff;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background-color: #e2e8f0;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .url-box {
+            flex: 1;
+            display: flex;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 7px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.92rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .url-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .go-btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 16px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .go-btn:hover {
+            background-color: #2563eb;
+        }
+
+        /* Webview plocha */
+        .webview-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #ffffff;
+        }
+
+        webview {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <span>Pracovné Prostredie (Emulátor Pohovoru)</span>
+        <span id="status-indicator" class="status-badge">Pripravené</span>
+    </header>
+
+    <div class="workspace">
+        <aside>
+            <h3>Nástroje</h3>
+            <ul class="tools-list">
+                <li>
+                    <button class="tool-btn" data-url="https://www.google.com">
+                        🔍 Google
+                    </button>
+                </li>
+                <li>
+                    <button class="tool-btn active" data-url="https://github.com/Bravci69/Automaticka-analyza-online-pohovorov">
+                        🐙 GitHub Projekt
+                    </button>
+                </li>
+                <li>
+                    <button class="tool-btn" data-url="https://sk.wikipedia.org">
+                        📖 Wikipedia
+                    </button>
+                </li>
+                <li>
+                    <button class="tool-btn" onclick="alert('Modul: Analýza pohovoru')">
+                        📊 Analýza pohovoru
+                    </button>
+                </li>
+            </ul>
+        </aside>
+
+        <main>
+            <!-- Adresný a navigačný riadok -->
+            <div class="browser-toolbar">
+                <button id="back-btn" class="nav-btn" title="Späť" disabled>&larr;</button>
+                <button id="forward-btn" class="nav-btn" title="Dopredu" disabled>&rarr;</button>
+                <button id="reload-btn" class="nav-btn" title="Znova načítať">&#x21bb;</button>
+
+                <div class="url-box">
+                    <input 
+                        type="text" 
+                        id="url-input" 
+                        class="url-input" 
+                        placeholder="Zadajte URL adresu (napr. https://github.com)..." 
+                        value="https://github.com/Bravci69/Automaticka-analyza-online-pohovorov" 
+                    />
+                </div>
+
+                <button id="go-btn" class="go-btn">Prejsť</button>
+            </div>
+
+            <!-- Samotný vložený Chromium webview -->
+            <div class="webview-container">
+                <webview 
+                    id="web-view" 
+                    src="https://github.com/Bravci69/Automaticka-analyza-online-pohovorov"
+                    allowpopups
+                ></webview>
+            </div>
+        </main>
+    </div>
+
+    <script src="../dist/renderer.js"></script>
+</body>
+
+</html>
+

@@ -1,0 +1,34 @@
+# Secrets & Keys (CRITICAL)
+SSH-vps-windows/
+*.key
+*.pem
+.env
+.env.*
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+dist/
+
+# Logs & temp
+*.log
+output.log
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp

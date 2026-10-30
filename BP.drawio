@@ -1,0 +1,49 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="iKO540pcYq2bUpLHI0fD">
+    <mxGraphModel dx="1414" dy="751" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-9" edge="1" parent="1" source="UlDv8wE5fPd4dDESzmMB-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" target="UlDv8wE5fPd4dDESzmMB-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-1" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;labelPerimeter=1;" value="HR" vertex="1">
+          <mxGeometry height="60" width="30" x="40" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-6" edge="1" parent="1" source="UlDv8wE5fPd4dDESzmMB-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;defaultLabelBackgroundColor=page;" target="UlDv8wE5fPd4dDESzmMB-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-3" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;labelPerimeter=1;" value="Záujemca" vertex="1">
+          <mxGeometry height="60" width="30" x="680" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-11" edge="1" parent="1" source="UlDv8wE5fPd4dDESzmMB-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;defaultLabelBackgroundColor=page;" target="UlDv8wE5fPd4dDESzmMB-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="Zistenie pozície" vertex="1">
+          <mxGeometry height="60" width="120" x="170" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-14" edge="1" parent="1" source="UlDv8wE5fPd4dDESzmMB-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" target="UlDv8wE5fPd4dDESzmMB-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="Zaslanie CV" vertex="1">
+          <mxGeometry height="60" width="120" x="470" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-13" edge="1" parent="1" source="UlDv8wE5fPd4dDESzmMB-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;defaultLabelBackgroundColor=page;" target="UlDv8wE5fPd4dDESzmMB-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="Vytvorenie otázok cez AI" vertex="1">
+          <mxGeometry height="60" width="120" x="170" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-17" edge="1" parent="1" source="UlDv8wE5fPd4dDESzmMB-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" target="UlDv8wE5fPd4dDESzmMB-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="Online pohovor" vertex="1">
+          <mxGeometry height="60" width="120" x="320" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="UlDv8wE5fPd4dDESzmMB-15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;" value="Nahranie pohovoru" vertex="1">
+          <mxGeometry height="60" width="120" x="630" y="330" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

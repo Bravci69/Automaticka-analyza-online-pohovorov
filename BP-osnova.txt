@@ -1,0 +1,14 @@
+úsmev, používanie hlasnejšieho hlasu a udržiavanie očného kontaktu pozitívne prispievajú k našej interpersonálnej komunikácii. 
+r>0.65 AUC = 0,81 (základná hodnota 0,50) v priemere. Môžeme tiež predpovedať rôzne sociálne črty, ako je angažovanosť, vzrušenie a priateľskosť s ešte vyššou presnosťou (r≥0.75, AUC >0.85) )
+angažovanosť, vzrušenie, očný kontakt, úsmev
+slová za sekundu
+jedinečné slová za sekundu
+celkový počet slov
+celkový počet jedinečných slov
+plniace slová za sekundu
+obrys tváre
+kombinácia hlas, mimika a slová je najlepšia
+schopnosť identifikovať netradičné talenty
+najprv to prekladajú do angličtiny??
+kombinácie správnosti
+používajú sa známe AI (chat,claude)

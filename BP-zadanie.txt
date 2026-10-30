@@ -1,0 +1,34 @@
+vlastný framework si vybrať
+odporúčanie - 
+jazyk programovací jazyk - 
+kludne môže byť nahrávka offline, nemusí byť online
+Lang povie dokedy čo a ako a openent
+vlastný rozvrh práce
+rešerš 
+návrh
+implementácia
+možná konzultácia aj počas leta
+aspoň raz do mesiaca na fakulte stretnutie
+výber hovoreného jazyka na mne
+výplňové slová ošetriť (opakuje ich viackrát)
+rozprávanie potichu atď
+obrazové javy: mykanie hlavou, zvláštne pohyby, teda ako sa hýbe človek
+obsahové javy: psychológia
+vyhodnocovanie: takže model hodnotenia, rozdeliť váhu javov
+neriešime správnosť odpovede, ale sémantiku prejavu (priama odpoveď, monotónná odpoveď, atď.)
+viac neutrálny názor, objektívny
+nie je potreba online
+
+očakávania:
+posielanie termínov
+analýza -výskum a terminológia a aktuálny stav 
+návrh
+implementácia
+
+vyhladať podobné riešenia
+oboznámenie s terminológiou
+rozdiel pohovor a online pohovor
+minimálne 3-5 zvukových a obrazových javov
+popísať 3-5 podobných riešení porovnanie kvalitatývnych a kvantitatývnych riešení
+čo je vhodné pri online pohovore dnes
+stačí v pár vet=ach popísať články
