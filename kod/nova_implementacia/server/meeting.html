@@ -46,7 +46,7 @@
         }
 
         /* ================================================================= */
-        /* LOBBY / PRE-CALL PRÍPRAVA                                         */
+        /* 1. LOBBY / PRE-CALL PRÍPRAVA                                      */
         /* ================================================================= */
         .lobby-view {
             flex: 1;
@@ -64,7 +64,7 @@
 
         .lobby-card {
             width: 100%;
-            max-width: 840px;
+            max-width: 860px;
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-lg);
@@ -81,7 +81,7 @@
             }
         }
 
-        /* Ľavá strana lobby - Video preview */
+        /* Ľavá strana: Video preview */
         .preview-pane {
             background: #000000;
             position: relative;
@@ -90,14 +90,14 @@
             align-items: center;
             justify-content: center;
             border-right: 1px solid var(--border-subtle);
-            min-height: 340px;
+            min-height: 350px;
         }
 
         .preview-video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* zrkadlenie */
+            transform: scaleX(-1);
         }
 
         .preview-placeholder {
@@ -120,7 +120,7 @@
             gap: 10px;
             background: rgba(15, 19, 28, 0.85);
             backdrop-filter: blur(12px);
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 999px;
             border: 1px solid var(--border-subtle);
         }
@@ -149,7 +149,7 @@
             color: var(--accent-red);
         }
 
-        /* Pravá strana lobby - Formulár */
+        /* Pravá strana: Formulár */
         .form-pane {
             padding: 36px 32px;
             display: flex;
@@ -251,7 +251,7 @@
         }
 
         /* ================================================================= */
-        /* CALL INTERFACE                                                    */
+        /* 2. CALL INTERFACE & HEADER HUD                                    */
         /* ================================================================= */
         .call-view {
             display: none;
@@ -309,7 +309,7 @@
             gap: 12px;
         }
 
-        /* Eye-tracking HUD Pill */
+        /* Real-time Eye-tracking HUD Pill */
         .gaze-hud-pill {
             display: inline-flex;
             align-items: center;
@@ -321,18 +321,18 @@
             font-size: 0.8rem;
             font-weight: 500;
             color: var(--text-muted);
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
         }
 
         .gaze-hud-pill.active {
             border-color: rgba(16, 185, 129, 0.3);
-            background: rgba(16, 185, 129, 0.05);
+            background: rgba(16, 185, 129, 0.06);
             color: #6ee7b7;
         }
 
         .gaze-hud-pill.warning {
-            border-color: rgba(239, 68, 68, 0.4);
-            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.45);
+            background: rgba(239, 68, 68, 0.12);
             color: #fca5a5;
         }
 
@@ -358,7 +358,29 @@
         .header-right {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+        }
+
+        .btn-header-tool {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-header-tool:hover, .btn-header-tool.active {
+            color: var(--text-main);
+            border-color: var(--border-active);
+            background: var(--bg-elevated);
         }
 
         .btn-leave-call {
@@ -402,7 +424,7 @@
         }
 
         /* ================================================================= */
-        /* EYE-TRACKING OVERLAY & ALERT HUD                                  */
+        /* 3. REÁLNY EYE-TRACKING OVERLAY & ALERT HUD                        */
         /* ================================================================= */
         .hud-overlay {
             position: absolute;
@@ -414,24 +436,23 @@
             align-items: center;
             justify-content: flex-start;
             padding-top: 24px;
-            transition: box-shadow 0.4s ease;
+            transition: box-shadow 0.35s ease;
         }
 
-        /* Jemný červený okraj pri odvrátení pohľadu */
         .hud-overlay.warning {
-            box-shadow: inset 0 0 80px rgba(239, 68, 68, 0.35);
+            box-shadow: inset 0 0 90px rgba(239, 68, 68, 0.4);
         }
 
         /* Elegantné plávajúce varovné okno */
         .alert-toast {
             background: rgba(15, 19, 28, 0.94);
-            border: 1px solid rgba(239, 68, 68, 0.5);
+            border: 1px solid rgba(239, 68, 68, 0.55);
             border-radius: 999px;
             padding: 10px 22px;
             display: flex;
             align-items: center;
             gap: 12px;
-            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.25), 0 0 0 1px rgba(239, 68, 68, 0.2);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3), 0 0 0 1px rgba(239, 68, 68, 0.2);
             backdrop-filter: blur(16px);
             transform: translateY(-80px);
             opacity: 0;
@@ -486,7 +507,99 @@
             margin-left: 6px;
         }
 
-        /* Spodný demo panel */
+        /* ================================================================= */
+        /* 4. DIAGNOSTICKÝ PIP PANEL (Obhajoba / Kalibrácia)                 */
+        /* ================================================================= */
+        .diagnostic-pip {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 260px;
+            background: rgba(15, 19, 28, 0.95);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(14px);
+            z-index: 120;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            pointer-events: auto;
+        }
+
+        .diagnostic-pip.active {
+            display: flex;
+        }
+
+        .pip-header {
+            padding: 8px 12px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .pip-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .pip-close-btn:hover {
+            color: var(--text-main);
+        }
+
+        .pip-canvas-wrap {
+            position: relative;
+            width: 100%;
+            height: 170px;
+            background: #000000;
+        }
+
+        #diagnosticCanvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .pip-metrics {
+            padding: 8px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-top: 1px solid var(--border-subtle);
+            background: var(--bg-surface);
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .metric-val {
+            color: #a5b4fc;
+            font-weight: 500;
+        }
+
+        .metric-val.ok {
+            color: var(--accent-green);
+        }
+
+        .metric-val.warn {
+            color: var(--accent-red);
+        }
+
+        /* Demo informácia */
         .demo-bar {
             position: absolute;
             bottom: 12px;
@@ -544,6 +657,9 @@
 </head>
 
 <body>
+    <!-- Skryté video na kŕmenie MediaPipe FaceMesh algoritmu -->
+    <video id="trackerVideo" playsinline autoplay muted style="display: none;"></video>
+
     <!-- ============================================================= -->
     <!-- 1. LOBBY / PRE-CALL PRÍPRAVA                                  -->
     <!-- ============================================================= -->
@@ -589,7 +705,7 @@
 
                     <h1 class="form-title">Pripravte sa na pohovor</h1>
                     <p class="form-desc">
-                        Pred vstupom si skontrolujte obraz z kamery a zadajte svoje celé meno pre personalistu.
+                        Pred vstupom si overte obraz z kamery a zadajte svoje celé meno pre personalistu.
                     </p>
 
                     <div class="input-group">
@@ -618,7 +734,7 @@
                             <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
-                        <span>Počas hovoru prebieha analýza očného kontaktu. Všetky video toky sú zabezpečené a šifrované.</span>
+                        <span>V miestnosti beží inteligentná detekcia očného kontaktu a smeru pohľadu.</span>
                     </div>
                 </div>
             </div>
@@ -645,11 +761,20 @@
                 <!-- Status pill sledovania pohľadu -->
                 <div class="gaze-hud-pill active" id="hudPill">
                     <div class="hud-dot" id="hudDot"></div>
-                    <span id="hudStatusText">Očný kontakt: v norme</span>
+                    <span id="hudStatusText">Očný kontakt: v poriadku</span>
                 </div>
             </div>
 
             <div class="header-right">
+                <!-- Tlačidlo na otvorenie diagnostického PiP okna -->
+                <button class="btn-header-tool" id="btnTogglePip" onclick="toggleDiagnosticPip()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span>Diagnostika</span>
+                </button>
+
                 <button class="btn-leave-call" onclick="leaveSession()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
@@ -679,20 +804,51 @@
                     </div>
                     <div class="alert-message">
                         <span class="alert-message-main">Udržujte očný kontakt s kamerou</span>
-                        <span class="alert-message-sub">Váš pohľad bol odvrátený mimo monitor</span>
+                        <span class="alert-message-sub" id="alertReasonText">Váš pohľad bol odvrátený mimo monitor</span>
                     </div>
                     <span class="away-timer-badge" id="awayTimerBadge">0s</span>
                 </div>
 
                 <div class="demo-bar">
-                    Test HUD: <kbd>W</kbd> simulovať odklon · <kbd>E</kbd> obnoviť
+                    Reálna AI detekcia aktívna · Manuálny test: <kbd>W</kbd> / <kbd>E</kbd>
+                </div>
+            </div>
+
+            <!-- Diagnostický plávajúci PiP panel s vizualizáciou bodov tváre a dúhoviek -->
+            <div class="diagnostic-pip" id="diagnosticPip">
+                <div class="pip-header">
+                    <span>Sledovanie očného kontaktu</span>
+                    <button class="pip-close-btn" onclick="toggleDiagnosticPip(false)">&times;</button>
+                </div>
+                <div class="pip-canvas-wrap">
+                    <canvas id="diagnosticCanvas" width="320" height="240"></canvas>
+                </div>
+                <div class="pip-metrics">
+                    <div class="metric-row">
+                        <span>Stav:</span>
+                        <span class="metric-val ok" id="metricStatus">Priamy kontakt</span>
+                    </div>
+                    <div class="metric-row">
+                        <span>Otočenie hlavy:</span>
+                        <span class="metric-val" id="metricYaw">0°</span>
+                    </div>
+                    <div class="metric-row">
+                        <span>Sklon hlavy:</span>
+                        <span class="metric-val" id="metricPitch">0°</span>
+                    </div>
+                    <div class="metric-row">
+                        <span>Horizontálna dúhovka:</span>
+                        <span class="metric-val" id="metricIris">0.50</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Jitsi Meet External API -->
+    <!-- Knižnice: Jitsi Meet & Google MediaPipe FaceMesh pre reálny Eye-Tracking -->
     <script src="https://meet.jit.si/external_api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 
     <script>
         const JITSI_SERVER = 'meet.jit.si';
@@ -702,11 +858,25 @@
         let isCamOn = true;
         let isMicOn = true;
 
-        // Eye-tracking demo stav
-        let isGazeWarning = false;
-        let gazeAwayTimer = null;
-        let gazeSeconds = 0;
+        // Eye-tracking & MediaPipe stav
+        let faceMesh = null;
+        let cameraTracker = null;
+        let isEyeTrackingRunning = false;
+        let isPipOpen = false;
 
+        // Časovač odvrátenia pohľadu
+        let isGazeAway = false;
+        let gazeAwayStartTime = null;
+        let awayAlertTriggered = false;
+        const AWAY_ALERT_THRESHOLD_MS = 2500; // Po 2.5 sekundách odvrátenia pohľadu sa zobrazí varovanie
+
+        // Buffer na vyhladenie (zamedzenie falošným poplachom)
+        let consecutiveAwayFrames = 0;
+        let consecutiveNormalFrames = 0;
+
+        // =================================================================
+        // 1. INICIALIZÁCIA LOBBY
+        // =================================================================
         async function initLobby() {
             const parts = window.location.pathname.split('/meeting/');
             activeRoom = (parts[1] || '').trim();
@@ -727,10 +897,10 @@
                 if (e.key === 'Enter') enterRoom();
             });
 
-            // Spustíme živý náhľad kamery v lobby
+            // Spustenie kamery pre náhľad v lobby
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 640 }, height: { ideal: 480 } },
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
                     audio: true
                 });
                 const videoEl = document.getElementById('previewVideo');
@@ -745,7 +915,7 @@
                         <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/>
                         <rect x="2" y="6" width="14" height="12" rx="2"/>
                     </svg>
-                    <span>Kamera nebola zistená alebo povolená</span>
+                    <span>Kamera nebola povolená</span>
                 `;
             }
         }
@@ -770,7 +940,10 @@
             }
         }
 
-        function enterRoom() {
+        // =================================================================
+        // 2. VSTUP DO MIESTNOSTI A ŠTART
+        // =================================================================
+        async function enterRoom() {
             const name = document.getElementById('candidateName').value.trim();
             if (!name) {
                 const el = document.getElementById('candidateName');
@@ -780,16 +953,25 @@
                 return;
             }
 
-            // Uvoľníme lokálny náhľadový stream pred spustením Jitsi, aby Jitsi malo prístup ku kamere
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-
             document.getElementById('lobbyView').classList.add('hidden');
             document.getElementById('callView').classList.add('active');
 
+            // Odovzdáme náhľadový stream nášmu tracking videu
+            const trackerVideo = document.getElementById('trackerVideo');
+            if (localStream) {
+                trackerVideo.srcObject = localStream;
+                try {
+                    await trackerVideo.play();
+                } catch (e) {
+                    console.log('Video play catch:', e);
+                }
+            }
+
+            // Štart Jitsi videohovoru
             startJitsi(name);
+
+            // Štart MediaPipe Eye-Trackingu
+            initRealEyeTracking();
         }
 
         function startJitsi(userName) {
@@ -835,14 +1017,12 @@
 
                 jitsiClient.addEventListener('videoConferenceJoined', () => {
                     document.getElementById('stageLoader').classList.add('hidden');
-                    enableEyeTrackingDemo();
                 });
 
                 jitsiClient.addEventListener('readyToClose', () => {
                     leaveSession();
                 });
 
-                // Fallback skrytia loaderu
                 setTimeout(() => {
                     document.getElementById('stageLoader').classList.add('hidden');
                 }, 2500);
@@ -850,59 +1030,255 @@
             } catch (err) {
                 console.error('Jitsi error:', err);
                 document.getElementById('stageLoader').innerHTML = `
-                    <p style="color: var(--accent-red); font-size: 0.95rem;">Spojenie sa nepodarilo nadviazať</p>
+                    <p style="color: var(--accent-red); font-size: 0.95rem;">Chyba pripojenia</p>
                     <button onclick="window.location.reload()" style="padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">Skúsiť znova</button>
                 `;
             }
         }
 
         function leaveSession() {
+            stopEyeTracking();
             if (jitsiClient) {
                 jitsiClient.dispose();
                 jitsiClient = null;
+            }
+            if (localStream) {
+                localStream.getTracks().forEach(t => t.stop());
             }
             window.location.href = '/';
         }
 
         // =================================================================
-        // EYE-TRACKING HUD OBSLUHA & SIMULÁCIA (W/E)
+        // 3. REÁLNY EYE-TRACKING (MediaPipe FaceMesh + Iris Detection)
         // =================================================================
-        function enableEyeTrackingDemo() {
-            window.addEventListener('keydown', (e) => {
-                if (e.key === 'w' || e.key === 'W') triggerGazeWarning();
-                if (e.key === 'e' || e.key === 'E') clearGazeWarning();
-            });
+        async function initRealEyeTracking() {
+            if (typeof FaceMesh === 'undefined') {
+                console.warn('MediaPipe FaceMesh sa nenačítal, prepínam do simulácie');
+                enableManualShortcuts();
+                return;
+            }
+
+            try {
+                faceMesh = new FaceMesh({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+                });
+
+                faceMesh.setOptions({
+                    maxNumFaces: 1,
+                    refineLandmarks: true, // KĽÚČOVÉ: vracia body dúhoviek (468–477)
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+
+                faceMesh.onResults(onFaceMeshResults);
+
+                const trackerVideo = document.getElementById('trackerVideo');
+                cameraTracker = new Camera(trackerVideo, {
+                    onFrame: async () => {
+                        if (isEyeTrackingRunning && trackerVideo.readyState >= 2) {
+                            await faceMesh.send({ image: trackerVideo });
+                        }
+                    },
+                    width: 640,
+                    height: 480
+                });
+
+                isEyeTrackingRunning = true;
+                await cameraTracker.start();
+                console.log('✅ Reálny eye-tracking úspešne inicializovaný cez MediaPipe FaceMesh');
+
+            } catch (err) {
+                console.error('Chyba štartu MediaPipe:', err);
+                enableManualShortcuts();
+            }
+
+            // Ponecháme klávesové skratky W / E ako voliteľný demo override
+            enableManualShortcuts();
         }
 
-        function triggerGazeWarning() {
-            if (isGazeWarning) return;
-            isGazeWarning = true;
+        function stopEyeTracking() {
+            isEyeTrackingRunning = false;
+            if (cameraTracker) {
+                try { cameraTracker.stop(); } catch(e){}
+            }
+        }
 
+        // =================================================================
+        // 4. ALGORITMUS HODNOTENIA POZORNOSTI A DÚHOVIEK
+        // =================================================================
+        function onFaceMeshResults(results) {
+            const canvas = document.getElementById('diagnosticCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // 1. Ak vôbec nie je detekovaná tvár (uchádzač odišiel, odvrátil sa úplne)
+            if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+                consecutiveAwayFrames++;
+                consecutiveNormalFrames = 0;
+                if (consecutiveAwayFrames > 5) {
+                    handleGazeAssessment(true, 'Tvár nezistená v zornom poli', 0, 0, 0.5);
+                }
+                if (isPipOpen) {
+                    ctx.fillStyle = '#090b10';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#ef4444';
+                    ctx.font = '12px "Plus Jakarta Sans"';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Tvár nezistená', canvas.width / 2, canvas.height / 2);
+                }
+                return;
+            }
+
+            const lm = results.multiFaceLandmarks[0];
+
+            // 2. Kontrola žmurknutia (EAR - Eye Aspect Ratio)
+            const leftEyeHeight = Math.hypot(lm[159].x - lm[145].x, lm[159].y - lm[145].y);
+            const leftEyeWidth  = Math.hypot(lm[133].x - lm[33].x,  lm[133].y - lm[33].y);
+            const leftEAR = leftEyeHeight / (leftEyeWidth || 1);
+
+            const rightEyeHeight = Math.hypot(lm[386].x - lm[374].x, lm[386].y - lm[374].y);
+            const rightEyeWidth  = Math.hypot(lm[263].x - lm[362].x, lm[263].y - lm[362].y);
+            const rightEAR = rightEyeHeight / (rightEyeWidth || 1);
+
+            const isBlinking = (leftEAR < 0.16 && rightEAR < 0.16);
+            if (isBlinking) {
+                // Počas žmurknutia neaktualizujeme stav odvrátenia
+                return;
+            }
+
+            // 3. Head Yaw (otočenie doľava / doprava)
+            // Nos (bod 1), ľavá tvár (bod 234), pravá tvár (bod 454)
+            const cheekDist = Math.abs(lm[454].x - lm[234].x);
+            const noseFromLeft = Math.abs(lm[1].x - lm[234].x);
+            const yawRatio = cheekDist > 0 ? (noseFromLeft / cheekDist) : 0.5;
+            const yawDegrees = Math.round((yawRatio - 0.5) * 120);
+
+            // 4. Head Pitch (predklon / záklon)
+            // Čelo (bod 10), brada (bod 152), nos (bod 1)
+            const faceHeight = Math.abs(lm[152].y - lm[10].y);
+            const noseFromTop = Math.abs(lm[1].y - lm[10].y);
+            const pitchRatio = faceHeight > 0 ? (noseFromTop / faceHeight) : 0.5;
+            const pitchDegrees = Math.round((pitchRatio - 0.5) * 100);
+
+            // 5. Horizontálna pozícia dúhovky (Iris tracking)
+            let avgIrisX = 0.5;
+            if (lm.length >= 478) {
+                const leftIris = lm[468];
+                const leftInner = lm[133];
+                const leftOuter = lm[33];
+                const leftSpan = Math.abs(leftInner.x - leftOuter.x);
+                const leftRatio = leftSpan > 0 ? (Math.abs(leftIris.x - leftOuter.x) / leftSpan) : 0.5;
+
+                const rightIris = lm[473];
+                const rightInner = lm[362];
+                const rightOuter = lm[263];
+                const rightSpan = Math.abs(rightOuter.x - rightInner.x);
+                const rightRatio = rightSpan > 0 ? (Math.abs(rightIris.x - rightInner.x) / rightSpan) : 0.5;
+
+                avgIrisX = (leftRatio + rightRatio) / 2;
+            }
+
+            // 6. Vyhodnotenie:
+            // Tolerancie pre prirodzený očný kontakt voči webkamere:
+            const isHeadTurned = (yawRatio < 0.34 || yawRatio > 0.66);
+            const isHeadTilted = (pitchRatio < 0.36 || pitchRatio > 0.68);
+            const isEyesAside = (avgIrisX < 0.28 || avgIrisX > 0.72);
+
+            const lookingAway = isHeadTurned || isHeadTilted || isEyesAside;
+
+            let reason = 'Očný kontakt v poriadku';
+            if (isHeadTurned) reason = yawRatio < 0.34 ? 'Hlava otočená doprava' : 'Hlava otočená doľava';
+            else if (isHeadTilted) reason = pitchRatio > 0.68 ? 'Pohľad sklopený nadol' : 'Hlava zaklonená nahor';
+            else if (isEyesAside) reason = 'Pohľad očí smeruje do strany';
+
+            // Vyhladzovací filter proti chveniu
+            if (lookingAway) {
+                consecutiveAwayFrames++;
+                consecutiveNormalFrames = 0;
+            } else {
+                consecutiveNormalFrames++;
+                consecutiveAwayFrames = 0;
+            }
+
+            if (consecutiveAwayFrames >= 4) {
+                handleGazeAssessment(true, reason, yawDegrees, pitchDegrees, avgIrisX);
+            } else if (consecutiveNormalFrames >= 3) {
+                handleGazeAssessment(false, 'Očný kontakt v norme', yawDegrees, pitchDegrees, avgIrisX);
+            }
+
+            // 7. Vykreslenie do diagnostického PiP plátna (ak je otvorené)
+            if (isPipOpen) {
+                drawDiagnosticFrame(ctx, canvas, results.image, lm, lookingAway);
+            }
+        }
+
+        // Obsluha stavu a varovného HUD
+        function handleGazeAssessment(away, reason, yaw, pitch, iris) {
+            // Aktualizácia hodnôt v diagnostickom paneli
+            document.getElementById('metricYaw').textContent = `${yaw}°`;
+            document.getElementById('metricPitch').textContent = `${pitch}°`;
+            document.getElementById('metricIris').textContent = iris.toFixed(2);
+
+            const statusVal = document.getElementById('metricStatus');
+
+            if (away) {
+                statusVal.textContent = 'Odvrátený pohľad';
+                statusVal.className = 'metric-val warn';
+
+                if (!isGazeAway) {
+                    isGazeAway = true;
+                    gazeAwayStartTime = Date.now();
+                }
+
+                const elapsed = Date.now() - gazeAwayStartTime;
+                const elapsedSec = Math.floor(elapsed / 1000);
+
+                if (elapsed >= AWAY_ALERT_THRESHOLD_MS && !awayAlertTriggered) {
+                    // Spustenie grafického varovania
+                    awayAlertTriggered = true;
+                    showVisualAlert(reason, elapsedSec);
+                } else if (awayAlertTriggered) {
+                    updateAlertTimer(elapsedSec);
+                }
+
+            } else {
+                // Návrat do normy
+                statusVal.textContent = 'Priamy kontakt';
+                statusVal.className = 'metric-val ok';
+
+                if (isGazeAway) {
+                    isGazeAway = false;
+                    gazeAwayStartTime = null;
+                    if (awayAlertTriggered) {
+                        awayAlertTriggered = false;
+                        hideVisualAlert();
+                    }
+                }
+            }
+        }
+
+        function showVisualAlert(reason, sec) {
             const overlay = document.getElementById('hudOverlay');
             const toast = document.getElementById('alertToast');
             const pill = document.getElementById('hudPill');
             const txt = document.getElementById('hudStatusText');
+            const reasonTxt = document.getElementById('alertReasonText');
 
             overlay.classList.add('warning');
             toast.classList.add('visible');
 
             pill.className = 'gaze-hud-pill warning';
             txt.textContent = 'Pozornosť: Odvrátený pohľad';
+            if (reasonTxt) reasonTxt.textContent = reason;
 
-            gazeSeconds = 0;
-            updateAwayBadge();
-            gazeAwayTimer = setInterval(() => {
-                gazeSeconds++;
-                updateAwayBadge();
-            }, 1000);
+            updateAlertTimer(sec);
         }
 
-        function clearGazeWarning() {
-            isGazeWarning = false;
-            clearInterval(gazeAwayTimer);
-            gazeAwayTimer = null;
-            gazeSeconds = 0;
+        function updateAlertTimer(sec) {
+            const badge = document.getElementById('awayTimerBadge');
+            if (badge) badge.textContent = `${sec}s`;
+        }
 
+        function hideVisualAlert() {
             const overlay = document.getElementById('hudOverlay');
             const toast = document.getElementById('alertToast');
             const pill = document.getElementById('hudPill');
@@ -912,11 +1288,85 @@
             toast.classList.remove('visible');
 
             pill.className = 'gaze-hud-pill active';
-            txt.textContent = 'Očný kontakt: v norme';
+            txt.textContent = 'Očný kontakt: v poriadku';
         }
 
-        function updateAwayBadge() {
-            document.getElementById('awayTimerBadge').textContent = `${gazeSeconds}s`;
+        // =================================================================
+        // 5. DIAGNOSTICKÉ KRESLENIE (PiP okno)
+        // =================================================================
+        function toggleDiagnosticPip(forced) {
+            isPipOpen = (typeof forced === 'boolean') ? forced : !isPipOpen;
+            const pip = document.getElementById('diagnosticPip');
+            const btn = document.getElementById('btnTogglePip');
+            pip.classList.toggle('active', isPipOpen);
+            btn.classList.toggle('active', isPipOpen);
+        }
+
+        function drawDiagnosticFrame(ctx, canvas, img, lm, isAway) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Zrkadlený obraz
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.drawImage(img, -canvas.width, 0, canvas.width, canvas.height);
+            ctx.restore();
+
+            // Kreslenie bodov očných dúhoviek
+            const color = isAway ? '#ef4444' : '#10b981';
+            ctx.fillStyle = color;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+
+            // Zrkadlené x-ové súradnice: (1 - x) * width
+            function pt(idx) {
+                return {
+                    x: (1 - lm[idx].x) * canvas.width,
+                    y: lm[idx].y * canvas.height
+                };
+            }
+
+            // Dúhovky (468 ľavá, 473 pravá)
+            if (lm.length >= 478) {
+                [468, 473].forEach(idx => {
+                    const p = pt(idx);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+            }
+
+            // Očné kontúry (ľavé oko: 33, 159, 133, 145; pravé oko: 362, 386, 263, 374)
+            [ [33, 159, 133, 145], [362, 386, 263, 374] ].forEach(ring => {
+                ctx.beginPath();
+                const p0 = pt(ring[0]);
+                ctx.moveTo(p0.x, p0.y);
+                for (let i = 1; i < ring.length; i++) {
+                    const p = pt(ring[i]);
+                    ctx.lineTo(p.x, p.y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            });
+
+            // Nos
+            const pNose = pt(1);
+            ctx.beginPath();
+            ctx.arc(pNose.x, pNose.y, 3, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        // =================================================================
+        // 6. MANUÁLNE DEMO SKRATKY (W / E)
+        // =================================================================
+        function enableManualShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'w' || e.key === 'W') {
+                    showVisualAlert('Simulované odvrátenie pozornosti (kláves W)', 3);
+                }
+                if (e.key === 'e' || e.key === 'E') {
+                    hideVisualAlert();
+                }
+            });
         }
 
         window.addEventListener('DOMContentLoaded', initLobby);
