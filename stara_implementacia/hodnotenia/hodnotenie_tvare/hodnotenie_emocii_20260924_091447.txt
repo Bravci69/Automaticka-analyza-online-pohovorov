@@ -1,0 +1,11 @@
+HODNOTENIE EMÓCIÍ
+========================================
+Vstupný súbor: emocie_20260924_091357.txt
+Celkový počet záznamov: 908
+
+hnev: 374 (41.19 %)
+neutral: 5 (0.55 %)
+prekvapenie: 5 (0.55 %)
+smútok: 511 (56.28 %)
+strach: 13 (1.43 %)
+========================================
