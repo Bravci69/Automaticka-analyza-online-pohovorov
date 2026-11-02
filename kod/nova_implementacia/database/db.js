@@ -261,15 +261,85 @@ function getAllUsers() {
 }
 
 function deleteUser(userId, author = 'admin') {
-  const user = db.prepare('SELECT username FROM users WHERE id = ?').get(userId);
-  if (!user) throw new Error('Používateľ neexistuje');
-  if (user.username === 'admin') throw new Error('Predvoleného superadmina nie je možné zmazať!');
+  const user = db.prepare('SELECT id, username, meno, priezvisko, ures_tag FROM users WHERE id = ?').get(userId);
+  if (!user) throw new Error('Používateľ s daným ID neexistuje.');
+  if (user.username === 'admin') throw new Error('Predvoleného superadmina (admin) nie je možné zmazať!');
+  if (author === user.username) throw new Error('Nemôžete zmazať svoj vlastný účet, pod ktorým ste aktuálne prihlásený!');
 
+  // Ak má daný používateľ priradené pohovory, prehodíme ich na hlavného admina, aby nedošlo k porušeniu integrity FK
+  const mainAdmin = db.prepare('SELECT id, meno, priezvisko FROM users WHERE username = ?').get('admin');
+  if (mainAdmin) {
+    db.prepare(`
+      UPDATE interview 
+      SET hr_id = ?, meno_hr = ? 
+      WHERE hr_id = ?
+    `).run(mainAdmin.id, `${mainAdmin.meno} ${mainAdmin.priezvisko}`, userId);
+    updateHrInterviewStats(mainAdmin.id);
+  }
+
+  // Zmažeme používateľa (kaskádovo zmaže hr_admin aj sessions)
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 
-  logAudit('ZMAZANIE_POUZIVATELA', author, `Používateľ "${user.username}" (ID: ${userId}) bol zmazaný`);
+  logAudit(
+    'ZMAZANIE_POUZIVATELA',
+    author,
+    `Superadmin "${author}" odstránil používateľa "${user.username}" (${user.meno} ${user.priezvisko}, rola: ${user.ures_tag})`
+  );
   notifyDbChange('USER_DELETED', { userId, username: user.username });
   return true;
+}
+
+// =============================================================================
+// TRVALÉ PRIHLASOVACIE RELÁCIE NA 30 DNÍ (sessions)
+// =============================================================================
+
+function createSession(userId, token, days = 30) {
+  // Vyčistenie starých expirovaných relácií
+  try {
+    db.prepare("DELETE FROM sessions WHERE datetime(expires_at) <= datetime('now', 'localtime')").run();
+  } catch (e) {}
+
+  const expiresDate = new Date(Date.now() + days * 24 * 3600 * 1000);
+  const pad = n => String(n).padStart(2, '0');
+  const expiresAt = `${expiresDate.getFullYear()}-${pad(expiresDate.getMonth() + 1)}-${pad(expiresDate.getDate())} ${pad(expiresDate.getHours())}:${pad(expiresDate.getMinutes())}:${pad(expiresDate.getSeconds())}`;
+
+  db.prepare(`
+    INSERT INTO sessions (token, user_id, expires_at)
+    VALUES (?, ?, ?)
+  `).run(token, userId, expiresAt);
+
+  return expiresAt;
+}
+
+function getSessionUser(token) {
+  if (!token) return null;
+  try {
+    const row = db.prepare(`
+      SELECT 
+        u.id,
+        u.username,
+        u.meno,
+        u.priezvisko,
+        u.mail,
+        u.ures_tag,
+        u.created_at,
+        s.expires_at
+      FROM sessions s
+      JOIN users u ON u.id = s.user_id
+      WHERE s.token = ? AND datetime(s.expires_at) > datetime('now', 'localtime')
+    `).get(token);
+
+    return row || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function deleteSession(token) {
+  if (!token) return;
+  try {
+    db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
+  } catch (e) {}
 }
 
 // =============================================================================
@@ -543,5 +613,8 @@ module.exports = {
   getAllVyhodnotenia,
   getAuditLogs,
   getLiveDatabaseSnapshot,
+  createSession,
+  getSessionUser,
+  deleteSession,
 };
 

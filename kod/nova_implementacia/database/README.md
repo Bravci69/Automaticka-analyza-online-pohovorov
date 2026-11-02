@@ -67,6 +67,9 @@ Sledovanie všetkých operácií v systéme v reálnom čase (vytvorenie použí
 ### 6. `interview_analyza`
 Ukladá multimodálne výsledky analýzy z Jitsi stretnutia (skóre pozornosti, dominantná emócia, počet výplňových slov).
 
+### 7. `sessions`
+Ukladá trvalé prihlasovacie relácie s platnosťou 30 dní (`token`, `user_id`, `created_at`, `expires_at`). Zabezpečuje, že používateľ zostane prihlásený 30 dní aj po reštarte servera.
+
 ---
 
 ## 🔑 Predvolený administrátor

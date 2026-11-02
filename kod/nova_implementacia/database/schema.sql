@@ -91,6 +91,17 @@ CREATE TABLE IF NOT EXISTS interview_analyza (
 );
 
 -- -----------------------------------------------------------------------------
+-- 7. TABUĽKA: sessions (Trvalé prihlasovacie relácie na 30 dní)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sessions (
+    token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    expires_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- -----------------------------------------------------------------------------
 -- Indexy pre rýchle vyhľadávanie
 -- -----------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
@@ -99,4 +110,6 @@ CREATE INDEX IF NOT EXISTS idx_interview_hr_id ON interview(hr_id);
 CREATE INDEX IF NOT EXISTS idx_interview_datum ON interview(datum);
 CREATE INDEX IF NOT EXISTS idx_interview_vyhodnotenie ON interview(vyhodnotenie);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_cas ON audit_logs(cas);
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 

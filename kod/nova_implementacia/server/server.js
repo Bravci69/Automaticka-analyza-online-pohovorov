@@ -93,14 +93,8 @@ function getAuthUser(req) {
   const authHeader = req.headers['authorization'];
   if (!authHeader) return null;
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-  const session = activeSessions.get(token);
-  if (!session) return null;
-  // Kontrola vypršania platnosti (24 hodín)
-  if (Date.now() - session.createdAt > 24 * 3600 * 1000) {
-    activeSessions.delete(token);
-    return null;
-  }
-  return session.user;
+  // Získanie používateľa z 30-dňovej perzistentnej session v SQLite databáze
+  return dbModule.getSessionUser(token);
 }
 
 function generateRoomId() {
@@ -163,12 +157,14 @@ async function handleRequest(req, res) {
       }
 
       const token = crypto.randomBytes(32).toString('hex');
-      activeSessions.set(token, { user, createdAt: Date.now() });
+      // Uloženie trvalej prihlasovacej session na 30 dní do databázy
+      const expiresAt = dbModule.createSession(user.id, token, 30);
 
       return sendJson(res, 200, {
         ok: true,
         token,
         user,
+        expiresAt,
       });
     }
 
@@ -176,7 +172,7 @@ async function handleRequest(req, res) {
     if (pathname === '/api/auth/me' && req.method === 'GET') {
       const user = getAuthUser(req);
       if (!user) {
-        return sendJson(res, 401, { error: 'Neprihlásený používateľ' });
+        return sendJson(res, 401, { error: 'Neprihlásený používateľ alebo relácia vypršala.' });
       }
       return sendJson(res, 200, { ok: true, user });
     }
@@ -186,7 +182,7 @@ async function handleRequest(req, res) {
       const authHeader = req.headers['authorization'];
       if (authHeader) {
         const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-        activeSessions.delete(token);
+        dbModule.deleteSession(token);
       }
       return sendJson(res, 200, { ok: true });
     }
@@ -217,9 +213,15 @@ async function handleRequest(req, res) {
       }
     }
 
-    // DELETE /api/users/:id
+    // DELETE /api/users/:id - Odstránenie používateľa (len pre Superadmina)
     if (pathname.startsWith('/api/users/') && req.method === 'DELETE') {
-      const caller = getAuthUser(req) || { username: 'admin' };
+      const caller = getAuthUser(req);
+      if (!caller) {
+        return sendJson(res, 401, { error: 'Pre zmazanie používateľa musíte byť prihlásený.' });
+      }
+      if (caller.ures_tag !== 'SUPERADMIN') {
+        return sendJson(res, 403, { error: 'Iba používateľ s rolou SUPERADMIN má právo odstrániť iného používateľa!' });
+      }
       const userId = parseInt(pathname.split('/api/users/')[1]);
       try {
         dbModule.deleteUser(userId, caller.username);

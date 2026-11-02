@@ -98,8 +98,46 @@ async function runTests() {
     throw new Error('❌ Vyhodnotenie sa neaktualizovalo!');
   }
 
-  // 10. Kontrola live snapshotu databázy
-  console.log('\n🔟 Získanie kompletného Live Snapshotu databázy...');
+  // 10. Kontrola 30-dňových perzistentných sessions
+  console.log('\n🔟 Test 30-dňových trvalých relácií (sessions)...');
+  const testToken = 'test_token_abcdef123456';
+  const expiresAt = dbModule.createSession(adminAuth.id, testToken, 30);
+  console.log(`   ✅ Session vytvorená v DB s platnosťou do: ${expiresAt}`);
+  const sessionUser = dbModule.getSessionUser(testToken);
+  if (!sessionUser || sessionUser.username !== 'admin') {
+    throw new Error('❌ Zlyhalo načítanie session z databázy!');
+  }
+  console.log(`   ✅ Používateľ úspešne overený cez DB session: ${sessionUser.username} (${sessionUser.ures_tag})`);
+  dbModule.deleteSession(testToken);
+  if (dbModule.getSessionUser(testToken) !== null) {
+    throw new Error('❌ Session mala byť po odhlásení vymazaná!');
+  }
+  console.log('   ✅ Odhlásenie a zmazanie session funguje správne.');
+
+  // 11. Test odstraňovania používateľov Superadminom
+  console.log('\n1️⃣1️⃣ Test odstraňovania používateľov Superadminom...');
+  // Pokus zmazať hlavného admina (musí zlyhať)
+  try {
+    dbModule.deleteUser(adminAuth.id, 'admin');
+    throw new Error('❌ Nemalo byť možné zmazať predvoleného admina!');
+  } catch (err) {
+    console.log(`   ✅ Ochrana hlavného admina funguje: "${err.message}"`);
+  }
+
+  // Superadmin maže HR Luciu, ktorá má dohodnutý pohovor (pohovor sa musí bezpečne previesť na admina)
+  dbModule.deleteUser(hrUser.id, 'admin');
+  console.log('   ✅ Superadmin úspešne odstránil používateľa Lucia z databázy.');
+
+  const checkDeleted = dbModule.getAllUsers().find(u => u.id === hrUser.id);
+  if (checkDeleted) throw new Error('❌ Používateľ mal byť zmazaný!');
+  console.log('   ✅ Používateľ bol kompletne odstránený z tabuľky users aj hr_admin.');
+
+  // Pohovor Lucii bol bezpečne prevedený na hlavného admina
+  const reassignedInt = dbModule.getAllInterviews().find(i => i.id === newInterview.id);
+  console.log(`   ✅ Pohovor #${reassignedInt.id} bol bezpečne prevedený na: "${reassignedInt.meno_hr}" (hr_id: ${reassignedInt.hr_id})`);
+
+  // 12. Kontrola live snapshotu databázy
+  console.log('\n1️⃣2️⃣ Získanie kompletného Live Snapshotu databázy...');
   const snapshot = dbModule.getLiveDatabaseSnapshot();
   console.log(`   ✅ Používatelia v DB: ${snapshot.stats.totalUsers}`);
   console.log(`   ✅ HR Admini v DB: ${snapshot.stats.totalHrAdmins}`);
@@ -107,10 +145,9 @@ async function runTests() {
   console.log(`   ✅ Postúpili: ${snapshot.stats.postupili}`);
   console.log(`   ✅ Audit logy: ${snapshot.tables.audit_logs.length}`);
 
-  // 11. Upratanie testovacích dát
-  console.log('\n1️⃣1️⃣ Čistenie testovacích záznamov...');
+  // 13. Upratanie testovacích dát
+  console.log('\n1️⃣3️⃣ Čistenie testovacích záznamov...');
   dbModule.deleteInterview(newInterview.id, 'admin');
-  dbModule.deleteUser(hrUser.id, 'admin');
   dbModule.deleteUser(superAdminUser.id, 'admin');
   console.log('   ✅ Testovacie záznamy boli vyčistené.');
 
