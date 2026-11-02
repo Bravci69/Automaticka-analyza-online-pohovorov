@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Konzola · Správa pohovorov | FIIT STU</title>
+    <title>HR Databázová Konzola · Správa pohovorov | FIIT STU</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -13,17 +13,23 @@
             --bg-base: #090b10;
             --bg-surface: #0f131c;
             --bg-elevated: #161b26;
-            --border-subtle: rgba(255, 255, 255, 0.07);
-            --border-active: rgba(99, 102, 241, 0.4);
+            --bg-input: #0c1017;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-active: rgba(99, 102, 241, 0.5);
             --primary: #6366f1;
             --primary-hover: #4f46e5;
-            --primary-glow: rgba(99, 102, 241, 0.25);
+            --primary-glow: rgba(99, 102, 241, 0.3);
+            --accent-green: #10b981;
+            --accent-green-bg: rgba(16, 185, 129, 0.12);
+            --accent-red: #ef4444;
+            --accent-red-bg: rgba(239, 68, 68, 0.12);
+            --accent-sky: #38bdf8;
+            --accent-sky-bg: rgba(56, 189, 248, 0.12);
+            --accent-amber: #f59e0b;
+            --accent-amber-bg: rgba(245, 158, 11, 0.12);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --text-dim: #64748b;
-            --accent-green: #10b981;
-            --accent-green-bg: rgba(16, 185, 129, 0.1);
-            --accent-red: #ef4444;
             --radius-sm: 8px;
             --radius-md: 14px;
             --radius-lg: 20px;
@@ -51,17 +57,18 @@
             z-index: 50;
             width: 100%;
             border-bottom: 1px solid var(--border-subtle);
-            background: rgba(9, 11, 16, 0.85);
+            background: rgba(9, 11, 16, 0.9);
             backdrop-filter: blur(16px);
         }
 
         .nav-inner {
-            max-width: 1180px;
+            max-width: 1320px;
             margin: 0 auto;
-            padding: 16px 24px;
+            padding: 14px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 16px;
         }
 
         .brand-group {
@@ -73,8 +80,8 @@
         }
 
         .brand-logo {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             border-radius: var(--radius-sm);
             background: linear-gradient(135deg, #4f46e5, #818cf8);
             display: flex;
@@ -102,38 +109,108 @@
             font-weight: 500;
         }
 
-        .nav-links {
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse-dot 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .user-pill {
             display: flex;
             align-items: center;
             gap: 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            padding: 5px 12px 5px 6px;
+            border-radius: 24px;
         }
 
-        .nav-link {
-            font-size: 0.86rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            text-decoration: none;
-            padding: 8px 14px;
-            border-radius: var(--radius-sm);
-            transition: all 0.15s ease;
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #10b981);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
         }
 
-        .nav-link:hover {
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.04);
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .user-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .user-role-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #818cf8;
+            letter-spacing: 0.04em;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            transition: color 0.15s;
+        }
+
+        .btn-logout:hover {
+            color: var(--accent-red);
         }
 
         /* Layout */
         main {
             flex: 1;
-            max-width: 1180px;
+            max-width: 1320px;
             margin: 0 auto;
             width: 100%;
-            padding: 40px 24px 60px;
+            padding: 32px 24px 60px;
         }
 
         .page-header {
-            margin-bottom: 32px;
+            margin-bottom: 28px;
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
@@ -142,53 +219,95 @@
         }
 
         .page-header h1 {
-            font-size: 1.8rem;
+            font-size: 1.75rem;
             font-weight: 800;
             letter-spacing: -0.02em;
             color: #ffffff;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .page-header p {
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 0.92rem;
         }
 
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+        /* Štatistické karty */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
-            padding: 8px 14px;
-            border-radius: var(--radius-sm);
-            font-size: 0.82rem;
-            color: var(--text-muted);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.15s, border-color 0.15s;
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent-green);
-            box-shadow: 0 0 8px var(--accent-green);
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
         }
 
-        /* Sekcia vytvorenia meetingu */
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-label {
+            font-size: 0.76rem;
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Karty a Formuláre */
         .card {
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
-            padding: 28px;
+            padding: 24px 28px;
             margin-bottom: 32px;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .card-title-group {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 24px;
+            gap: 12px;
         }
 
         .card-title-group h2 {
@@ -197,58 +316,66 @@
             color: #ffffff;
         }
 
-        .form-grid {
+        .badge-role-tag {
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 3px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.04em;
+        }
+
+        .form-grid-3 {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
+            gap: 16px;
             margin-bottom: 20px;
         }
 
         .field-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .field-label {
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-muted);
         }
 
-        .input-text {
-            background: var(--bg-base);
+        .input-text, .select-input {
+            background: var(--bg-input);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-sm);
-            padding: 11px 14px;
+            padding: 10px 14px;
             font-family: inherit;
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             color: var(--text-main);
             outline: none;
-            transition: border-color 0.15s ease;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            width: 100%;
         }
 
-        .input-text:focus {
+        .input-text:focus, .select-input:focus {
             border-color: var(--primary);
-        }
-
-        .input-text::placeholder {
-            color: var(--text-dim);
-            font-size: 0.88rem;
+            box-shadow: 0 0 0 3px var(--primary-glow);
         }
 
         .input-hint {
-            font-size: 0.74rem;
+            font-size: 0.72rem;
             color: var(--text-dim);
         }
 
-        .btn-create {
+        .btn-primary {
             background: var(--primary);
             color: white;
             font-family: inherit;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 600;
-            padding: 12px 24px;
+            padding: 11px 22px;
             border: none;
             border-radius: var(--radius-sm);
             cursor: pointer;
@@ -258,119 +385,160 @@
             gap: 8px;
         }
 
-        .btn-create:hover {
+        .btn-primary:hover {
             background: var(--primary-hover);
             box-shadow: 0 4px 14px var(--primary-glow);
         }
 
-        /* Výsledok */
-        .result-panel {
-            display: none;
-            margin-top: 24px;
-            background: rgba(99, 102, 241, 0.05);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            border-radius: var(--radius-sm);
-            padding: 20px;
-        }
-
-        .result-panel.active {
-            display: block;
-        }
-
-        .result-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .result-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #a5b4fc;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .link-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-
-        .link-input {
-            flex: 1;
-            background: var(--bg-base);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            border-radius: var(--radius-sm);
-            padding: 10px 14px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.88rem;
-            color: #a5b4fc;
-            outline: none;
-        }
-
-        .btn-action {
+        .btn-secondary {
             background: var(--bg-elevated);
             color: var(--text-main);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-sm);
-            padding: 10px 16px;
+            padding: 8px 14px;
             font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 500;
+            font-size: 0.82rem;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.15s ease;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            text-decoration: none;
         }
 
-        .btn-action:hover {
+        .btn-secondary:hover {
             background: #1e2638;
-            border-color: var(--border-active);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
-        .btn-action.success {
-            background: var(--accent-green);
-            color: #090b10;
-            border-color: var(--accent-green);
+        /* Výsledkový panel pre link */
+        .result-panel {
+            display: none;
+            margin-top: 20px;
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            border-radius: var(--radius-sm);
+            padding: 18px;
+        }
+
+        .result-panel.active {
+            display: block;
+            animation: fadeIn 0.2s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .link-bar {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .link-input {
+            flex: 1;
+            min-width: 280px;
+            background: var(--bg-base);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.86rem;
+            color: #a5b4fc;
+            outline: none;
+        }
+
+        /* Tabulátorové rozhranie pre ŽIVÝ PREHĽAD DATABÁZY */
+        .db-explorer-tabs {
+            display: flex;
+            gap: 6px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.84rem;
             font-weight: 600;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
         }
 
-        .btn-action.success:hover {
-            background: #0ea5e9;
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
         }
 
-        /* Zoznam pohovorov */
+        .tab-btn.active {
+            color: #ffffff;
+            background: var(--bg-elevated);
+            border-color: var(--border-active);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab-counter {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1px 6px;
+            border-radius: 10px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* Tabuľky */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-base);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.88rem;
+            font-size: 0.86rem;
+            text-align: left;
         }
 
         th {
-            text-align: left;
-            padding: 12px 16px;
+            background: var(--bg-elevated);
+            padding: 12px 14px;
             border-bottom: 1px solid var(--border-subtle);
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-dim);
-            font-size: 0.78rem;
+            font-size: 0.74rem;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
         }
 
         td {
-            padding: 16px;
+            padding: 14px;
             border-bottom: 1px solid var(--border-subtle);
             vertical-align: middle;
+            color: var(--text-main);
         }
 
         tr:hover td {
@@ -379,78 +547,203 @@
 
         .code-pill {
             font-family: 'JetBrains Mono', monospace;
-            background: var(--bg-base);
+            background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 6px;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             color: #a5b4fc;
+            display: inline-block;
+        }
+
+        .hash-pill {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.74rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .hash-pill:hover {
+            background: rgba(16, 185, 129, 0.18);
+        }
+
+        .status-badge-enum {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .status-rozpracovane {
+            background: var(--accent-sky-bg);
+            color: var(--accent-sky);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .status-neprebehlo {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--text-muted);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .status-postupil {
+            background: var(--accent-green-bg);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-nepostupil {
+            background: var(--accent-red-bg);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .select-enum-inline {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .select-enum-inline:focus {
+            border-color: var(--primary);
         }
 
         .empty-view {
-            padding: 48px 20px;
+            padding: 40px 20px;
             text-align: center;
             color: var(--text-dim);
         }
 
-        .empty-view svg {
-            margin-bottom: 12px;
-            color: var(--text-dim);
-        }
-
-        .actions-cell {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-        }
-
-        .btn-icon {
-            background: transparent;
-            border: 1px solid var(--border-subtle);
-            color: var(--text-muted);
-            border-radius: var(--radius-sm);
-            padding: 6px 10px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            display: inline-flex;
+        /* Prihlasovací Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            padding: 20px;
         }
 
-        .btn-icon:hover {
-            color: var(--text-main);
-            border-color: rgba(255, 255, 255, 0.2);
-            background: var(--bg-elevated);
+        .modal-overlay.active {
+            display: flex;
         }
 
-        .btn-icon.delete:hover {
-            color: var(--accent-red);
-            border-color: rgba(239, 68, 68, 0.4);
-            background: rgba(239, 68, 68, 0.08);
+        .modal-dialog {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-active);
+            border-radius: var(--radius-md);
+            max-width: 440px;
+            width: 100%;
+            padding: 32px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .modal-header p {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+        }
+
+        .banner-hint {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            font-size: 0.78rem;
+            color: #a5b4fc;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .banner-hint code {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fff;
+        }
+
+        /* Detail hashu modal */
+        .hash-detail-box {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            word-break: break-all;
+            color: #38bdf8;
+            margin-bottom: 12px;
         }
 
         /* Pätička */
         footer {
             border-top: 1px solid var(--border-subtle);
             background: var(--bg-surface);
-            padding: 24px;
+            padding: 20px 24px;
             width: 100%;
+            margin-top: auto;
         }
 
         .footer-inner {
-            max-width: 1180px;
+            max-width: 1320px;
             margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
             font-size: 0.82rem;
             color: var(--text-dim);
+            flex-wrap: wrap;
+            gap: 10px;
         }
     </style>
 </head>
 
 <body>
+    <!-- Navigácia -->
     <header>
         <div class="nav-inner">
             <a href="/" class="brand-group">
@@ -462,314 +755,1191 @@
                 </div>
                 <div class="brand-text">
                     <span class="brand-title">Analýza Pohovorov</span>
-                    <span class="brand-meta">FIIT STU · HR Konzola</span>
+                    <span class="brand-meta">FIIT STU · HR Databázová Konzola</span>
                 </div>
             </a>
-            <div class="nav-links">
-                <a href="/" class="nav-link">Hlavná stránka</a>
+
+            <div class="nav-actions">
+                <div class="live-indicator" id="liveIndicator" title="Real-time Server-Sent Events spojenie">
+                    <div class="live-dot" id="liveDot"></div>
+                    <span id="liveText">Živá synchronizácia: Pripojené</span>
+                </div>
+
+                <div id="authContainer">
+                    <!-- Sem sa dynamicky vloží informácia o prihlásenom používateľovi -->
+                </div>
             </div>
         </div>
     </header>
 
     <main>
+        <!-- Hlavička stránky -->
         <div class="page-header">
             <div>
-                <h1>Správa pohovorových stretnutí</h1>
-                <p>Vytvárajte pozvánky pre uchádzačov a monitorujte aktívne relácie.</p>
+                <h1>Správa pohovorov a administrácia</h1>
+                <p>Real-time prístup k SQLite databáze, registrácia kandidátov a správa HR rolí.</p>
             </div>
-            <div class="status-badge">
-                <div class="status-dot"></div>
-                <span>Server online (Port 45681)</span>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-secondary" onclick="forceSync()" title="Manuálne obnoviť všetky dáta z databázy">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                        <path d="M3 3v5h5"/>
+                        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                        <path d="M16 21h5v-5"/>
+                    </svg>
+                    Obnoviť DB
+                </button>
+                <button class="btn-secondary" onclick="exportDbJson()" title="Stiahnuť aktuálny JSON dump databázy">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Export JSON
+                </button>
             </div>
         </div>
 
+        <!-- Štatistické KPI Karty -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="statUsers">0</span>
+                    <span class="stat-label">Používatelia</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="statHr">0</span>
+                    <span class="stat-label">HR Administrátori</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="22"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="statInterviews">0</span>
+                    <span class="stat-label">Pohovory celkovo</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="statPostupili">0</span>
+                    <span class="stat-label">Postúpili</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="statNepostupili">0</span>
+                    <span class="stat-label">Nepostúpili</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. KARTA: Vytvoriť nové pohovorové sedenie (interview) -->
         <div class="card">
-            <div class="card-title-group">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #818cf8;">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="16"/>
-                    <line x1="8" y1="12" x2="16" y2="12"/>
-                </svg>
-                <h2>Vytvoriť nové pohovorové sedenie</h2>
+            <div class="card-header-row">
+                <div class="card-title-group">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #818cf8;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="16"/>
+                        <line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                    <h2>1. Vytvorenie nového pohovoru (Kandidát & Meeting)</h2>
+                </div>
+                <span class="badge-role-tag">Tabuľka: interview</span>
             </div>
 
-            <div class="form-grid">
-                <div class="field-group">
-                    <label class="field-label" for="meetingTitle">Pozícia / Názov pohovoru</label>
-                    <input
-                        type="text"
-                        id="meetingTitle"
-                        class="input-text"
-                        placeholder="napr. Senior Fullstack Developer"
-                        autocomplete="off"
-                    />
-                </div>
-                <div class="field-group">
-                    <label class="field-label" for="hrName">Meno personalistu (HR)</label>
-                    <input
-                        type="text"
-                        id="hrName"
-                        class="input-text"
-                        placeholder="napr. Mgr. Peter Novák"
-                        autocomplete="name"
-                    />
-                </div>
-                <div class="field-group">
-                    <label class="field-label" for="customRoomId">Vlastný kód stretnutia (voliteľné)</label>
-                    <input
-                        type="text"
-                        id="customRoomId"
-                        class="input-text"
-                        placeholder="nechajte prázdne pre automatický"
-                        autocomplete="off"
-                    />
-                    <span class="input-hint">Formát: iba malé písmená, čísla a pomlčky.</span>
-                </div>
-            </div>
+            <form id="createInterviewForm" onsubmit="event.preventDefault(); createInterview();">
+                <div class="form-grid-3">
+                    <div class="field-group">
+                        <label class="field-label" for="intTitle">Názov pozície</label>
+                        <input type="text" id="intTitle" class="input-text" placeholder="napr. Senior Python / AI Engineer" required />
+                    </div>
 
-            <button class="btn-create" onclick="createMeeting()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14"/>
-                    <path d="m12 5 7 7-7 7"/>
-                </svg>
-                <span>Generovať pozvánku pre kandidáta</span>
-            </button>
+                    <div class="field-group">
+                        <label class="field-label" for="intRespondentName">Meno respondenta (uchádzača)</label>
+                        <input type="text" id="intRespondentName" class="input-text" placeholder="napr. Bc. Martin Kováč" required />
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="intRespondentEmail">E-mail respondenta</label>
+                        <input type="email" id="intRespondentEmail" class="input-text" placeholder="martin.kovac@example.com" required />
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="intHrSelect">Priradený HR personalista (FK: hr_id)</label>
+                        <select id="intHrSelect" class="select-input" required>
+                            <!-- Dynamicky naplnené z tabuľky users -->
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="intDatum">Dátum a čas konania</label>
+                        <input type="datetime-local" id="intDatum" class="input-text" required />
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="intVyhodnotenie">Počiatočné vyhodnotenie</label>
+                        <select id="intVyhodnotenie" class="select-input">
+                            <option value="neprebehlo" selected>neprebehlo (Neprebehlo)</option>
+                            <option value="rozpracovane">rozpracovane (Rozpracované)</option>
+                            <option value="postupil">postupil (Postúpil)</option>
+                            <option value="nepostupil">nepostupil (Nepostúpil)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid-3" style="margin-bottom: 20px;">
+                    <div class="field-group" style="grid-column: span 2;">
+                        <label class="field-label" for="intPoznamky">Poznámky k pohovoru (voliteľné)</label>
+                        <input type="text" id="intPoznamky" class="input-text" placeholder="napr. Zamerať sa na otázky k architektúre systémov a reakčnému času." />
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="intCustomRoom">Kód miestnosti (voliteľné)</label>
+                        <input type="text" id="intCustomRoom" class="input-text" placeholder="nechajte prázdne pre automatický" />
+                        <span class="input-hint">Ponechajte prázdne pre automatický bp-xxxx-xxxx-xxxx</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"/>
+                        <path d="m12 5 7 7-7 7"/>
+                    </svg>
+                    Uložiť pohovor do DB a vygenerovať odkaz
+                </button>
+            </form>
 
             <div class="result-panel" id="resultPanel">
-                <div class="result-header">
-                    <span class="result-title">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 6 9 17l-5-5"/>
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-weight: 700; color: #a5b4fc; display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;">
+                            <polyline points="20 6 9 17 4 12"/>
                         </svg>
-                        Pohovor bol úspešne zaregistrovaný
+                        Pohovor úspešne zapísaný do tabuliek `interview` a `hr_admin`!
                     </span>
-                    <span style="font-size: 0.78rem; color: var(--text-dim);" id="resultMeta"></span>
+                    <span style="font-size: 0.76rem; color: var(--text-dim);" id="resultMeta"></span>
                 </div>
-
                 <div class="link-bar">
                     <input type="text" id="resultUrl" class="link-input" readonly />
-                    <button class="btn-action success" id="copyBtn" onclick="copyLink()">
+                    <button class="btn-primary" style="background: #10b981;" onclick="copyInterviewLink()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                             <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
                         </svg>
-                        <span id="copyBtnText">Kopírovať</span>
+                        <span id="copyBtnText">Kopírovať odkaz</span>
                     </button>
-                    <button class="btn-action" onclick="openMeetingDirect()">
+                    <button class="btn-secondary" onclick="openDirectMeeting()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                             <polyline points="15 3 21 3 21 9"/>
                             <line x1="10" x2="21" y1="14" y2="3"/>
                         </svg>
-                        Otvoriť
+                        Otvoriť pohovor
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-title-group">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #94a3b8;">
-                    <path d="M8 2v4"/>
-                    <path d="M16 2v4"/>
-                    <rect width="18" height="18" x="3" y="4" rx="2"/>
-                    <path d="M3 10h18"/>
-                </svg>
-                <h2>Aktívne a naplánované relácie</h2>
+        <!-- 2. KARTA: Správa používateľov - Vytvorenie nového HR alebo Superadmina (Prístupné pre admina) -->
+        <div class="card" id="userAdminCard">
+            <div class="card-header-row">
+                <div class="card-title-group">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <line x1="19" y1="8" x2="19" y2="14"/>
+                        <line x1="22" y1="11" x2="16" y2="11"/>
+                    </svg>
+                    <h2>2. Vytvorenie nového HR používateľa alebo Super Admina</h2>
+                </div>
+                <span class="badge-role-tag" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">
+                    Tabuľky: users & hr_admin
+                </span>
             </div>
 
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Názov pohovoru</th>
-                            <th>Kód relácie</th>
-                            <th>Personalista</th>
-                            <th>Dátum vytvorenia</th>
-                            <th style="text-align: right;">Možnosti</th>
-                        </tr>
-                    </thead>
-                    <tbody id="meetingsTbody">
-                        <tr>
-                            <td colspan="5">
-                                <div class="empty-view">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect width="18" height="18" x="3" y="3" rx="2"/>
-                                        <path d="M9 3v18"/>
-                                    </svg>
-                                    <p>Zatiaľ neboli vytvorené žiadne pohovory.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <form id="createUserForm" onsubmit="event.preventDefault(); createNewUser();">
+                <div class="form-grid-3">
+                    <div class="field-group">
+                        <label class="field-label" for="usrRole">Rola používateľa (ures_tag)</label>
+                        <select id="usrRole" class="select-input" required>
+                            <option value="HR_ADMIN" selected>HR_ADMIN (HR Osobný konzultant)</option>
+                            <option value="SUPERADMIN">SUPERADMIN (Super Administrátor systému)</option>
+                        </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="usrUsername">Prihlasovacie meno (username)</label>
+                        <input type="text" id="usrUsername" class="input-text" placeholder="napr. petra_hr" required />
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="usrPassword">Heslo (bude automaticky zahashované v DB)</label>
+                        <input type="password" id="usrPassword" class="input-text" placeholder="••••••••" required />
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="usrMeno">Meno</label>
+                        <input type="text" id="usrMeno" class="input-text" placeholder="napr. Petra" required />
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="usrPriezvisko">Priezvisko</label>
+                        <input type="text" id="usrPriezvisko" class="input-text" placeholder="napr. Malíková" required />
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="usrMail">E-mail</label>
+                        <input type="email" id="usrMail" class="input-text" placeholder="malikova@fiit.stuba.sk" required />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="background: #059669;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    Vytvoriť používateľa s rolou a zaheslovať v DB
+                </button>
+            </form>
+        </div>
+
+        <!-- 3. KARTA: VIZUÁLNY PREHĽAD DATABÁZY V REÁLNOM ČASE (Real-Time DB Explorer) -->
+        <div class="card">
+            <div class="card-header-row">
+                <div class="card-title-group">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #38bdf8;">
+                        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                    </svg>
+                    <h2>3. Živý náhľad do databázy v reálnom čase (Real-Time DB Explorer)</h2>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;" id="dbStatsMeta">
+                    SQLite WAL · 0 KB
+                </div>
+            </div>
+
+            <!-- Tab navigácia tabuliek -->
+            <div class="db-explorer-tabs">
+                <button class="tab-btn active" onclick="switchDbTab('interview')">
+                    🎙️ interview <span class="tab-counter" id="cntInterview">0</span>
+                </button>
+                <button class="tab-btn" onclick="switchDbTab('users')">
+                    👥 users <span class="tab-counter" id="cntUsers">0</span>
+                </button>
+                <button class="tab-btn" onclick="switchDbTab('hr_admin')">
+                    👔 hr_admin <span class="tab-counter" id="cntHrAdmin">0</span>
+                </button>
+                <button class="tab-btn" onclick="switchDbTab('vyhodnotenie')">
+                    🏷️ vyhodnotenie (Enum) <span class="tab-counter" id="cntVyhodnotenie">4</span>
+                </button>
+                <button class="tab-btn" onclick="switchDbTab('interview_analyza')">
+                    📊 interview_analyza <span class="tab-counter" id="cntAnalyza">0</span>
+                </button>
+                <button class="tab-btn" onclick="switchDbTab('audit_logs')">
+                    📜 audit_logs <span class="tab-counter" id="cntLogs">0</span>
+                </button>
+            </div>
+
+            <!-- PANE 1: TABUĽKA interview -->
+            <div class="tab-pane active" id="pane-interview">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Pozícia</th>
+                                <th>Respondent</th>
+                                <th>E-mail</th>
+                                <th>HR Personalista (FK)</th>
+                                <th>Dátum pohovoru</th>
+                                <th>Kód relácie</th>
+                                <th>Vyhodnotenie (Live zmena)</th>
+                                <th style="text-align: right;">Akcie</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyInterview">
+                            <tr><td colspan="9" class="empty-view">Načítavam dáta...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANE 2: TABUĽKA users -->
+            <div class="tab-pane" id="pane-users">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Meno a Priezvisko</th>
+                                <th>E-mail</th>
+                                <th>Rola (ures_tag)</th>
+                                <th>Heslo v DB (Zahashované scrypt)</th>
+                                <th>Dátum registrácie</th>
+                                <th style="text-align: right;">Správa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyUsers">
+                            <tr><td colspan="8" class="empty-view">Načítavam dáta...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANE 3: TABUĽKA hr_admin -->
+            <div class="tab-pane" id="pane-hr_admin">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User ID (FK)</th>
+                                <th>Meno personalistu</th>
+                                <th>Používateľské meno</th>
+                                <th>Rola</th>
+                                <th>Počet pohovorov</th>
+                                <th>Dátum najbližšieho pohovoru</th>
+                                <th>Posledná aktualizácia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyHrAdmin">
+                            <tr><td colspan="8" class="empty-view">Načítavam dáta...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANE 4: TABUĽKA vyhodnotenie (Enum) -->
+            <div class="tab-pane" id="pane-vyhodnotenie">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kód (Enum hodnota)</th>
+                                <th>Názov</th>
+                                <th>Vizuálny odznak</th>
+                                <th>Popis stavu</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyVyhodnotenie">
+                            <tr><td colspan="4" class="empty-view">Načítavam dáta...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANE 5: TABUĽKA interview_analyza -->
+            <div class="tab-pane" id="pane-interview_analyza">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Interview ID (FK)</th>
+                                <th>Skóre pozornosti</th>
+                                <th>Dominantná emócia</th>
+                                <th>Výplňové slová</th>
+                                <th>Stav analýzy</th>
+                                <th>Zaznamenané</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyAnalyza">
+                            <tr><td colspan="7" class="empty-view">Načítavam dáta...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANE 6: TABUĽKA audit_logs -->
+            <div class="tab-pane" id="pane-audit_logs">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Čas záznamu</th>
+                                <th>Akcia</th>
+                                <th>Autor</th>
+                                <th>Detaily zmeny</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyAuditLogs">
+                            <tr><td colspan="5" class="empty-view">Načítavam dáta...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
 
+    <!-- Modal pre zobrazenie detailu hashu a soli -->
+    <div class="modal-overlay" id="hashModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Kryptografický záznam hesla v DB</h3>
+                <p>Heslo nie je nikdy uložené v čistej podobe. V databáze je unikátny kryptografický hash vygenerovaný algoritmom scrypt s náhodnou soľou.</p>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label class="field-label">Zahashované heslo (password_hash):</label>
+                <div class="hash-detail-box" id="modalHashVal"></div>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label class="field-label">Unikátna soľ (password_salt):</label>
+                <div class="hash-detail-box" id="modalSaltVal" style="color: #34d399;"></div>
+            </div>
+            <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="closeHashModal()">Zavrieť</button>
+        </div>
+    </div>
+
+    <!-- Prihlasovací Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #4f46e5, #818cf8); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; color: white;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                </div>
+                <h3>Prihlásenie do HR Konzoly</h3>
+                <p>Zadajte prihlasovacie údaje pre prístup k správe databázy.</p>
+            </div>
+
+            <div class="banner-hint">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                <span>Predvolený účet: <code>admin</code> / heslo: <code>admin</code></span>
+            </div>
+
+            <form id="loginForm" onsubmit="event.preventDefault(); doLogin();">
+                <div class="field-group" style="margin-bottom: 14px;">
+                    <label class="field-label" for="loginUser">Používateľské meno</label>
+                    <input type="text" id="loginUser" class="input-text" value="admin" required autocomplete="username" />
+                </div>
+
+                <div class="field-group" style="margin-bottom: 20px;">
+                    <label class="field-label" for="loginPass">Heslo</label>
+                    <input type="password" id="loginPass" class="input-text" value="admin" required autocomplete="current-password" />
+                </div>
+
+                <div id="loginError" style="color: var(--accent-red); font-size: 0.82rem; margin-bottom: 14px; display: none;"></div>
+
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">
+                    Prihlásiť sa
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pätička -->
     <footer>
         <div class="footer-inner">
-            <span>Bakalársky projekt · Jakub Chmura · FIIT STU v Bratislave</span>
-            <span>Interná HR Konzola</span>
+            <span>Bakalársky projekt · Automatická analýza online pohovorov · FIIT STU v Bratislave</span>
+            <span>SQLite Databáza · Real-Time Web Rozhranie</span>
         </div>
     </footer>
 
+    <!-- Klientsky JavaScript -->
     <script>
-        let currentUrl = '';
+        let currentUser = null;
+        let authToken = localStorage.getItem('bp_token') || '';
+        let lastSnapshot = null;
+        let eventSource = null;
 
-        async function loadMeetings() {
-            try {
-                const res = await fetch('/api/meetings');
-                const list = await res.json();
-                renderTable(list);
-            } catch (err) {
-                console.error('Chyba načítania:', err);
+        // Inicializácia formulára s predvoleným dátumom (zajtra o 10:00)
+        window.addEventListener('DOMContentLoaded', () => {
+            const tmr = new Date(Date.now() + 24 * 3600 * 1000);
+            tmr.setHours(10, 0, 0, 0);
+            const pad = n => String(n).padStart(2, '0');
+            const dateStr = `${tmr.getFullYear()}-${pad(tmr.getMonth() + 1)}-${pad(tmr.getDate())}T${pad(tmr.getHours())}:${pad(tmr.getMinutes())}`;
+            const dtInput = document.getElementById('intDatum');
+            if (dtInput) dtInput.value = dateStr;
+
+            initAuth();
+            setupRealtimeSync();
+        });
+
+        // -------------------------------------------------------------
+        // AUTENTIFIKÁCIA
+        // -------------------------------------------------------------
+
+        async function initAuth() {
+            if (authToken) {
+                try {
+                    const res = await fetch('/api/auth/me', {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        currentUser = data.user;
+                        renderAuthHeader();
+                        loadLiveDb();
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Overenie zlyhalo:', e);
+                }
+            }
+            // Ak nie je prihlásený, zobrazíme prihlasovací dialóg
+            openLoginModal();
+            loadLiveDb(); // načítame verejný náhľad
+        }
+
+        function renderAuthHeader() {
+            const container = document.getElementById('authContainer');
+            if (currentUser) {
+                const initials = (currentUser.meno[0] || 'A') + (currentUser.priezvisko[0] || 'D');
+                container.innerHTML = `
+                    <div class="user-pill">
+                        <div class="user-avatar">${escapeHtml(initials)}</div>
+                        <div class="user-details">
+                            <span class="user-name">${escapeHtml(currentUser.meno)} ${escapeHtml(currentUser.priezvisko)}</span>
+                            <span class="user-role-badge">${escapeHtml(currentUser.ures_tag)}</span>
+                        </div>
+                        <button class="btn-logout" onclick="doLogout()" title="Odhlásiť sa">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <button class="btn-primary" onclick="openLoginModal()" style="padding: 7px 14px; font-size: 0.82rem;">
+                        Prihlásiť sa
+                    </button>
+                `;
             }
         }
 
-        async function createMeeting() {
-            const title = document.getElementById('meetingTitle').value.trim() || 'Pohovor bez názvu';
-            const hrName = document.getElementById('hrName').value.trim() || 'HR Administrátor';
-            let roomId = document.getElementById('customRoomId').value.trim();
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.add('active');
+        }
 
-            if (roomId) {
-                roomId = roomId.toLowerCase().replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-');
-            }
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('active');
+        }
+
+        async function doLogin() {
+            const u = document.getElementById('loginUser').value.trim();
+            const p = document.getElementById('loginPass').value;
+            const errDiv = document.getElementById('loginError');
+            errDiv.style.display = 'none';
 
             try {
-                const res = await fetch('/api/meetings', {
+                const res = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, hrName, roomId: roomId || undefined })
+                    body: JSON.stringify({ username: u, password: p })
                 });
 
                 const data = await res.json();
-                currentUrl = data.meetingUrl;
+                if (!res.ok) {
+                    errDiv.textContent = data.error || 'Prihlásenie zlyhalo';
+                    errDiv.style.display = 'block';
+                    return;
+                }
 
-                const panel = document.getElementById('resultPanel');
-                const urlInput = document.getElementById('resultUrl');
-                const meta = document.getElementById('resultMeta');
-
-                panel.classList.add('active');
-                urlInput.value = data.meetingUrl;
-                meta.textContent = `Kód: ${data.roomId}`;
-
-                document.getElementById('copyBtnText').textContent = 'Kopírovať';
-
-                loadMeetings();
-
-                document.getElementById('meetingTitle').value = '';
-                document.getElementById('customRoomId').value = '';
+                authToken = data.token;
+                localStorage.setItem('bp_token', authToken);
+                currentUser = data.user;
+                closeLoginModal();
+                renderAuthHeader();
+                loadLiveDb();
             } catch (err) {
-                alert('Chyba pri vytváraní: ' + err.message);
+                errDiv.textContent = 'Chyba servera: ' + err.message;
+                errDiv.style.display = 'block';
             }
         }
 
-        async function copyLink() {
-            const input = document.getElementById('resultUrl');
+        async function doLogout() {
             try {
-                await navigator.clipboard.writeText(input.value);
-                const txt = document.getElementById('copyBtnText');
-                txt.textContent = 'Skopírované!';
-                setTimeout(() => txt.textContent = 'Kopírovať', 2000);
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+            } catch (e) {}
+
+            authToken = '';
+            localStorage.removeItem('bp_token');
+            currentUser = null;
+            renderAuthHeader();
+            openLoginModal();
+        }
+
+        // -------------------------------------------------------------
+        // REAL-TIME SYNCHRONIZÁCIA (SSE + Polling)
+        // -------------------------------------------------------------
+
+        function setupRealtimeSync() {
+            if (window.EventSource) {
+                try {
+                    eventSource = new EventSource('/api/db/stream');
+                    eventSource.onopen = () => {
+                        updateLiveStatus(true, 'Živá synchronizácia: Pripojené');
+                    };
+                    eventSource.onmessage = (e) => {
+                        // Pri akejkoľvek zmene v DB okamžite aktualizujeme zobrazenie
+                        loadLiveDb();
+                    };
+                    eventSource.onerror = () => {
+                        updateLiveStatus(false, 'SSE odpájané, beží interval polling');
+                    };
+                } catch (e) {
+                    console.warn('SSE nie je podporované:', e);
+                }
+            }
+
+            // Fallback polling každé 3 sekundy
+            setInterval(loadLiveDb, 3000);
+        }
+
+        function updateLiveStatus(active, text) {
+            const dot = document.getElementById('liveDot');
+            const txt = document.getElementById('liveText');
+            if (dot) dot.style.background = active ? 'var(--accent-green)' : 'var(--accent-amber)';
+            if (dot) dot.style.boxShadow = active ? '0 0 10px var(--accent-green)' : 'none';
+            if (txt) txt.textContent = text;
+        }
+
+        function forceSync() {
+            loadLiveDb();
+        }
+
+        // -------------------------------------------------------------
+        // NAČÍTANIE A VYKRESLENIE ŽIVEJ DATABÁZY
+        // -------------------------------------------------------------
+
+        async function loadLiveDb() {
+            try {
+                const res = await fetch('/api/db/live');
+                if (!res.ok) return;
+                const data = await res.json();
+                lastSnapshot = data;
+                renderDatabase(data);
             } catch (e) {
-                input.select();
-                document.execCommand('copy');
+                console.error('Chyba načítania live DB:', e);
             }
         }
 
-        function openMeetingDirect() {
-            if (currentUrl) window.open(currentUrl, '_blank');
+        function renderDatabase(snapshot) {
+            const { tables, stats } = snapshot;
+
+            // 1. Štatistiky
+            document.getElementById('statUsers').textContent = stats.totalUsers;
+            document.getElementById('statHr').textContent = stats.totalHrAdmins;
+            document.getElementById('statInterviews').textContent = stats.totalInterviews;
+            document.getElementById('statPostupili').textContent = stats.postupili;
+            document.getElementById('statNepostupili').textContent = stats.nepostupili;
+            document.getElementById('dbStatsMeta').textContent = `DB: ${stats.dbSize} · Aktualizované: ${new Date().toLocaleTimeString('sk-SK')}`;
+
+            // 2. Počítadlá v záložkách
+            document.getElementById('cntInterview').textContent = tables.interview.length;
+            document.getElementById('cntUsers').textContent = tables.users.length;
+            document.getElementById('cntHrAdmin').textContent = tables.hr_admin.length;
+            document.getElementById('cntVyhodnotenie').textContent = tables.vyhodnotenie.length;
+            document.getElementById('cntAnalyza').textContent = tables.interview_analyza.length;
+            document.getElementById('cntLogs').textContent = tables.audit_logs.length;
+
+            // 3. Naplnenie výberu HR v registračnom formulári
+            populateHrSelect(tables.users);
+
+            // 4. Vykreslenie jednotlivých tabuliek
+            renderInterviewTable(tables.interview, tables.vyhodnotenie);
+            renderUsersTable(tables.users);
+            renderHrAdminTable(tables.hr_admin);
+            renderVyhodnotenieTable(tables.vyhodnotenie);
+            renderAnalyzaTable(tables.interview_analyza);
+            renderAuditLogsTable(tables.audit_logs);
         }
 
-        function renderTable(list) {
-            const tbody = document.getElementById('meetingsTbody');
+        function populateHrSelect(users) {
+            const select = document.getElementById('intHrSelect');
+            if (!select) return;
+            const currentVal = select.value;
+
+            // Filter používateľov s rolou HR_ADMIN alebo SUPERADMIN
+            const hrUsers = users.filter(u => u.ures_tag.includes('HR') || u.ures_tag.includes('ADMIN'));
+            select.innerHTML = hrUsers.map(u => `
+                <option value="${u.id}">${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)} (${escapeHtml(u.ures_tag)})</option>
+            `).join('');
+
+            if (currentVal) select.value = currentVal;
+        }
+
+        // Vykreslenie tabuľky interview
+        function renderInterviewTable(list, enumList) {
+            const tbody = document.getElementById('tbodyInterview');
             if (!list || list.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5">
-                            <div class="empty-view">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect width="18" height="18" x="3" y="3" rx="2"/>
-                                    <path d="M9 3v18"/>
-                                </svg>
-                                <p>Zatiaľ neboli vytvorené žiadne pohovory.</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                tbody.innerHTML = `<tr><td colspan="9" class="empty-view">Žiadne pohovory v databáze.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = list.map(m => {
-                const d = new Date(m.createdAt).toLocaleString('sk-SK', {
-                    day: '2-digit', month: '2-digit', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit'
-                });
+            tbody.innerHTML = list.map(item => {
+                const enumOptions = enumList.map(ev => `
+                    <option value="${ev.kod}" ${ev.kod === item.vyhodnotenie ? 'selected' : ''}>
+                        ${ev.nazov}
+                    </option>
+                `).join('');
+
+                const badgeClass = `status-${item.vyhodnotenie}`;
 
                 return `
                     <tr>
-                        <td style="font-weight: 600; color: #ffffff;">${escapeHtml(m.title)}</td>
-                        <td><span class="code-pill">${escapeHtml(m.roomId)}</span></td>
-                        <td>${escapeHtml(m.hrName)}</td>
-                        <td style="color: var(--text-dim); font-size: 0.8rem;">${d}</td>
-                        <td style="text-align: right;">
-                            <div class="actions-cell">
-                                <button class="btn-icon" onclick="copyAny('${m.meetingUrl}')" title="Kopírovať odkaz">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-                                    </svg>
-                                    Link
-                                </button>
-                                <button class="btn-icon" onclick="window.open('${m.meetingUrl}', '_blank')" title="Vstúpiť do miestnosti">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                                        <polyline points="15 3 21 3 21 9"/>
-                                        <line x1="10" x2="21" y1="14" y2="3"/>
-                                    </svg>
-                                    Vstúpiť
-                                </button>
-                                <button class="btn-icon delete" onclick="deleteSession('${m.roomId}')" title="Odstrániť sedenie">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M3 6h18"/>
-                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                                    </svg>
-                                </button>
+                        <td><span class="code-pill">#${item.id}</span></td>
+                        <td style="font-weight: 700; color: #fff;">${escapeHtml(item.titul_pozicia || 'Pohovor')}</td>
+                        <td>
+                            <div style="font-weight: 600;">${escapeHtml(item.meno_respondenta)}</div>
+                        </td>
+                        <td><span style="color: var(--text-muted); font-size: 0.8rem;">${escapeHtml(item.mail_respondenta)}</span></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="badge-role-tag" style="font-size: 0.65rem;">ID:${item.hr_id}</span>
+                                <span>${escapeHtml(item.meno_hr)}</span>
                             </div>
+                        </td>
+                        <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #a5b4fc;">${escapeHtml(item.datum)}</td>
+                        <td><span class="code-pill">${escapeHtml(item.room_id)}</span></td>
+                        <td>
+                            <select class="select-enum-inline ${badgeClass}" onchange="changeEvaluation(${item.id}, this.value)">
+                                ${enumOptions}
+                            </select>
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <button class="btn-secondary" style="padding: 5px 8px;" onclick="copyAnyLink('${item.link_meeting}')" title="Kopírovať odkaz pre uchádzača">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                                </svg>
+                                Link
+                            </button>
+                            <button class="btn-secondary" style="padding: 5px 8px;" onclick="window.open('${item.link_meeting}', '_blank')" title="Vstúpiť do videohovoru">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" x2="21" y1="14" y2="3"/>
+                                </svg>
+                                Vstúpiť
+                            </button>
+                            <button class="btn-secondary" style="padding: 5px 8px; color: var(--accent-red);" onclick="deleteInterview(${item.id})" title="Zmazať pohovor">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 6h18"/>
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                </svg>
+                            </button>
                         </td>
                     </tr>
                 `;
             }).join('');
         }
 
-        async function copyAny(text) {
+        // Vykreslenie tabuľky users
+        function renderUsersTable(list) {
+            const tbody = document.getElementById('tbodyUsers');
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-view">Žiadni používatelia v databáze.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(u => {
+                const roleBadge = u.ures_tag === 'SUPERADMIN' 
+                    ? `<span class="badge-role-tag" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);">${u.ures_tag}</span>`
+                    : `<span class="badge-role-tag" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">${u.ures_tag}</span>`;
+
+                const shortHash = u.password_hash.substring(0, 16) + '...';
+
+                return `
+                    <tr>
+                        <td><span class="code-pill">#${u.id}</span></td>
+                        <td style="font-weight: 700; color: #fff;">${escapeHtml(u.username)}</td>
+                        <td>${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)}</td>
+                        <td style="color: var(--text-muted); font-size: 0.82rem;">${escapeHtml(u.mail)}</td>
+                        <td>${roleBadge}</td>
+                        <td>
+                            <button class="hash-pill" onclick="showHashModal('${u.password_hash}', '${u.password_salt}')" title="Kliknite pre zobrazenie plného scrypt hashu a soli">
+                                🔒 scrypt: ${shortHash}
+                            </button>
+                        </td>
+                        <td style="font-size: 0.78rem; color: var(--text-dim);">${escapeHtml(u.created_at)}</td>
+                        <td style="text-align: right;">
+                            ${u.username === 'admin' 
+                                ? `<span style="font-size: 0.75rem; color: var(--text-dim);">Hlavný Admin</span>`
+                                : `<button class="btn-secondary" style="padding: 4px 8px; color: var(--accent-red);" onclick="deleteUser(${u.id})">Zmazať</button>`
+                            }
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Vykreslenie tabuľky hr_admin
+        function renderHrAdminTable(list) {
+            const tbody = document.getElementById('tbodyHrAdmin');
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-view">Žiadne záznamy v tabuľke hr_admin.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(item => `
+                <tr>
+                    <td><span class="code-pill">#${item.id}</span></td>
+                    <td><span class="code-pill" style="color: #38bdf8;">FK: users(#${item.user_id})</span></td>
+                    <td style="font-weight: 700; color: #fff;">${escapeHtml(item.meno)} ${escapeHtml(item.priezvisko)}</td>
+                    <td><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #a5b4fc;">@${escapeHtml(item.username)}</span></td>
+                    <td><span class="badge-role-tag">${escapeHtml(item.ures_tag)}</span></td>
+                    <td>
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 700; font-size: 0.82rem;">
+                            ${item.pocet_interviews}
+                        </span>
+                    </td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: ${item.datum_interview ? '#34d399' : 'var(--text-dim)'};">
+                        ${item.datum_interview ? escapeHtml(item.datum_interview) : 'Žiadny naplánovaný'}
+                    </td>
+                    <td style="font-size: 0.76rem; color: var(--text-dim);">${escapeHtml(item.updated_at)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Vykreslenie enum vyhodnotenia
+        function renderVyhodnotenieTable(list) {
+            const tbody = document.getElementById('tbodyVyhodnotenie');
+            tbody.innerHTML = list.map(item => `
+                <tr>
+                    <td><span class="code-pill" style="color: #fff; font-weight: 700;">'${escapeHtml(item.kod)}'</span></td>
+                    <td style="font-weight: 600;">${escapeHtml(item.nazov)}</td>
+                    <td>
+                        <span class="status-badge-enum status-${item.kod}">
+                            <span style="width: 6px; height: 6px; border-radius: 50%; background: ${item.farba};"></span>
+                            ${item.nazov}
+                        </span>
+                    </td>
+                    <td style="color: var(--text-muted); font-size: 0.84rem;">${escapeHtml(item.popis)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Vykreslenie interview_analyza
+        function renderAnalyzaTable(list) {
+            const tbody = document.getElementById('tbodyAnalyza');
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-view">Zatiaľ žiadne dáta multimodálnej analýzy.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(item => `
+                <tr>
+                    <td><span class="code-pill">#${item.id}</span></td>
+                    <td><span class="code-pill" style="color: #38bdf8;">FK: interview(#${item.interview_id})</span></td>
+                    <td style="font-weight: 700; color: #34d399;">${item.skore_pozornosti ? item.skore_pozornosti.toFixed(1) + '%' : '0.0%'}</td>
+                    <td><span class="badge-role-tag" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">${escapeHtml(item.dominantna_emocia || 'neutrálna')}</span></td>
+                    <td>${item.pocet_vyplnovych_slov || 0}</td>
+                    <td><span class="status-badge-enum status-rozpracovane">${escapeHtml(item.stav_analyzy)}</span></td>
+                    <td style="font-size: 0.78rem; color: var(--text-dim);">${escapeHtml(item.vytvorene)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Vykreslenie audit_logs
+        function renderAuditLogsTable(list) {
+            const tbody = document.getElementById('tbodyAuditLogs');
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-view">Audit log je prázdny.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(item => `
+                <tr>
+                    <td><span class="code-pill">#${item.id}</span></td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--text-dim);">${escapeHtml(item.cas)}</td>
+                    <td><span class="badge-role-tag" style="font-size: 0.7rem;">${escapeHtml(item.akcia)}</span></td>
+                    <td style="font-weight: 600; color: #a5b4fc;">${escapeHtml(item.autor)}</td>
+                    <td style="color: var(--text-muted); font-size: 0.82rem;">${escapeHtml(item.detaily)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // -------------------------------------------------------------
+        // AKCIE: Vytvorenie pohovoru, vytvorenie usera, zmena vyhodnotenia
+        // -------------------------------------------------------------
+
+        async function createInterview() {
+            const title = document.getElementById('intTitle').value.trim();
+            const respondentName = document.getElementById('intRespondentName').value.trim();
+            const respondentEmail = document.getElementById('intRespondentEmail').value.trim();
+            const hrId = parseInt(document.getElementById('intHrSelect').value);
+            const datum = document.getElementById('intDatum').value.replace('T', ' ');
+            const vyhodnotenie = document.getElementById('intVyhodnotenie').value;
+            const poznamky = document.getElementById('intPoznamky').value.trim();
+            let customRoom = document.getElementById('intCustomRoom').value.trim();
+
+            if (customRoom) {
+                customRoom = customRoom.toLowerCase().replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-');
+            }
+
             try {
-                await navigator.clipboard.writeText(text);
-                alert('Odkaz bol skopírovaný do schránky.');
-            } catch (e) {
-                prompt('Skopírujte odkaz ručne:', text);
+                const res = await fetch('/api/interviews', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        titul_pozicia: title,
+                        meno_respondenta: respondentName,
+                        mail_respondenta: respondentEmail,
+                        hr_id: hrId,
+                        datum: datum,
+                        vyhodnotenie: vyhodnotenie,
+                        poznamky: poznamky,
+                        roomId: customRoom || undefined
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    alert('Chyba: ' + (data.error || 'Nepodarilo sa vytvoriť pohovor'));
+                    return;
+                }
+
+                // Zobrazenie vygenerovaného linku
+                const panel = document.getElementById('resultPanel');
+                const urlInput = document.getElementById('resultUrl');
+                const meta = document.getElementById('resultMeta');
+
+                panel.classList.add('active');
+                urlInput.value = data.meetingUrl;
+                meta.textContent = `Miestnosť: ${data.room_id} · Respondent: ${respondentName}`;
+                document.getElementById('copyBtnText').textContent = 'Kopírovať odkaz';
+
+                // Reset formulára
+                document.getElementById('intTitle').value = '';
+                document.getElementById('intRespondentName').value = '';
+                document.getElementById('intRespondentEmail').value = '';
+                document.getElementById('intPoznamky').value = '';
+                document.getElementById('intCustomRoom').value = '';
+
+                loadLiveDb();
+            } catch (err) {
+                alert('Chyba pri ukladaní do DB: ' + err.message);
             }
         }
 
-        async function deleteSession(id) {
-            if (!confirm('Naozaj chcete vymazať tento pohovor?')) return;
+        async function createNewUser() {
+            const role = document.getElementById('usrRole').value;
+            const username = document.getElementById('usrUsername').value.trim();
+            const password = document.getElementById('usrPassword').value;
+            const meno = document.getElementById('usrMeno').value.trim();
+            const priezvisko = document.getElementById('usrPriezvisko').value.trim();
+            const mail = document.getElementById('usrMail').value.trim();
+
             try {
-                await fetch('/api/meetings/' + id, { method: 'DELETE' });
-                loadMeetings();
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        meno,
+                        priezvisko,
+                        mail,
+                        ures_tag: role
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    alert('Chyba: ' + (data.error || 'Nepodarilo sa vytvoriť používateľa'));
+                    return;
+                }
+
+                alert(`✅ Používateľ "${username}" (${role}) bol úspešne vytvorený a heslo zahashované v DB!`);
+
+                document.getElementById('usrUsername').value = '';
+                document.getElementById('usrPassword').value = '';
+                document.getElementById('usrMeno').value = '';
+                document.getElementById('usrPriezvisko').value = '';
+                document.getElementById('usrMail').value = '';
+
+                loadLiveDb();
+            } catch (err) {
+                alert('Chyba servera: ' + err.message);
+            }
+        }
+
+        async function changeEvaluation(interviewId, newStatus) {
+            try {
+                const res = await fetch(`/api/interviews/${interviewId}/vyhodnotenie`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ vyhodnotenie: newStatus })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert('Chyba pri zmene vyhodnotenia: ' + (err.error || 'Neznáma chyba'));
+                }
+                loadLiveDb();
+            } catch (e) {
+                alert('Chyba komunikácie: ' + e.message);
+            }
+        }
+
+        async function deleteInterview(id) {
+            if (!confirm(`Naozaj chcete natrvalo zmazať pohovor #${id} z databázy?`)) return;
+            try {
+                await fetch(`/api/interviews/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                loadLiveDb();
             } catch (e) {
                 alert('Chyba: ' + e.message);
             }
         }
 
-        function escapeHtml(str) {
-            const d = document.createElement('div');
-            d.textContent = str;
-            return d.innerHTML;
+        async function deleteUser(userId) {
+            if (!confirm(`Naozaj chcete natrvalo zmazať používateľa #${userId}? Spolu s ním sa zmaže aj väzba v hr_admin.`)) return;
+            try {
+                const res = await fetch(`/api/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert('Chyba: ' + (data.error || 'Nepodarilo sa zmazať používateľa'));
+                    return;
+                }
+                loadLiveDb();
+            } catch (e) {
+                alert('Chyba: ' + e.message);
+            }
         }
 
-        loadMeetings();
+        // -------------------------------------------------------------
+        // POMOCNÉ FUNKCIE (UI, Tabs, Modals, Clipboard)
+        // -------------------------------------------------------------
+
+        function switchDbTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const panes = document.querySelectorAll('.tab-pane');
+
+            tabs.forEach(t => t.classList.remove('active'));
+            panes.forEach(p => p.classList.remove('active'));
+
+            const targetPane = document.getElementById(`pane-${tabName}`);
+            if (targetPane) targetPane.classList.add('active');
+
+            const activeBtn = Array.from(tabs).find(b => b.getAttribute('onclick').includes(tabName));
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        function showHashModal(hash, salt) {
+            document.getElementById('modalHashVal').textContent = hash;
+            document.getElementById('modalSaltVal').textContent = salt;
+            document.getElementById('hashModal').classList.add('active');
+        }
+
+        function closeHashModal() {
+            document.getElementById('hashModal').classList.remove('active');
+        }
+
+        async function copyInterviewLink() {
+            const input = document.getElementById('resultUrl');
+            try {
+                await navigator.clipboard.writeText(input.value);
+                const txt = document.getElementById('copyBtnText');
+                txt.textContent = 'Skopírované do schránky!';
+                setTimeout(() => txt.textContent = 'Kopírovať odkaz', 2000);
+            } catch (e) {
+                input.select();
+                document.execCommand('copy');
+            }
+        }
+
+        function openDirectMeeting() {
+            const url = document.getElementById('resultUrl').value;
+            if (url) window.open(url, '_blank');
+        }
+
+        async function copyAnyLink(link) {
+            try {
+                await navigator.clipboard.writeText(link);
+                alert('Odkaz na stretnutie bol skopírovaný do schránky.');
+            } catch (e) {
+                prompt('Skopírujte odkaz ručne:', link);
+            }
+        }
+
+        function exportDbJson() {
+            if (!lastSnapshot) {
+                alert('Dáta databázy sa ešte nenačítali.');
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lastSnapshot, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `pohovory_db_dump_${new Date().toISOString().slice(0, 10)}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            const d = document.createElement('div');
+            d.textContent = String(str);
+            return d.innerHTML;
+        }
     </script>
 </body>
 

@@ -25,6 +25,13 @@ dist/
 *.log
 output.log
 
+# Database (runtime SQLite files)
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
 # IDE & OS
 .DS_Store
 Thumbs.db
