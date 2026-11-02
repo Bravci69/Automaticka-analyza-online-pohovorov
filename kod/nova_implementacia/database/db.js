@@ -263,29 +263,42 @@ function getAllUsers() {
 function deleteUser(userId, author = 'admin') {
   const user = db.prepare('SELECT id, username, meno, priezvisko, ures_tag FROM users WHERE id = ?').get(userId);
   if (!user) throw new Error('Používateľ s daným ID neexistuje.');
-  if (user.username === 'admin') throw new Error('Predvoleného superadmina (admin) nie je možné zmazať!');
   if (author === user.username) throw new Error('Nemôžete zmazať svoj vlastný účet, pod ktorým ste aktuálne prihlásený!');
 
-  // Ak má daný používateľ priradené pohovory, prehodíme ich na hlavného admina, aby nedošlo k porušeniu integrity FK
-  const mainAdmin = db.prepare('SELECT id, meno, priezvisko FROM users WHERE username = ?').get('admin');
-  if (mainAdmin) {
+  // Ak je mazaný používateľ SUPERADMIN, overíme, že v systéme zostane aspoň jeden iný aktívny SUPERADMIN
+  if (user.ures_tag === 'SUPERADMIN') {
+    const superadminCount = db.prepare("SELECT COUNT(*) AS cnt FROM users WHERE ures_tag = 'SUPERADMIN'").get().cnt;
+    if (superadminCount <= 1) {
+      throw new Error('Nie je možné zmazať tohto administrátora! V databáze musí zostať aspoň jeden aktívny SUPERADMIN.');
+    }
+  }
+
+  // Ak má daný používateľ priradené pohovory, prehodíme ich na autora (prihláseného superadmina)
+  // alebo iného existujúceho superadmina, aby nedošlo k porušeniu integrity cudzích kľúčov
+  let targetAdmin = db.prepare('SELECT id, meno, priezvisko FROM users WHERE username = ?').get(author);
+  if (!targetAdmin || targetAdmin.id === userId) {
+    targetAdmin = db.prepare("SELECT id, meno, priezvisko FROM users WHERE ures_tag = 'SUPERADMIN' AND id != ? LIMIT 1").get(userId);
+  }
+
+  if (targetAdmin) {
     db.prepare(`
       UPDATE interview 
       SET hr_id = ?, meno_hr = ? 
       WHERE hr_id = ?
-    `).run(mainAdmin.id, `${mainAdmin.meno} ${mainAdmin.priezvisko}`, userId);
-    updateHrInterviewStats(mainAdmin.id);
+    `).run(targetAdmin.id, `${targetAdmin.meno} ${targetAdmin.priezvisko}`, userId);
+    updateHrInterviewStats(targetAdmin.id);
   }
 
   // Zmažeme používateľa (kaskádovo zmaže hr_admin aj sessions)
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 
+  const actionName = user.ures_tag === 'SUPERADMIN' ? 'ZMAZANIE_SUPERADMINA' : 'ZMAZANIE_POUZIVATELA';
   logAudit(
-    'ZMAZANIE_POUZIVATELA',
+    actionName,
     author,
     `Superadmin "${author}" odstránil používateľa "${user.username}" (${user.meno} ${user.priezvisko}, rola: ${user.ures_tag})`
   );
-  notifyDbChange('USER_DELETED', { userId, username: user.username });
+  notifyDbChange('USER_DELETED', { userId, username: user.username, role: user.ures_tag });
   return true;
 }
 

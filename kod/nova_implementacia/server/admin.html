@@ -1619,21 +1619,25 @@
             }
 
             const isSuperAdmin = currentUser && currentUser.ures_tag === 'SUPERADMIN';
+            const superadminCount = list.filter(x => x.ures_tag === 'SUPERADMIN').length;
 
             tbody.innerHTML = list.map(u => {
-                const roleBadge = u.ures_tag === 'SUPERADMIN' 
+                const isTargetSuper = u.ures_tag === 'SUPERADMIN';
+                const roleBadge = isTargetSuper 
                     ? `<span class="badge-role-tag" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);">${u.ures_tag}</span>`
                     : `<span class="badge-role-tag" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">${u.ures_tag}</span>`;
 
                 const shortHash = u.password_hash.substring(0, 16) + '...';
 
                 let actionHtml = '';
-                if (u.username === 'admin') {
-                    actionHtml = `<span style="font-size: 0.74rem; color: var(--text-dim); font-weight: 600;">Hlavný Admin</span>`;
-                } else if (currentUser && currentUser.id === u.id) {
+                if (currentUser && (currentUser.id === u.id || currentUser.username === u.username)) {
                     actionHtml = `<span style="font-size: 0.74rem; color: #a5b4fc; font-weight: 600;">Váš účet</span>`;
+                } else if (isTargetSuper && superadminCount <= 1) {
+                    actionHtml = `<span style="font-size: 0.74rem; color: var(--text-dim); font-weight: 600;">Posledný Superadmin</span>`;
                 } else if (isSuperAdmin) {
-                    actionHtml = `<button class="btn-secondary" style="padding: 4px 8px; color: var(--accent-red); border-color: rgba(239, 68, 68, 0.3);" onclick="deleteUser(${u.id}, '${escapeHtml(u.username)}')">Odstrániť</button>`;
+                    const btnLabel = isTargetSuper ? 'Zmazať Superadmina' : 'Zmazať';
+                    const btnColor = isTargetSuper ? 'var(--accent-red)' : 'var(--accent-red)';
+                    actionHtml = `<button class="btn-secondary" style="padding: 4px 8px; color: ${btnColor}; border-color: rgba(239, 68, 68, 0.4);" onclick="deleteUser(${u.id}, '${escapeHtml(u.username)}', '${escapeHtml(u.ures_tag)}')">${btnLabel}</button>`;
                 } else {
                     actionHtml = `<span style="font-size: 0.74rem; color: var(--text-dim);">-</span>`;
                 }
@@ -1677,28 +1681,32 @@
                 return;
             }
 
-            tbody.innerHTML = users.map(u => {
-                const isMainAdmin = u.username === 'admin';
-                const isSelf = currentUser && currentUser.id === u.id;
+            const superadminCount = users.filter(x => x.ures_tag === 'SUPERADMIN').length;
 
-                const roleBadge = u.ures_tag === 'SUPERADMIN' 
+            tbody.innerHTML = users.map(u => {
+                const isTargetSuper = u.ures_tag === 'SUPERADMIN';
+                const isSelf = currentUser && (currentUser.id === u.id || currentUser.username === u.username);
+
+                const roleBadge = isTargetSuper 
                     ? `<span class="badge-role-tag" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);">${escapeHtml(u.ures_tag)}</span>`
                     : `<span class="badge-role-tag" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">${escapeHtml(u.ures_tag)}</span>`;
 
                 let actionCell = '';
-                if (isMainAdmin) {
-                    actionCell = `<span style="font-size: 0.74rem; color: var(--text-dim); font-weight: 600;">🔒 Hlavný Admin (Chránený)</span>`;
-                } else if (isSelf) {
+                if (isSelf) {
                     actionCell = `<span style="font-size: 0.74rem; color: #a5b4fc; font-weight: 600;">👤 Váš prihlásený účet</span>`;
+                } else if (isTargetSuper && superadminCount <= 1) {
+                    actionCell = `<span style="font-size: 0.74rem; color: var(--text-dim); font-weight: 600;" title="V systéme musí zostať aspoň 1 Superadmin">🔒 Posledný Superadmin</span>`;
                 } else {
+                    const btnLabel = isTargetSuper ? 'Odstrániť Superadmina' : 'Odstrániť z DB';
+                    const btnBg = isTargetSuper ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)';
                     actionCell = `
-                        <button class="btn-secondary" style="color: var(--accent-red); border-color: rgba(239, 68, 68, 0.35); padding: 5px 12px; font-size: 0.8rem; background: rgba(239, 68, 68, 0.08);" onclick="deleteUser(${u.id}, '${escapeHtml(u.username)}')">
+                        <button class="btn-secondary" style="color: var(--accent-red); border-color: rgba(239, 68, 68, 0.45); padding: 5px 12px; font-size: 0.8rem; background: ${btnBg};" onclick="deleteUser(${u.id}, '${escapeHtml(u.username)}', '${escapeHtml(u.ures_tag)}')">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 6h18"/>
                                 <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
                                 <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
                             </svg>
-                            Odstrániť z DB
+                            ${btnLabel}
                         </button>
                     `;
                 }
@@ -1948,9 +1956,14 @@
             }
         }
 
-        async function deleteUser(userId, username) {
-            const nameStr = username ? `používateľa "${username}" (ID: #${userId})` : `používateľa #${userId}`;
-            if (!confirm(`Naozaj chcete ako SUPERADMIN natrvalo odstrániť ${nameStr} z databázy?\n\n(Prípadné dohodnuté pohovory tohto používateľa budú automaticky prevedené pod správu hlavného administrátora.)`)) return;
+        async function deleteUser(userId, username, role) {
+            const isSuper = role === 'SUPERADMIN';
+            const warningMsg = isSuper 
+                ? `⚠️ POZOR: Používateľ "${username}" (ID: #${userId}) má rolu SUPERADMIN!\n\nNaozaj chcete tohto Superadmina natrvalo odstrániť z databázy?\n(Prípadné dohodnuté pohovory budú bezpečne prevedené pod vašu správu.)`
+                : `Naozaj chcete ako SUPERADMIN natrvalo odstrániť používateľa "${username}" (ID: #${userId}) z databázy?\n\n(Prípadné dohodnuté pohovory tohto používateľa budú automaticky prevedené pod vašu správu.)`;
+
+            if (!confirm(warningMsg)) return;
+
             try {
                 const res = await fetch(`/api/users/${userId}`, {
                     method: 'DELETE',

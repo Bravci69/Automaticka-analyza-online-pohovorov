@@ -114,27 +114,42 @@ async function runTests() {
   }
   console.log('   ✅ Odhlásenie a zmazanie session funguje správne.');
 
-  // 11. Test odstraňovania používateľov Superadminom
-  console.log('\n1️⃣1️⃣ Test odstraňovania používateľov Superadminom...');
-  // Pokus zmazať hlavného admina (musí zlyhať)
+  // 11. Test odstraňovania používateľov Superadminom (vrátane iného Superadmina!)
+  console.log('\n1️⃣1️⃣ Test odstraňovania používateľov a iných Superadminov...');
+  // Pokus zmazať svoj vlastný účet (musí zlyhať)
   try {
     dbModule.deleteUser(adminAuth.id, 'admin');
-    throw new Error('❌ Nemalo byť možné zmazať predvoleného admina!');
+    throw new Error('❌ Nemalo byť možné zmazať svoj vlastný prihlásený účet!');
   } catch (err) {
-    console.log(`   ✅ Ochrana hlavného admina funguje: "${err.message}"`);
+    console.log(`   ✅ Ochrana vlastného prihláseného účtu funguje: "${err.message}"`);
   }
 
   // Superadmin maže HR Luciu, ktorá má dohodnutý pohovor (pohovor sa musí bezpečne previesť na admina)
   dbModule.deleteUser(hrUser.id, 'admin');
-  console.log('   ✅ Superadmin úspešne odstránil používateľa Lucia z databázy.');
+  console.log('   ✅ Superadmin úspešne odstránil používateľa Lucia (HR_ADMIN) z databázy.');
 
   const checkDeleted = dbModule.getAllUsers().find(u => u.id === hrUser.id);
   if (checkDeleted) throw new Error('❌ Používateľ mal byť zmazaný!');
   console.log('   ✅ Používateľ bol kompletne odstránený z tabuľky users aj hr_admin.');
 
-  // Pohovor Lucii bol bezpečne prevedený na hlavného admina
+  // Pohovor Lucii bol bezpečne prevedený na admina
   const reassignedInt = dbModule.getAllInterviews().find(i => i.id === newInterview.id);
   console.log(`   ✅ Pohovor #${reassignedInt.id} bol bezpečne prevedený na: "${reassignedInt.meno_hr}" (hr_id: ${reassignedInt.hr_id})`);
+
+  // SUPERADMIN maže iného SUPERADMINA (Peter Kováč, rola: SUPERADMIN)
+  console.log('\n   ⭐ Test: Superadmin maže iného Superadmina (Peter Kováč)...');
+  dbModule.deleteUser(superAdminUser.id, 'admin');
+  const checkDeletedSuper = dbModule.getAllUsers().find(u => u.id === superAdminUser.id);
+  if (checkDeletedSuper) throw new Error('❌ Iný Superadmin mal byť zmazaný!');
+  console.log('   ✅ Superadmin úspešne odstránil iného Superadmina z databázy!');
+
+  // Pokus zmazať posledného existujúceho Superadmina (admin) iným autorom - musí zlyhať
+  try {
+    dbModule.deleteUser(adminAuth.id, 'iný_autor');
+    throw new Error('❌ Nemalo byť možné zmazať posledného Superadmina v systéme!');
+  } catch (err) {
+    console.log(`   ✅ Ochrana posledného Superadmina v databáze funguje: "${err.message}"`);
+  }
 
   // 12. Kontrola live snapshotu databázy
   console.log('\n1️⃣2️⃣ Získanie kompletného Live Snapshotu databázy...');
@@ -148,7 +163,6 @@ async function runTests() {
   // 13. Upratanie testovacích dát
   console.log('\n1️⃣3️⃣ Čistenie testovacích záznamov...');
   dbModule.deleteInterview(newInterview.id, 'admin');
-  dbModule.deleteUser(superAdminUser.id, 'admin');
   console.log('   ✅ Testovacie záznamy boli vyčistené.');
 
   console.log('\n🎉 VŠETKY TESTY PREBEHLI NA 100% ÚSPEŠNE!');
