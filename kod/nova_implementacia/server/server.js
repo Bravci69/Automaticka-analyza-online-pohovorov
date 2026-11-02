@@ -201,9 +201,15 @@ async function handleRequest(req, res) {
       return sendJson(res, 200, users);
     }
 
-    // POST /api/users - Vytvorenie nového HR alebo Superadmina
+    // POST /api/users - Vytvorenie nového HR alebo Superadmina (len pre Superadmina)
     if (pathname === '/api/users' && req.method === 'POST') {
-      const caller = getAuthUser(req) || { username: 'admin' };
+      const caller = getAuthUser(req);
+      if (!caller) {
+        return sendJson(res, 401, { error: 'Pre vytvorenie používateľa musíte byť prihlásený.' });
+      }
+      if (caller.ures_tag !== 'SUPERADMIN') {
+        return sendJson(res, 403, { error: 'Iba používateľ s rolou SUPERADMIN má právo vytvárať nových používateľov!' });
+      }
       const body = await parseJsonBody(req);
       try {
         const newUser = dbModule.createUser(body, caller.username);
@@ -248,7 +254,19 @@ async function handleRequest(req, res) {
     // ---- POHOVORY (interview & meetings) ----
     // GET /api/interviews alebo /api/meetings
     if ((pathname === '/api/interviews' || pathname === '/api/meetings') && req.method === 'GET') {
-      const list = dbModule.getAllInterviews();
+      const caller = getAuthUser(req);
+      const mine = url.searchParams.get('mine');
+      const hrIdParam = url.searchParams.get('hr_id');
+
+      let list;
+      if (mine === '1' || mine === 'true') {
+        list = caller ? dbModule.getInterviewsByHr(caller.id) : [];
+      } else if (hrIdParam) {
+        list = dbModule.getInterviewsByHr(parseInt(hrIdParam));
+      } else {
+        list = dbModule.getAllInterviews();
+      }
+
       const mapped = list.map(item => ({
         ...item,
         title: item.titul_pozicia,
@@ -261,7 +279,7 @@ async function handleRequest(req, res) {
 
     // POST /api/interviews alebo /api/meetings - Vytvoriť pohovor
     if ((pathname === '/api/interviews' || pathname === '/api/meetings') && req.method === 'POST') {
-      const caller = getAuthUser(req) || { username: 'admin' };
+      const caller = getAuthUser(req) || { username: 'admin', ures_tag: 'SUPERADMIN', id: 1 };
       const body = await parseJsonBody(req);
 
       const roomId = body.roomId || body.room_id || generateRoomId();
@@ -269,19 +287,20 @@ async function handleRequest(req, res) {
       const host = req.headers.host || `85.239.155.67:${PORT}`;
       const link_meeting = body.link_meeting || `${protocol}://${host}/meeting/${roomId}`;
 
-      // Zistenie HR ID
-      let hr_id = body.hr_id;
-      if (!hr_id) {
-        const allUsers = dbModule.getAllUsers();
-        if (body.hrName) {
-          const found = allUsers.find(
-            u => `${u.meno} ${u.priezvisko}`.toLowerCase().includes(body.hrName.toLowerCase()) ||
-                 u.username.toLowerCase() === body.hrName.toLowerCase()
-          );
-          hr_id = found ? found.id : allUsers[0]?.id || 1;
+      // PRIRAĎOVANIE HR:
+      // Iba SUPERADMIN môže priraďovať, kto bude ako HR na pohovore.
+      // HR admin si nemôže meniť kto tam bude, ale je nastavený automaticky na seba!
+      let hr_id;
+      if (caller.ures_tag === 'SUPERADMIN') {
+        if (body.hr_id) {
+          hr_id = parseInt(body.hr_id);
         } else {
-          hr_id = allUsers[0]?.id || 1;
+          const allUsers = dbModule.getAllUsers();
+          hr_id = allUsers[0]?.id || caller.id || 1;
         }
+      } else {
+        // Pre HR_ADMIN sa ignoruje akékoľvek poslané hr_id a nastaví sa automaticky na prihláseného HR
+        hr_id = caller.id;
       }
 
       const datum = body.datum || new Date().toISOString().replace('T', ' ').substring(0, 16);
@@ -314,10 +333,55 @@ async function handleRequest(req, res) {
           hrName: interview.meno_hr,
           meetingUrl: interview.link_meeting,
           createdAt: interview.created_at,
+          invitation: interview.invitation,
         });
       } catch (err) {
         return sendJson(res, 400, { error: err.message });
       }
+    }
+
+    // GET /api/interviews/:id/invitation - Získanie detailu vygenerovanej pozvánky
+    if (pathname.match(/^\/api\/interviews\/\d+\/invitation$/) && req.method === 'GET') {
+      const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0]);
+      const interview = dbModule.getInterviewById(id);
+      if (!interview) {
+        return sendJson(res, 404, { error: 'Pohovor s daným ID neexistuje.' });
+      }
+      const invitation = dbModule.generateInterviewInvitation(interview);
+      return sendJson(res, 200, { ok: true, interview, invitation });
+    }
+
+    // GET /api/interviews/:id/ics - Stiahnutie iCalendar (.ics) súboru pre kalendár
+    if (pathname.match(/^\/api\/interviews\/\d+\/ics$/) && req.method === 'GET') {
+      const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0]);
+      const interview = dbModule.getInterviewById(id);
+      if (!interview) {
+        return sendJson(res, 404, { error: 'Pohovor s daným ID neexistuje.' });
+      }
+      const ics = dbModule.generateIcsContent(interview);
+      res.writeHead(200, {
+        'Content-Type': 'text/calendar; charset=utf-8',
+        'Content-Disposition': `attachment; filename="pohovor-${interview.room_id || id}.ics"`,
+        'Access-Control-Allow-Origin': '*',
+      });
+      return res.end(ics);
+    }
+
+    // POST /api/interviews/:id/resend-invitation - Opätovné odoslanie pozvánky uchádzačovi
+    if (pathname.match(/^\/api\/interviews\/\d+\/resend-invitation$/) && req.method === 'POST') {
+      const caller = getAuthUser(req) || { username: 'admin' };
+      const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0]);
+      const interview = dbModule.getInterviewById(id);
+      if (!interview) {
+        return sendJson(res, 404, { error: 'Pohovor neexistuje.' });
+      }
+      const invitation = dbModule.generateInterviewInvitation(interview);
+      dbModule.logAudit(
+        'POZVANKA_OPATOVNE_ODOSLANA',
+        caller.username,
+        `Pozvánka na pohovor #${id} bola opätovne odoslaná na email ${interview.meno_respondenta} (${interview.mail_respondenta}).`
+      );
+      return sendJson(res, 200, { ok: true, message: 'Pozvánka bola úspešne odoslaná.', invitation });
     }
 
     // PATCH /api/interviews/:id/vyhodnotenie - Zmena statusu vyhodnotenia

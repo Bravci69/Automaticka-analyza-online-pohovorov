@@ -65,8 +65,8 @@ async function runTests() {
   if (!luciaHr) throw new Error('❌ test_hr_lucia sa nenachádza v hr_admin!');
   console.log(`   ✅ Záznam hr_admin pre Luciu nájdený: User ID ${luciaHr.user_id}, počet interviews: ${luciaHr.pocet_interviews}`);
 
-  // 7. Vytvorenie pohovoru pre kandidáta
-  console.log('\n7️⃣ Vytvorenie pohovoru (interview)...');
+  // 7. Vytvorenie pohovoru pre kandidáta a automatická pozvánka
+  console.log('\n7️⃣ Vytvorenie pohovoru (interview) a automatická pozvánka...');
   const interviewDatum = '2026-11-10 14:00';
   const newInterview = dbModule.createInterview({
     datum: interviewDatum,
@@ -80,6 +80,22 @@ async function runTests() {
     poznamky: 'Pohovor s kandidátom pre cloud infraštruktúru'
   }, 'test_hr_lucia');
   console.log(`   ✅ Pohovor úspešne vytvorený: ID ${newInterview.id}, kandidát: ${newInterview.meno_respondenta}, status: ${newInterview.vyhodnotenie}`);
+  
+  if (!newInterview.invitation || !newInterview.invitation.ics || !newInterview.invitation.html) {
+    throw new Error('❌ Automatická pozvánka na pohovor nebola vygenerovaná!');
+  }
+  console.log(`   ✅ Automatická pozvánka vygenerovaná: Predmet = "${newInterview.invitation.subject}"`);
+  console.log(`   ✅ iCalendar (.ics) vytvorený (${newInterview.invitation.ics.length} bajtov)`);
+
+  const fetchedById = dbModule.getInterviewById(newInterview.id);
+  if (!fetchedById || fetchedById.meno_respondenta !== 'Tomáš Testovací') {
+    throw new Error('❌ getInterviewById zlyhal!');
+  }
+  const hrInterviews = dbModule.getInterviewsByHr(luciaHr.user_id);
+  if (!hrInterviews.length || hrInterviews[0].id !== newInterview.id) {
+    throw new Error('❌ getInterviewsByHr zlyhal!');
+  }
+  console.log(`   ✅ getInterviewById aj getInterviewsByHr úspešne otestované.`);
 
   // 8. Overenie aktualizácie počtu a dátumu v hr_admin
   console.log('\n8️⃣ Overenie automatickej aktualizácie štatistík v hr_admin...');

@@ -417,6 +417,23 @@ function getAllInterviews() {
   `).all();
 }
 
+function getInterviewById(id) {
+  return db.prepare(`
+    SELECT 
+      i.*,
+      v.nazov AS vyhodnotenie_nazov,
+      v.farba AS vyhodnotenie_farba,
+      u.meno AS hr_meno,
+      u.priezvisko AS hr_priezvisko,
+      u.username AS hr_username,
+      u.mail AS hr_mail
+    FROM interview i
+    LEFT JOIN vyhodnotenie v ON v.kod = i.vyhodnotenie
+    LEFT JOIN users u ON u.id = i.hr_id
+    WHERE i.id = ?
+  `).get(id);
+}
+
 function getInterviewByRoomId(roomId) {
   return db.prepare(`
     SELECT 
@@ -424,12 +441,213 @@ function getInterviewByRoomId(roomId) {
       v.nazov AS vyhodnotenie_nazov,
       v.farba AS vyhodnotenie_farba,
       u.meno AS hr_meno,
-      u.priezvisko AS hr_priezvisko
+      u.priezvisko AS hr_priezvisko,
+      u.username AS hr_username,
+      u.mail AS hr_mail
     FROM interview i
     LEFT JOIN vyhodnotenie v ON v.kod = i.vyhodnotenie
     LEFT JOIN users u ON u.id = i.hr_id
     WHERE i.room_id = ?
   `).get(roomId);
+}
+
+function getInterviewsByHr(hrId) {
+  return db.prepare(`
+    SELECT 
+      i.*,
+      v.nazov AS vyhodnotenie_nazov,
+      v.farba AS vyhodnotenie_farba,
+      u.meno AS hr_meno,
+      u.priezvisko AS hr_priezvisko,
+      u.username AS hr_username,
+      u.mail AS hr_mail
+    FROM interview i
+    LEFT JOIN vyhodnotenie v ON v.kod = i.vyhodnotenie
+    LEFT JOIN users u ON u.id = i.hr_id
+    WHERE i.hr_id = ?
+    ORDER BY i.datum ASC, i.id ASC
+  `).all(hrId);
+}
+
+function formatDateTimeSk(dateStr) {
+  try {
+    const d = new Date(dateStr.replace(' ', 'T'));
+    if (isNaN(d.getTime())) return dateStr;
+    const pad = n => String(n).padStart(2, '0');
+    const days = ['nedeľa', 'pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota'];
+    const months = ['januára', 'februára', 'marca', 'apríla', 'mája', 'júna', 'júla', 'augusta', 'septembra', 'októbra', 'novembra', 'decembra'];
+    return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()} o ${pad(d.getHours())}:${pad(d.getMinutes())} (${days[d.getDay()]})`;
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function generateIcsContent(interview) {
+  const parseDate = (dStr) => {
+    const d = new Date(dStr.replace(' ', 'T'));
+    if (isNaN(d.getTime())) return new Date();
+    return d;
+  };
+  const startDate = parseDate(interview.datum);
+  const endDate = new Date(startDate.getTime() + 45 * 60 * 1000);
+
+  const formatIcsDate = (d) => {
+    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  };
+
+  const uid = `interview-${interview.id}-${interview.room_id}@fiit.stuba.sk`;
+  const now = formatIcsDate(new Date());
+  const dtStart = formatIcsDate(startDate);
+  const dtEnd = formatIcsDate(endDate);
+
+  const cleanTitle = (interview.titul_pozicia || 'Online pohovor').replace(/[\r\n]+/g, ' ');
+  const desc = `Pozvánka na online výberový pohovor na pozíciu ${cleanTitle}.\\n\\nKandidát: ${interview.meno_respondenta}\\nHR Konzultant: ${interview.meno_hr}\\n\\nPripojenie na pohovor:\\n${interview.link_meeting}\\n\\nSystém automatickej multimodálnej analýzy pohovorov (FIIT STU).`;
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//FIIT STU//Automaticka analyza online pohovorov//SK',
+    'CALSCALE:GREGORIAN',
+    'METHOD:REQUEST',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${dtStart}`,
+    `DTEND:${dtEnd}`,
+    `SUMMARY:Online pohovor: ${cleanTitle}`,
+    `DESCRIPTION:${desc}`,
+    `LOCATION:${interview.link_meeting}`,
+    `URL:${interview.link_meeting}`,
+    'STATUS:CONFIRMED',
+    'SEQUENCE:0',
+    'BEGIN:VALARM',
+    'TRIGGER:-PT15M',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Pripomienka: Online pohovor začína o 15 minút',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+}
+
+function generateInterviewInvitation(interview) {
+  const formattedDatum = formatDateTimeSk(interview.datum);
+  const title = interview.titul_pozicia || 'Online pohovor';
+  const subject = `Pozvánka na online pohovor: ${title} – FIIT STU`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
+    .email-card { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06); }
+    .email-header { background: linear-gradient(135deg, #4f46e5, #6366f1); padding: 30px 24px; color: white; text-align: center; }
+    .email-header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+    .email-header p { margin: 6px 0 0; opacity: 0.9; font-size: 13px; }
+    .email-body { padding: 32px 28px; line-height: 1.6; }
+    .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #4f46e5; border-radius: 8px; padding: 18px 20px; margin: 24px 0; }
+    .info-row { display: flex; margin-bottom: 8px; font-size: 14px; }
+    .info-label { font-weight: 600; width: 140px; color: #64748b; }
+    .info-value { font-weight: 700; color: #0f172a; }
+    .btn-join { display: inline-block; background: #4f46e5; color: #ffffff !important; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; text-align: center; margin: 20px 0; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35); }
+    .btn-container { text-align: center; }
+    .notice { font-size: 12px; color: #64748b; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; padding: 12px; margin-top: 20px; }
+    .email-footer { background: #f8fafc; padding: 16px 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="email-card">
+    <div class="email-header">
+      <h1>Pozvánka na online pohovor</h1>
+      <p>Automatická analýza pohovorov · FIIT Slovenská technická univerzita</p>
+    </div>
+    <div class="email-body">
+      <p>Dobrý deň <strong>${escapeHtml(interview.meno_respondenta)}</strong>,</p>
+      <p>s potešením Vás pozývame na online výberový pohovor na pozíciu <strong>${escapeHtml(title)}</strong>.</p>
+      
+      <div class="info-box">
+        <div class="info-row"><span class="info-label">📅 Dátum a čas:</span><span class="info-value">${escapeHtml(formattedDatum)}</span></div>
+        <div class="info-row"><span class="info-label">👔 HR Konzultant:</span><span class="info-value">${escapeHtml(interview.meno_hr)}</span></div>
+        <div class="info-row"><span class="info-label">💼 Pracovná pozícia:</span><span class="info-value">${escapeHtml(title)}</span></div>
+        <div class="info-row"><span class="info-label">🔑 ID miestnosti:</span><span class="info-value"><code>${escapeHtml(interview.room_id)}</code></span></div>
+      </div>
+
+      <div class="btn-container">
+        <a href="${interview.link_meeting}" class="btn-join">Vstúpiť do virtuálnej miestnosti</a>
+      </div>
+
+      <p style="font-size: 13px; color: #475569; word-break: break-all;">
+        Priamy odkaz na pripojenie k videohovoru:<br>
+        <a href="${interview.link_meeting}" style="color: #4f46e5;">${interview.link_meeting}</a>
+      </p>
+
+      <div class="notice">
+        <strong>💡 Technické inštrukcie:</strong><br>
+        • Pripojte sa prosím 5 minút pred stanoveným časom.<br>
+        • Pohovor prebieha priamo vo webovom prehliadači (Chrome, Firefox, Edge). Nie je potrebná inštalácia softvéru.<br>
+        • Uistite sa, že máte funkčnú webkameru a mikrofón. Počas hovoru prebieha automatická analýza očného kontaktu a reči.
+      </div>
+    </div>
+    <div class="email-footer">
+      Tento email bol vygenerovaný automatickým systémom správy pohovorov FIIT STU v Bratislave.<br>
+      © ${new Date().getFullYear()} FIIT STU Bratislava · Všetky práva vyhradené.
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const plainText = `
+Dobrý deň ${interview.meno_respondenta},
+
+Pozývame Vás na online výberový pohovor na pozíciu: ${title}
+
+📅 DÁTUM A ČAS: ${formattedDatum}
+👔 HR KONZULTANT: ${interview.meno_hr}
+💼 PRACOVNÁ POZÍCIA: ${title}
+🔑 KÓD MIESTNOSTI: ${interview.room_id}
+
+ODKAZ NA PRIPOJENIE:
+${interview.link_meeting}
+
+INŠTRUKCIE:
+- Pripojte sa prosím 5 minút vopred cez webový prehliadač.
+- Skontrolujte funkčnosť kamery a mikrofónu.
+- Počas pohovoru bude prebiehať analýza reči a očného kontaktu.
+
+S pozdravom,
+${interview.meno_hr}
+FIIT STU v Bratislave
+  `.trim();
+
+  const ics = generateIcsContent(interview);
+
+  return {
+    subject,
+    recipientEmail: interview.mail_respondenta,
+    recipientName: interview.meno_respondenta,
+    hrName: interview.meno_hr,
+    datum: interview.datum,
+    formattedDatum,
+    meetingUrl: interview.link_meeting,
+    html: htmlContent,
+    text: plainText,
+    ics,
+    sentAt: new Date().toISOString(),
+    status: 'odoslana',
+  };
 }
 
 function createInterview({
@@ -487,9 +705,8 @@ function createInterview({
     `Vytvorený pohovor "${titul_pozicia || 'Pohovor'}" pre kandidáta "${meno_respondenta}" (HR: ${meno_hr}, Kód: ${room_id})`
   );
 
-  notifyDbChange('INTERVIEW_CREATED', { interviewId, room_id, meno_respondenta });
-
-  return {
+  // Automatické vygenerovanie a odoslanie pozvánky na pohovor
+  const createdInterviewData = {
     id: interviewId,
     datum,
     hr_id,
@@ -501,6 +718,21 @@ function createInterview({
     titul_pozicia: titul_pozicia || 'Pohovor',
     vyhodnotenie,
     poznamky,
+  };
+
+  const invitation = generateInterviewInvitation(createdInterviewData);
+
+  logAudit(
+    'POZVANKA_ODOSLANA',
+    author,
+    `Automatická pozvánka na pohovor "${titul_pozicia || 'Pohovor'}" úspešne odoslaná na email kandidáta ${meno_respondenta} (${mail_respondenta}) na termín ${datum}. Link: ${link_meeting}`
+  );
+
+  notifyDbChange('INTERVIEW_CREATED', { interviewId, room_id, meno_respondenta });
+
+  return {
+    ...createdInterviewData,
+    invitation,
   };
 }
 
@@ -619,11 +851,16 @@ module.exports = {
   deleteUser,
   getAllHrAdmins,
   getAllInterviews,
+  getInterviewById,
   getInterviewByRoomId,
+  getInterviewsByHr,
+  generateInterviewInvitation,
+  generateIcsContent,
   createInterview,
   updateInterviewEvaluation,
   deleteInterview,
   getAllVyhodnotenia,
+  logAudit,
   getAuditLogs,
   getLiveDatabaseSnapshot,
   createSession,

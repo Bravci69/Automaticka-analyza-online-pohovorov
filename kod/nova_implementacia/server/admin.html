@@ -719,6 +719,291 @@
             margin-bottom: 12px;
         }
 
+        /* HR Uzamknuté pole pre HR_ADMIN */
+        .hr-locked-box {
+            background: var(--bg-input);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+        }
+
+        /* --------------------------------------------------------------------- */
+        /* INTERAKTÍVNY KALENDÁR POHOVOROV ŠTÝLY                                   */
+        /* --------------------------------------------------------------------- */
+        .calendar-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 24px 28px;
+            margin-bottom: 32px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+        }
+
+        .calendar-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .calendar-nav-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calendar-month-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #ffffff;
+            min-width: 200px;
+            text-align: center;
+            letter-spacing: -0.01em;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .calendar-weekday {
+            text-align: center;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 8px 4px;
+        }
+
+        .calendar-day-cell {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            min-height: 90px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+        }
+
+        .calendar-day-cell:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            background: #1a2030;
+            transform: translateY(-1px);
+        }
+
+        .calendar-day-cell.other-month {
+            opacity: 0.35;
+            background: rgba(15, 19, 28, 0.5);
+        }
+
+        .calendar-day-cell.today {
+            border-color: var(--accent-green);
+            box-shadow: inset 0 0 0 1px var(--accent-green);
+        }
+
+        .calendar-day-cell.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.12);
+            box-shadow: 0 0 0 2px var(--primary-glow);
+        }
+
+        .day-header-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+        .day-number {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .day-badge-today {
+            font-size: 0.62rem;
+            background: var(--accent-green-bg);
+            color: var(--accent-green);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .day-events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .event-chip {
+            font-size: 0.7rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background: rgba(99, 102, 241, 0.2);
+            color: #c7d2fe;
+            border-left: 3px solid #6366f1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .event-chip.chip-postupil {
+            background: var(--accent-green-bg);
+            color: #6ee7b7;
+            border-left-color: var(--accent-green);
+        }
+
+        .event-chip.chip-nepostupil {
+            background: var(--accent-red-bg);
+            color: #fca5a5;
+            border-left-color: var(--accent-red);
+        }
+
+        .event-chip.chip-rozpracovane {
+            background: var(--accent-sky-bg);
+            color: #7dd3fc;
+            border-left-color: var(--accent-sky);
+        }
+
+        /* Denný rozvrh (Day Agenda) */
+        .day-agenda-box {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .agenda-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .agenda-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .interview-schedule-item {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            transition: all 0.15s ease;
+        }
+
+        .interview-schedule-item:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateX(2px);
+        }
+
+        .schedule-time-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elevated);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            min-width: 90px;
+        }
+
+        .schedule-time-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #a5b4fc;
+        }
+
+        .schedule-date-val {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .schedule-details {
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .schedule-job-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .schedule-candidate-name {
+            font-size: 0.88rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .schedule-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .schedule-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Pozvánka e-mail modal */
+        .invitation-preview-container {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 480px;
+            overflow-y: auto;
+            border: 1px solid #cbd5e1;
+            margin: 16px 0;
+        }
+
         /* Pätička */
         footer {
             border-top: 1px solid var(--border-subtle);
@@ -776,8 +1061,8 @@
         <!-- Hlavička stránky -->
         <div class="page-header">
             <div>
-                <h1>Správa pohovorov a administrácia</h1>
-                <p>Real-time prístup k SQLite databáze, registrácia kandidátov a správa HR rolí.</p>
+                <h1 id="pageHeaderTitle">Správa pohovorov a administrácia</h1>
+                <p id="pageHeaderDesc">Real-time prístup k SQLite databáze, registrácia kandidátov a správa HR rolí.</p>
             </div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn-secondary" onclick="forceSync()" title="Manuálne obnoviť všetky dáta z databázy">
@@ -789,7 +1074,7 @@
                     </svg>
                     Obnoviť DB
                 </button>
-                <button class="btn-secondary" onclick="exportDbJson()" title="Stiahnuť aktuálny JSON dump databázy">
+                <button class="btn-secondary" id="btnExportDbJson" onclick="exportDbJson()" title="Stiahnuť aktuálny JSON dump databázy">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
@@ -802,7 +1087,7 @@
 
         <!-- Štatistické KPI Karty -->
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card" id="cardStat1">
                 <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -813,11 +1098,11 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-value" id="statUsers">0</span>
-                    <span class="stat-label">Používatelia</span>
+                    <span class="stat-label" id="statLabelUsers">Používatelia</span>
                 </div>
             </div>
 
-            <div class="stat-card">
+            <div class="stat-card" id="cardStat2">
                 <div class="stat-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect width="20" height="14" x="2" y="7" rx="2" ry="2"/>
@@ -826,7 +1111,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-value" id="statHr">0</span>
-                    <span class="stat-label">HR Administrátori</span>
+                    <span class="stat-label" id="statLabelHr">HR Administrátori</span>
                 </div>
             </div>
 
@@ -840,7 +1125,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-value" id="statInterviews">0</span>
-                    <span class="stat-label">Pohovory celkovo</span>
+                    <span class="stat-label" id="statLabelInterviews">Pohovory celkovo</span>
                 </div>
             </div>
 
@@ -871,7 +1156,7 @@
         </div>
 
         <!-- 1. KARTA: Vytvoriť nové pohovorové sedenie (interview) -->
-        <div class="card">
+        <div class="card" id="createInterviewCard">
             <div class="card-header-row">
                 <div class="card-title-group">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #818cf8;">
@@ -881,7 +1166,7 @@
                     </svg>
                     <h2>1. Vytvorenie nového pohovoru (Kandidát & Meeting)</h2>
                 </div>
-                <span class="badge-role-tag">Tabuľka: interview</span>
+                <span class="badge-role-tag">Automatická pozvánka na e-mail</span>
             </div>
 
             <form id="createInterviewForm" onsubmit="event.preventDefault(); createInterview();">
@@ -901,16 +1186,31 @@
                         <input type="email" id="intRespondentEmail" class="input-text" placeholder="martin.kovac@example.com" required />
                     </div>
 
-                    <div class="field-group">
-                        <label class="field-label" for="intHrSelect">Priradený HR personalista (FK: hr_id)</label>
-                        <select id="intHrSelect" class="select-input" required>
+                    <div class="field-group" id="fieldGroupHr">
+                        <label class="field-label" for="intHrSelect">Priradený HR personalista</label>
+                        <!-- Pre SUPERADMINA: možnosť zvoliť ľubovoľného HR -->
+                        <select id="intHrSelect" class="select-input">
                             <!-- Dynamicky naplnené z tabuľky users -->
                         </select>
+                        <!-- Pre HR_ADMINA: zaistené nemenné pole s jeho vlastným menom -->
+                        <div id="hrLockedDisplay" class="hr-locked-box" style="display: none;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1rem;">🔒</span>
+                                    <span id="hrLockedName" style="font-weight: 700; color: #fff;"></span>
+                                </div>
+                                <span class="badge-role-tag" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;">Automaticky nastavené</span>
+                            </div>
+                            <span class="input-hint" style="margin-top: 6px; display: block;">
+                                Ako HR personalista máte tento pohovor automaticky priradený pod seba. Iba SUPERADMIN má právo preobsadzovať HR.
+                            </span>
+                        </div>
                     </div>
 
                     <div class="field-group">
-                        <label class="field-label" for="intDatum">Dátum a čas konania</label>
+                        <label class="field-label" for="intDatum">Dátum a presný čas konania</label>
                         <input type="datetime-local" id="intDatum" class="input-text" required />
+                        <span class="input-hint">Presný čas bude automaticky vložený do e-mailovej pozvánky a kalendára</span>
                     </div>
 
                     <div class="field-group">
@@ -942,20 +1242,42 @@
                         <path d="M5 12h14"/>
                         <path d="m12 5 7 7-7 7"/>
                     </svg>
-                    Uložiť pohovor do DB a vygenerovať odkaz
+                    Uložiť pohovor do DB a automaticky odoslať pozvánku
                 </button>
             </form>
 
             <div class="result-panel" id="resultPanel">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                     <span style="font-weight: 700; color: #a5b4fc; display: flex; align-items: center; gap: 8px;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;">
                             <polyline points="20 6 9 17 4 12"/>
                         </svg>
-                        Pohovor úspešne zapísaný do tabuliek `interview` a `hr_admin`!
+                        Pohovor úspešne zapísaný do databázy!
                     </span>
                     <span style="font-size: 0.76rem; color: var(--text-dim);" id="resultMeta"></span>
                 </div>
+
+                <!-- Oznámenie o automaticky odoslanej pozvánke -->
+                <div id="invitationAlertBox" style="margin-top: 14px; padding: 12px 14px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #34d399;">
+                            <rect width="20" height="16" x="2" y="4" rx="2"/>
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                        </svg>
+                        <span style="font-size: 0.84rem; color: #34d399; font-weight: 600;" id="invitationAlertText">
+                            Automatická pozvánka s presným časom a odkazom na pohovor bola odoslaná kandidátovi!
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn-secondary" style="padding: 5px 10px; font-size: 0.78rem;" onclick="viewLastInvitation()">
+                            ✉️ Náhľad pozvánky
+                        </button>
+                        <button type="button" class="btn-secondary" style="padding: 5px 10px; font-size: 0.78rem;" onclick="downloadLastIcs()">
+                            📅 Stiahnuť .ics
+                        </button>
+                    </div>
+                </div>
+
                 <div class="link-bar">
                     <input type="text" id="resultUrl" class="link-input" readonly />
                     <button class="btn-primary" style="background: #10b981;" onclick="copyInterviewLink()">
@@ -973,6 +1295,121 @@
                         </svg>
                         Otvoriť pohovor
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ----------------------------------------------------------------- -->
+        <!-- INTERAKTÍVNY KALENDÁR POHOVOROV (Pre HR aj Superadmina)           -->
+        <!-- ----------------------------------------------------------------- -->
+        <div class="calendar-card" id="calendarCard">
+            <div class="card-header-row" style="margin-bottom: 16px;">
+                <div class="card-title-group">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #818cf8;">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <h2 id="calendarCardTitle">Interaktívny kalendár pohovorov</h2>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <!-- Filter pre Superadmina -->
+                    <div id="calendarSuperadminFilter" style="display: none; align-items: center; gap: 6px;">
+                        <label style="font-size: 0.76rem; color: var(--text-dim); font-weight: 600;">Filter:</label>
+                        <select id="calFilterHr" class="select-enum-inline" onchange="onCalendarFilterChange()">
+                            <option value="all">Všetky pohovory v systéme</option>
+                            <option value="mine">Iba moje pohovory</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 4px; background: var(--bg-elevated); padding: 3px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                        <button type="button" class="tab-btn active" id="btnViewMonth" onclick="setCalendarView('month')" style="padding: 5px 12px; font-size: 0.78rem;">
+                            📅 Mesačný kalendár
+                        </button>
+                        <button type="button" class="tab-btn" id="btnViewAgenda" onclick="setCalendarView('agenda')" style="padding: 5px 12px; font-size: 0.78rem;">
+                            📋 Nadchádzajúce (<span id="cntUpcoming">0</span>)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kalendárový Toolbar: Navigácia v mesiacoch -->
+            <div class="calendar-toolbar" id="calMonthToolbar">
+                <div class="calendar-nav-group">
+                    <button type="button" class="btn-secondary" onclick="prevMonth()" title="Predchádzajúci mesiac">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m15 18-6-6 6-6"/>
+                        </svg>
+                        Predchádzajúci
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="goToToday()" title="Prejsť na dnešný deň">
+                        Dnes
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="nextMonth()" title="Nasledujúci mesiac">
+                        Nasledujúci
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="calendar-month-title" id="calMonthTitle">
+                    November 2026
+                </div>
+
+                <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; gap: 12px;">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #6366f1;"></span> Naplánovaný
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green);"></span> Postúpil
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-red);"></span> Nepostúpil
+                    </span>
+                </div>
+            </div>
+
+            <!-- Mriežka mesačného kalendára -->
+            <div id="calMonthContainer">
+                <div class="calendar-grid" style="margin-bottom: 8px;">
+                    <div class="calendar-weekday">Po</div>
+                    <div class="calendar-weekday">Ut</div>
+                    <div class="calendar-weekday">St</div>
+                    <div class="calendar-weekday">Št</div>
+                    <div class="calendar-weekday">Pia</div>
+                    <div class="calendar-weekday" style="color: #a5b4fc;">So</div>
+                    <div class="calendar-weekday" style="color: #a5b4fc;">Ne</div>
+                </div>
+                <div class="calendar-grid" id="calendarDaysGrid">
+                    <!-- Dni v mesiaci generované dynamicky cez JS -->
+                </div>
+            </div>
+
+            <!-- Denný rozvrh (Day Agenda) pre vybraný deň -->
+            <div class="day-agenda-box" id="dayAgendaBox">
+                <div class="agenda-header">
+                    <div class="agenda-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #818cf8;">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span id="agendaDayTitle">Rozvrh pohovorov na: Dnes</span>
+                    </div>
+                    <button type="button" class="btn-primary" style="padding: 6px 14px; font-size: 0.78rem;" onclick="scheduleForSelectedDay()">
+                        + Naplánovať pohovor na tento deň
+                    </button>
+                </div>
+
+                <div id="agendaItemsList">
+                    <!-- Položky pohovorov na vybraný deň -->
+                </div>
+            </div>
+
+            <!-- Alternatívne zobrazenie: Zoznam všetkých nadchádzajúcich pohovorov -->
+            <div id="calAgendaContainer" style="display: none; margin-top: 10px;">
+                <div id="upcomingInterviewsList">
+                    <!-- Zoznam nadchádzajúcich pohovorov -->
                 </div>
             </div>
         </div>
@@ -1075,7 +1512,7 @@
         </div>
 
         <!-- 3. KARTA: VIZUÁLNY PREHĽAD DATABÁZY V REÁLNOM ČASE (Real-Time DB Explorer) -->
-        <div class="card">
+        <div class="card" id="dbExplorerCard">
             <div class="card-header-row">
                 <div class="card-title-group">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #38bdf8;">
@@ -1298,6 +1735,54 @@
         </div>
     </div>
 
+    <!-- Modal pre náhľad a opätovné odoslanie e-mailovej pozvánky -->
+    <div class="modal-overlay" id="invitationModal">
+        <div class="modal-dialog" style="max-width: 680px;">
+            <div class="modal-header">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; color: white;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="20" height="16" x="2" y="4" rx="2"/>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                    </svg>
+                </div>
+                <h3 id="invModalTitle">Odoslaná e-mailová pozvánka na pohovor</h3>
+                <p id="invModalSubtitle">Automatický e-mail odoslaný uchádzačovi s presným časom a odkazom na pohovor.</p>
+            </div>
+
+            <div style="display: flex; gap: 12px; font-size: 0.8rem; background: var(--bg-elevated); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 14px; flex-wrap: wrap;">
+                <div><span style="color: var(--text-dim);">Prijímateľ:</span> <strong id="invModalRecipient" style="color: #fff;"></strong></div>
+                <div><span style="color: var(--text-dim);">Dátum a čas:</span> <strong id="invModalDatum" style="color: #34d399;"></strong></div>
+                <div><span style="color: var(--text-dim);">HR Konzultant:</span> <strong id="invModalHr" style="color: #818cf8;"></strong></div>
+            </div>
+
+            <!-- HTML náhľad e-mailu -->
+            <div class="invitation-preview-container">
+                <iframe id="invModalIframe" style="width: 100%; height: 340px; border: none; background: #fff;"></iframe>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; margin-top: 14px;">
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-primary" style="background: #10b981;" onclick="downloadModalIcs()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Stiahnuť .ics do kalendára
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="resendModalInvitation()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                            <path d="M3 3v5h5"/>
+                        </svg>
+                        Odoslať znova
+                    </button>
+                </div>
+                <button type="button" class="btn-secondary" onclick="closeInvitationModal()">Zavrieť</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Pätička -->
     <footer>
         <div class="footer-inner">
@@ -1313,11 +1798,26 @@
         let lastSnapshot = null;
         let eventSource = null;
 
+        // Stav kalendára
+        const now = new Date();
+        let calendarYear = now.getFullYear();
+        let calendarMonth = now.getMonth(); // 0 - 11
+        const pad = n => String(n).padStart(2, '0');
+        let selectedDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+        let calendarFilter = 'all'; // 'all' alebo 'mine'
+        let calendarView = 'month'; // 'month' alebo 'agenda'
+        let lastCreatedInterview = null;
+        let currentModalInterviewId = null;
+
+        const MONTH_NAMES_SK = [
+            'Január', 'Február', 'Marec', 'Apríl', 'Máj', 'Jún',
+            'Júl', 'August', 'September', 'Október', 'November', 'December'
+        ];
+
         // Inicializácia formulára s predvoleným dátumom (zajtra o 10:00)
         window.addEventListener('DOMContentLoaded', () => {
             const tmr = new Date(Date.now() + 24 * 3600 * 1000);
             tmr.setHours(10, 0, 0, 0);
-            const pad = n => String(n).padStart(2, '0');
             const dateStr = `${tmr.getFullYear()}-${pad(tmr.getMonth() + 1)}-${pad(tmr.getDate())}T${pad(tmr.getHours())}:${pad(tmr.getMinutes())}`;
             const dtInput = document.getElementById('intDatum');
             if (dtInput) dtInput.value = dateStr;
@@ -1327,7 +1827,7 @@
         });
 
         // -------------------------------------------------------------
-        // AUTENTIFIKÁCIA
+        // AUTENTIFIKÁCIA A ROLY (SUPERADMIN vs HR_ADMIN)
         // -------------------------------------------------------------
 
         async function initAuth() {
@@ -1340,6 +1840,7 @@
                         const data = await res.json();
                         currentUser = data.user;
                         renderAuthHeader();
+                        applyRolePermissions();
                         loadLiveDb();
                         return;
                     } else {
@@ -1352,8 +1853,8 @@
                     console.warn('Overenie zlyhalo:', e);
                 }
             }
-            // Ak nie je prihlásený, zobrazíme prihlasovací dialóg
             renderAuthHeader();
+            applyRolePermissions();
             openLoginModal();
             loadLiveDb();
         }
@@ -1362,12 +1863,14 @@
             const container = document.getElementById('authContainer');
             if (currentUser) {
                 const initials = (currentUser.meno[0] || 'A') + (currentUser.priezvisko[0] || 'D');
+                const isSuper = currentUser.ures_tag === 'SUPERADMIN';
+                const roleColor = isSuper ? '#818cf8' : '#34d399';
                 container.innerHTML = `
                     <div class="user-pill">
-                        <div class="user-avatar">${escapeHtml(initials)}</div>
+                        <div class="user-avatar" style="background: ${isSuper ? 'linear-gradient(135deg, #6366f1, #a855f7)' : 'linear-gradient(135deg, #10b981, #06b6d4)'}">${escapeHtml(initials)}</div>
                         <div class="user-details">
                             <span class="user-name">${escapeHtml(currentUser.meno)} ${escapeHtml(currentUser.priezvisko)}</span>
-                            <span class="user-role-badge">${escapeHtml(currentUser.ures_tag)}</span>
+                            <span class="user-role-badge" style="color: ${roleColor};">${escapeHtml(currentUser.ures_tag)}</span>
                         </div>
                         <button class="btn-logout" onclick="doLogout()" title="Odhlásiť sa">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1384,6 +1887,68 @@
                         Prihlásiť sa
                     </button>
                 `;
+            }
+        }
+
+        // KĽÚČOVÁ FUNKCIA: Dynamické riadenie prístupu podľa roly
+        function applyRolePermissions() {
+            const isSuper = currentUser && currentUser.ures_tag === 'SUPERADMIN';
+            const isHr = currentUser && currentUser.ures_tag !== 'SUPERADMIN';
+
+            // 1. Zobrazenie / Skrytie sekcie 2: Vytvorenie používateľov
+            const userCard = document.getElementById('userAdminCard');
+            if (userCard) {
+                userCard.style.display = isSuper ? 'block' : 'none';
+            }
+
+            // 2. Zobrazenie / Skrytie sekcie 3: Real-Time DB Explorer
+            const dbCard = document.getElementById('dbExplorerCard');
+            if (dbCard) {
+                dbCard.style.display = isSuper ? 'block' : 'none';
+            }
+
+            // 3. Export JSON v hlavičke (len pre Superadmina)
+            const exportBtn = document.getElementById('btnExportDbJson');
+            if (exportBtn) {
+                exportBtn.style.display = isSuper ? 'inline-flex' : 'none';
+            }
+
+            // 4. Titulky a popis stránky
+            const pageTitle = document.getElementById('pageHeaderTitle');
+            const pageDesc = document.getElementById('pageHeaderDesc');
+            if (isHr) {
+                if (pageTitle) pageTitle.textContent = 'HR Portál · Moje pohovory a kalendár';
+                if (pageDesc) pageDesc.textContent = 'Prehľad naplánovaných pohovorov, interaktívny kalendár termínov a odosielanie pozvánok.';
+            } else {
+                if (pageTitle) pageTitle.textContent = 'Správa pohovorov a administrácia';
+                if (pageDesc) pageDesc.textContent = 'Real-time prístup k SQLite databáze, registrácia kandidátov a správa HR rolí.';
+            }
+
+            // 5. Priradenie HR vo formulári na vytvorenie pohovoru:
+            // - SUPERADMIN: vidí rozbaľovací zoznam a môže zvoliť kohokoľvek
+            // - HR_ADMIN: pole je zamknuté na prihláseného HR, nemôže ho zmeniť!
+            const selectHr = document.getElementById('intHrSelect');
+            const lockedHr = document.getElementById('hrLockedDisplay');
+            const lockedName = document.getElementById('hrLockedName');
+
+            if (isSuper) {
+                if (selectHr) selectHr.style.display = 'block';
+                if (lockedHr) lockedHr.style.display = 'none';
+            } else if (currentUser) {
+                if (selectHr) selectHr.style.display = 'none';
+                if (lockedHr) lockedHr.style.display = 'block';
+                if (lockedName) lockedName.textContent = `${currentUser.meno} ${currentUser.priezvisko} (@${currentUser.username})`;
+            }
+
+            // 6. Kalendárový filter pre Superadmina (Všetky pohovory vs Moje pohovory)
+            const superFilter = document.getElementById('calendarSuperadminFilter');
+            if (superFilter) {
+                superFilter.style.display = isSuper ? 'flex' : 'none';
+            }
+
+            const calTitle = document.getElementById('calendarCardTitle');
+            if (calTitle) {
+                calTitle.textContent = isHr ? 'Môj interaktívny kalendár pohovorov' : 'Interaktívny kalendár pohovorov';
             }
         }
 
@@ -1421,6 +1986,7 @@
                 document.getElementById('loginPass').value = '';
                 closeLoginModal();
                 renderAuthHeader();
+                applyRolePermissions();
                 loadLiveDb();
             } catch (err) {
                 errDiv.textContent = 'Chyba servera: ' + err.message;
@@ -1440,6 +2006,7 @@
             localStorage.removeItem('bp_token');
             currentUser = null;
             renderAuthHeader();
+            applyRolePermissions();
             openLoginModal();
         }
 
@@ -1455,7 +2022,6 @@
                         updateLiveStatus(true, 'Živá synchronizácia: Pripojené');
                     };
                     eventSource.onmessage = (e) => {
-                        // Pri akejkoľvek zmene v DB okamžite aktualizujeme zobrazenie
                         loadLiveDb();
                     };
                     eventSource.onerror = () => {
@@ -1466,7 +2032,6 @@
                 }
             }
 
-            // Fallback polling každé 3 sekundy
             setInterval(loadLiveDb, 3000);
         }
 
@@ -1500,34 +2065,75 @@
 
         function renderDatabase(snapshot) {
             const { tables, stats } = snapshot;
+            const isSuper = currentUser && currentUser.ures_tag === 'SUPERADMIN';
+            const isHr = currentUser && currentUser.ures_tag !== 'SUPERADMIN';
 
-            // 1. Štatistiky
-            document.getElementById('statUsers').textContent = stats.totalUsers;
-            document.getElementById('statHr').textContent = stats.totalHrAdmins;
-            document.getElementById('statInterviews').textContent = stats.totalInterviews;
-            document.getElementById('statPostupili').textContent = stats.postupili;
-            document.getElementById('statNepostupili').textContent = stats.nepostupili;
-            document.getElementById('dbStatsMeta').textContent = `DB: ${stats.dbSize} · Aktualizované: ${new Date().toLocaleTimeString('sk-SK')}`;
+            // Zabezpečenie správneho zobrazenia prvkov podľa roly
+            applyRolePermissions();
 
-            // 2. Počítadlá v záložkách
-            document.getElementById('cntInterview').textContent = tables.interview.length;
-            document.getElementById('cntUsers').textContent = tables.users.length;
-            document.getElementById('cntHrAdmin').textContent = tables.hr_admin.length;
-            document.getElementById('cntVyhodnotenie').textContent = tables.vyhodnotenie.length;
-            document.getElementById('cntAnalyza').textContent = tables.interview_analyza.length;
-            document.getElementById('cntLogs').textContent = tables.audit_logs.length;
+            // 1. Štatistiky prispôsobené podľa roly
+            if (isHr && currentUser) {
+                // Pre HR personalistu zobrazujeme jeho vlastné štatistiky
+                const myInterviews = tables.interview.filter(i => i.hr_id === currentUser.id);
+                const todayStr = new Date().toISOString().substring(0, 10);
+                const myToday = myInterviews.filter(i => i.datum && i.datum.startsWith(todayStr)).length;
+                const myPostupili = myInterviews.filter(i => i.vyhodnotenie === 'postupil').length;
+                const myNepostupili = myInterviews.filter(i => i.vyhodnotenie === 'nepostupil').length;
 
-            // 3. Naplnenie výberu HR v registračnom formulári
+                document.getElementById('statUsers').textContent = myInterviews.length;
+                document.getElementById('statLabelUsers').textContent = 'Moje pohovory';
+
+                document.getElementById('statHr').textContent = myToday;
+                document.getElementById('statLabelHr').textContent = 'Dnes naplánované';
+
+                document.getElementById('statInterviews').textContent = myInterviews.length;
+                document.getElementById('statLabelInterviews').textContent = 'Celkovo';
+
+                document.getElementById('statPostupili').textContent = myPostupili;
+                document.getElementById('statNepostupili').textContent = myNepostupili;
+            } else {
+                // Pre Superadmina zobrazujeme kompletné štatistiky celého systému
+                document.getElementById('statUsers').textContent = stats.totalUsers;
+                document.getElementById('statLabelUsers').textContent = 'Používatelia';
+
+                document.getElementById('statHr').textContent = stats.totalHrAdmins;
+                document.getElementById('statLabelHr').textContent = 'HR Administrátori';
+
+                document.getElementById('statInterviews').textContent = stats.totalInterviews;
+                document.getElementById('statLabelInterviews').textContent = 'Pohovory celkovo';
+
+                document.getElementById('statPostupili').textContent = stats.postupili;
+                document.getElementById('statNepostupili').textContent = stats.nepostupili;
+            }
+
+            const dbMeta = document.getElementById('dbStatsMeta');
+            if (dbMeta) {
+                dbMeta.textContent = `DB: ${stats.dbSize} · Aktualizované: ${new Date().toLocaleTimeString('sk-SK')}`;
+            }
+
+            // 2. Naplnenie výberu HR personalistov pre Superadmina
             populateHrSelect(tables.users);
 
-            // 4. Vykreslenie jednotlivých tabuliek
-            renderInterviewTable(tables.interview, tables.vyhodnotenie);
-            renderUsersTable(tables.users);
-            renderSuperadminUsers(tables.users);
-            renderHrAdminTable(tables.hr_admin);
-            renderVyhodnotenieTable(tables.vyhodnotenie);
-            renderAnalyzaTable(tables.interview_analyza);
-            renderAuditLogsTable(tables.audit_logs);
+            // 3. Vykreslenie INTERAKTÍVNEHO KALENDÁRA
+            renderCalendar();
+
+            // 4. Vykreslenie DB Explorera (len ak je prihlásený Superadmin)
+            if (isSuper) {
+                document.getElementById('cntInterview').textContent = tables.interview.length;
+                document.getElementById('cntUsers').textContent = tables.users.length;
+                document.getElementById('cntHrAdmin').textContent = tables.hr_admin.length;
+                document.getElementById('cntVyhodnotenie').textContent = tables.vyhodnotenie.length;
+                document.getElementById('cntAnalyza').textContent = tables.interview_analyza.length;
+                document.getElementById('cntLogs').textContent = tables.audit_logs.length;
+
+                renderInterviewTable(tables.interview, tables.vyhodnotenie);
+                renderUsersTable(tables.users);
+                renderSuperadminUsers(tables.users);
+                renderHrAdminTable(tables.hr_admin);
+                renderVyhodnotenieTable(tables.vyhodnotenie);
+                renderAnalyzaTable(tables.interview_analyza);
+                renderAuditLogsTable(tables.audit_logs);
+            }
         }
 
         function populateHrSelect(users) {
@@ -1535,18 +2141,509 @@
             if (!select) return;
             const currentVal = select.value;
 
-            // Filter používateľov s rolou HR_ADMIN alebo SUPERADMIN
+            // Zoznam používateľov s rolou HR_ADMIN alebo SUPERADMIN
             const hrUsers = users.filter(u => u.ures_tag.includes('HR') || u.ures_tag.includes('ADMIN'));
             select.innerHTML = hrUsers.map(u => `
                 <option value="${u.id}">${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)} (${escapeHtml(u.ures_tag)})</option>
             `).join('');
 
             if (currentVal) select.value = currentVal;
+            else if (currentUser && select.querySelector(`option[value="${currentUser.id}"]`)) {
+                select.value = currentUser.id;
+            }
         }
 
-        // Vykreslenie tabuľky interview
+        // -------------------------------------------------------------
+        // LOGIKA INTERAKTÍVNEHO KALENDÁRA POHOVOROV
+        // -------------------------------------------------------------
+
+        function prevMonth() {
+            calendarMonth--;
+            if (calendarMonth < 0) {
+                calendarMonth = 11;
+                calendarYear--;
+            }
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            calendarMonth++;
+            if (calendarMonth > 11) {
+                calendarMonth = 0;
+                calendarYear++;
+            }
+            renderCalendar();
+        }
+
+        function goToToday() {
+            const d = new Date();
+            calendarYear = d.getFullYear();
+            calendarMonth = d.getMonth();
+            selectedDate = `${calendarYear}-${pad(calendarMonth + 1)}-${pad(d.getDate())}`;
+            renderCalendar();
+        }
+
+        function onCalendarFilterChange() {
+            const sel = document.getElementById('calFilterHr');
+            if (sel) calendarFilter = sel.value;
+            renderCalendar();
+        }
+
+        function setCalendarView(view) {
+            calendarView = view;
+            const btnMonth = document.getElementById('btnViewMonth');
+            const btnAgenda = document.getElementById('btnViewAgenda');
+            const monthToolbar = document.getElementById('calMonthToolbar');
+            const monthCont = document.getElementById('calMonthContainer');
+            const dayBox = document.getElementById('dayAgendaBox');
+            const agendaCont = document.getElementById('calAgendaContainer');
+
+            if (view === 'month') {
+                btnMonth.classList.add('active');
+                btnAgenda.classList.remove('active');
+                monthToolbar.style.display = 'flex';
+                monthCont.style.display = 'block';
+                dayBox.style.display = 'block';
+                agendaCont.style.display = 'none';
+            } else {
+                btnMonth.classList.remove('active');
+                btnAgenda.classList.add('active');
+                monthToolbar.style.display = 'none';
+                monthCont.style.display = 'none';
+                dayBox.style.display = 'none';
+                agendaCont.style.display = 'block';
+            }
+            renderCalendar();
+        }
+
+        function selectCalendarDay(dateStr) {
+            selectedDate = dateStr;
+            renderCalendar();
+            // Plynulý posun na denný rozvrh
+            const dayBox = document.getElementById('dayAgendaBox');
+            if (dayBox) {
+                dayBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function getFilteredInterviews() {
+            if (!lastSnapshot || !lastSnapshot.tables || !lastSnapshot.tables.interview) return [];
+            const all = lastSnapshot.tables.interview;
+            const isSuper = currentUser && currentUser.ures_tag === 'SUPERADMIN';
+
+            if (!isSuper && currentUser) {
+                // HR_ADMIN vidí VÝLUČNE svoje pohovory
+                return all.filter(i => i.hr_id === currentUser.id);
+            }
+
+            if (isSuper && calendarFilter === 'mine' && currentUser) {
+                return all.filter(i => i.hr_id === currentUser.id);
+            }
+
+            return all;
+        }
+
+        function renderCalendar() {
+            const interviews = getFilteredInterviews();
+
+            // Nastavenie nadpisu mesiaca
+            const monthTitleEl = document.getElementById('calMonthTitle');
+            if (monthTitleEl) {
+                monthTitleEl.textContent = `${MONTH_NAMES_SK[calendarMonth]} ${calendarYear}`;
+            }
+
+            // Počet nadchádzajúcich pohovorov
+            const todayIso = new Date().toISOString().substring(0, 10);
+            const upcomingCount = interviews.filter(i => i.datum && i.datum >= todayIso).length;
+            const cntUpEl = document.getElementById('cntUpcoming');
+            if (cntUpEl) cntUpEl.textContent = upcomingCount;
+
+            // 1. Vykreslenie buniek mesiaca
+            const grid = document.getElementById('calendarDaysGrid');
+            if (grid) {
+                grid.innerHTML = '';
+
+                // Prvý deň v mesiaci
+                const firstDay = new Date(calendarYear, calendarMonth, 1);
+                // Posun na pondelok ako 0 (v JS: 0=nedeľa, 1=pondelok ... 6=sobota)
+                let startWeekday = (firstDay.getDay() + 6) % 7;
+
+                // Počet dní v aktuálnom mesiaci
+                const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+                // Počet dní v predchádzajúcom mesiaci pre doplnenie mriežky
+                const daysInPrevMonth = new Date(calendarYear, calendarMonth, 0).getDate();
+
+                const todayObj = new Date();
+                const todayFormatted = `${todayObj.getFullYear()}-${pad(todayObj.getMonth() + 1)}-${pad(todayObj.getDate())}`;
+
+                // Predchádzajúci mesiac (sivé dni)
+                for (let i = startWeekday - 1; i >= 0; i--) {
+                    const prevD = daysInPrevMonth - i;
+                    const prevMonthNum = calendarMonth === 0 ? 12 : calendarMonth;
+                    const prevYearNum = calendarMonth === 0 ? calendarYear - 1 : calendarYear;
+                    const prevDateIso = `${prevYearNum}-${pad(prevMonthNum)}-${pad(prevD)}`;
+
+                    const cell = document.createElement('div');
+                    cell.className = 'calendar-day-cell other-month';
+                    cell.innerHTML = `
+                        <div class="day-header-line">
+                            <span class="day-number">${prevD}</span>
+                        </div>
+                    `;
+                    cell.onclick = () => {
+                        calendarMonth--;
+                        if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+                        selectCalendarDay(prevDateIso);
+                    };
+                    grid.appendChild(cell);
+                }
+
+                // Dni aktuálneho mesiaca
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayDateIso = `${calendarYear}-${pad(calendarMonth + 1)}-${pad(day)}`;
+                    const isToday = dayDateIso === todayFormatted;
+                    const isSelected = dayDateIso === selectedDate;
+
+                    // Pohovory pre tento deň
+                    const dayInterviews = interviews.filter(i => i.datum && i.datum.startsWith(dayDateIso));
+
+                    const cell = document.createElement('div');
+                    cell.className = `calendar-day-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`;
+                    cell.onclick = () => selectCalendarDay(dayDateIso);
+
+                    let chipsHtml = '';
+                    dayInterviews.slice(0, 3).forEach(it => {
+                        const timeStr = it.datum.split(' ')[1] ? it.datum.split(' ')[1].substring(0, 5) : '00:00';
+                        const statusClass = `chip-${it.vyhodnotenie}`;
+                        chipsHtml += `
+                            <div class="event-chip ${statusClass}" title="${escapeHtml(it.titul_pozicia)}: ${escapeHtml(it.meno_respondenta)} (${timeStr})">
+                                <span>⏰ ${timeStr}</span>
+                                <span>${escapeHtml(it.meno_respondenta.split(' ')[0])}</span>
+                            </div>
+                        `;
+                    });
+
+                    if (dayInterviews.length > 3) {
+                        chipsHtml += `<div style="font-size: 0.65rem; color: #a5b4fc; font-weight: 700; text-align: right;">+${dayInterviews.length - 3} ďalšie</div>`;
+                    }
+
+                    cell.innerHTML = `
+                        <div class="day-header-line">
+                            <span class="day-number">${day}</span>
+                            ${isToday ? '<span class="day-badge-today">Dnes</span>' : ''}
+                        </div>
+                        <div class="day-events-list">
+                            ${chipsHtml}
+                        </div>
+                    `;
+                    grid.appendChild(cell);
+                }
+
+                // Doplnenie dní nasledujúceho mesiaca pre ucelenú mriežku
+                const totalCells = startWeekday + daysInMonth;
+                const remainingCells = (7 - (totalCells % 7)) % 7;
+                for (let nextD = 1; nextD <= remainingCells; nextD++) {
+                    const nextMonthNum = calendarMonth === 11 ? 1 : calendarMonth + 2;
+                    const nextYearNum = calendarMonth === 11 ? calendarYear + 1 : calendarYear;
+                    const nextDateIso = `${nextYearNum}-${pad(nextMonthNum)}-${pad(nextD)}`;
+
+                    const cell = document.createElement('div');
+                    cell.className = 'calendar-day-cell other-month';
+                    cell.innerHTML = `
+                        <div class="day-header-line">
+                            <span class="day-number">${nextD}</span>
+                        </div>
+                    `;
+                    cell.onclick = () => {
+                        calendarMonth++;
+                        if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+                        selectCalendarDay(nextDateIso);
+                    };
+                    grid.appendChild(cell);
+                }
+            }
+
+            // 2. Vykreslenie Denného rozvrhu pre vybraný deň
+            renderDayAgenda(selectedDate, interviews);
+
+            // 3. Vykreslenie Zoznamu nadchádzajúcich pohovorov (agenda view)
+            renderUpcomingInterviews(interviews);
+        }
+
+        // Vykreslenie položiek pre konkrétny vybraný deň
+        function renderDayAgenda(dateStr, allInterviews) {
+            const interviews = allInterviews || getFilteredInterviews();
+            const dayInterviews = interviews.filter(i => i.datum && i.datum.startsWith(dateStr));
+
+            // Formátovanie dátumu
+            const parts = dateStr.split('-');
+            const dObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            const daysSk = ['nedeľa', 'pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota'];
+            const formattedHeaderDate = `${parseInt(parts[2])}. ${MONTH_NAMES_SK[parseInt(parts[1]) - 1]} ${parts[0]} (${daysSk[dObj.getDay()]})`;
+
+            const titleEl = document.getElementById('agendaDayTitle');
+            if (titleEl) {
+                titleEl.textContent = `Rozvrh pohovorov na: ${formattedHeaderDate}`;
+            }
+
+            const listEl = document.getElementById('agendaItemsList');
+            if (!listEl) return;
+
+            if (dayInterviews.length === 0) {
+                listEl.innerHTML = `
+                    <div style="padding: 30px; text-align: center; color: var(--text-dim);">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px; opacity: 0.5;">
+                            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <p style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">
+                            Na tento deň nie je naplánovaný žiadny pohovor.
+                        </p>
+                        <p style="font-size: 0.78rem;">Kliknite na tlačidlo vyššie pre naplánovanie nového termínu na tento dátum.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Zoradenie podľa času
+            dayInterviews.sort((a, b) => a.datum.localeCompare(b.datum));
+
+            listEl.innerHTML = dayInterviews.map(item => {
+                const time = item.datum.split(' ')[1] ? item.datum.split(' ')[1].substring(0, 5) : '10:00';
+                const enumOptions = (lastSnapshot?.tables?.vyhodnotenie || [
+                    { kod: 'neprebehlo', nazov: 'Neprebehlo' },
+                    { kod: 'rozpracovane', nazov: 'Rozpracované' },
+                    { kod: 'postupil', nazov: 'Postúpil' },
+                    { kod: 'nepostupil', nazov: 'Nepostúpil' }
+                ]).map(ev => `
+                    <option value="${ev.kod}" ${ev.kod === item.vyhodnotenie ? 'selected' : ''}>
+                        ${ev.nazov}
+                    </option>
+                `).join('');
+
+                const badgeClass = `status-${item.vyhodnotenie}`;
+
+                return `
+                    <div class="interview-schedule-item">
+                        <div class="schedule-time-box">
+                            <span class="schedule-time-val">${time}</span>
+                            <span class="schedule-date-val">45 min</span>
+                        </div>
+
+                        <div class="schedule-details">
+                            <div class="schedule-job-title">${escapeHtml(item.titul_pozicia || 'Pohovor')}</div>
+                            <div class="schedule-candidate-name">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #38bdf8;">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <strong>${escapeHtml(item.meno_respondenta)}</strong>
+                                <span style="color: var(--text-muted); font-size: 0.8rem;">(${escapeHtml(item.mail_respondenta)})</span>
+                            </div>
+                            <div class="schedule-meta-row">
+                                <span>👔 HR: <strong>${escapeHtml(item.meno_hr)}</strong></span>
+                                <span>🔑 Miestnosť: <code class="code-pill">${escapeHtml(item.room_id)}</code></span>
+                                <span style="display: flex; align-items: center; gap: 4px;">
+                                    <span>Hodnotenie:</span>
+                                    <select class="select-enum-inline ${badgeClass}" onchange="changeEvaluation(${item.id}, this.value)">
+                                        ${enumOptions}
+                                    </select>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="schedule-actions">
+                            <button type="button" class="btn-primary" style="padding: 7px 14px; font-size: 0.82rem;" onclick="window.open('${item.link_meeting}', '_blank')" title="Otvoriť videohovor">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" x2="21" y1="14" y2="3"/>
+                                </svg>
+                                Vstúpiť
+                            </button>
+
+                            <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem;" onclick="copyAnyLink('${item.link_meeting}')" title="Kopírovať odkaz pre uchádzača">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                                </svg>
+                                Link
+                            </button>
+
+                            <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem; color: #34d399;" onclick="openInvitationModal(${item.id})" title="Zobraziť odoslanú e-mailovú pozvánku a termín">
+                                ✉️ Pozvánka
+                            </button>
+
+                            <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem;" onclick="downloadInterviewIcs(${item.id})" title="Stiahnuť .ics do kalendára">
+                                📅 .ics
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Vykreslenie všetkých nadchádzajúcich pohovorov (agenda view)
+        function renderUpcomingInterviews(allInterviews) {
+            const interviews = allInterviews || getFilteredInterviews();
+            const listEl = document.getElementById('upcomingInterviewsList');
+            if (!listEl) return;
+
+            const todayStr = new Date().toISOString().substring(0, 10);
+            const upcoming = interviews.filter(i => i.datum && i.datum >= todayStr);
+            upcoming.sort((a, b) => a.datum.localeCompare(b.datum));
+
+            if (upcoming.length === 0) {
+                listEl.innerHTML = `
+                    <div style="padding: 40px; text-align: center; color: var(--text-dim); background: var(--bg-base); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                        <p style="font-size: 0.92rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">
+                            Nemáte žiadne nadchádzajúce pohovory.
+                        </p>
+                        <p style="font-size: 0.8rem;">Vytvorte nový pohovor v sekcii 1 pre naplánovanie termínu.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = upcoming.map(item => {
+                const dateParts = item.datum.split(' ');
+                const dateVal = dateParts[0];
+                const timeVal = dateParts[1] ? dateParts[1].substring(0, 5) : '10:00';
+                const badgeClass = `status-${item.vyhodnotenie}`;
+
+                return `
+                    <div class="interview-schedule-item">
+                        <div class="schedule-time-box" style="min-width: 110px;">
+                            <span class="schedule-time-val" style="font-size: 1.05rem;">${dateVal}</span>
+                            <span class="schedule-date-val" style="color: #a5b4fc; font-weight: 700; font-size: 0.82rem;">⏰ ${timeVal}</span>
+                        </div>
+
+                        <div class="schedule-details">
+                            <div class="schedule-job-title">${escapeHtml(item.titul_pozicia || 'Pohovor')}</div>
+                            <div class="schedule-candidate-name">
+                                <strong>${escapeHtml(item.meno_respondenta)}</strong> · ${escapeHtml(item.mail_respondenta)}
+                            </div>
+                            <div class="schedule-meta-row">
+                                <span>👔 HR: <strong>${escapeHtml(item.meno_hr)}</strong></span>
+                                <span class="status-badge-enum ${badgeClass}">${escapeHtml(item.vyhodnotenie)}</span>
+                            </div>
+                        </div>
+
+                        <div class="schedule-actions">
+                            <button type="button" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.open('${item.link_meeting}', '_blank')">
+                                Vstúpiť
+                            </button>
+                            <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem;" onclick="openInvitationModal(${item.id})">
+                                ✉️ Pozvánka
+                            </button>
+                            <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem;" onclick="downloadInterviewIcs(${item.id})">
+                                📅 .ics
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Tlačidlo "+ Naplánovať pohovor na tento deň"
+        function scheduleForSelectedDay() {
+            const dtInput = document.getElementById('intDatum');
+            if (dtInput) {
+                dtInput.value = `${selectedDate}T10:00`;
+            }
+            const createCard = document.getElementById('createInterviewCard');
+            if (createCard) {
+                createCard.scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('intTitle').focus();
+            }
+        }
+
+        // -------------------------------------------------------------
+        // POZVÁNKY A ICALENDAR (.ICS)
+        // -------------------------------------------------------------
+
+        async function openInvitationModal(interviewId) {
+            currentModalInterviewId = interviewId;
+            try {
+                const res = await fetch(`/api/interviews/${interviewId}/invitation`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (!res.ok) {
+                    alert('Nepodarilo sa načítať pozvánku');
+                    return;
+                }
+                const data = await res.json();
+                const inv = data.invitation;
+
+                document.getElementById('invModalRecipient').textContent = `${inv.recipientName} (${inv.recipientEmail})`;
+                document.getElementById('invModalDatum').textContent = inv.formattedDatum || inv.datum;
+                document.getElementById('invModalHr').textContent = inv.hrName;
+
+                // Nastavenie HTML obsahu v iframe
+                const iframe = document.getElementById('invModalIframe');
+                iframe.srcdoc = inv.html;
+
+                document.getElementById('invitationModal').classList.add('active');
+            } catch (e) {
+                alert('Chyba načítania pozvánky: ' + e.message);
+            }
+        }
+
+        function closeInvitationModal() {
+            document.getElementById('invitationModal').classList.remove('active');
+            currentModalInterviewId = null;
+        }
+
+        function viewLastInvitation() {
+            if (lastCreatedInterview && lastCreatedInterview.id) {
+                openInvitationModal(lastCreatedInterview.id);
+            }
+        }
+
+        function downloadLastIcs() {
+            if (lastCreatedInterview && lastCreatedInterview.id) {
+                downloadInterviewIcs(lastCreatedInterview.id);
+            }
+        }
+
+        function downloadInterviewIcs(interviewId) {
+            window.open(`/api/interviews/${interviewId}/ics`, '_blank');
+        }
+
+        function downloadModalIcs() {
+            if (currentModalInterviewId) {
+                downloadInterviewIcs(currentModalInterviewId);
+            }
+        }
+
+        async function resendModalInvitation() {
+            if (!currentModalInterviewId) return;
+            try {
+                const res = await fetch(`/api/interviews/${currentModalInterviewId}/resend-invitation`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('✅ Pozvánka na pohovor bola úspešne opätovne odoslaná uchádzačovi!');
+                } else {
+                    alert('Chyba pri odosielaní: ' + (data.error || 'Neznáma chyba'));
+                }
+            } catch (e) {
+                alert('Chyba komunikácie: ' + e.message);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // VYKRESLENIE TABULIEK (PRE SUPERADMINA)
+        // -------------------------------------------------------------
+
+        // Vykreslenie tabuľky interview v DB Exploreri
         function renderInterviewTable(list, enumList) {
             const tbody = document.getElementById('tbodyInterview');
+            if (!tbody) return;
             if (!list || list.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="9" class="empty-view">Žiadne pohovory v databáze.</td></tr>`;
                 return;
@@ -1598,6 +2695,9 @@
                                 </svg>
                                 Vstúpiť
                             </button>
+                            <button class="btn-secondary" style="padding: 5px 8px; color: #34d399;" onclick="openInvitationModal(${item.id})" title="Pozvánka">
+                                ✉️
+                            </button>
                             <button class="btn-secondary" style="padding: 5px 8px; color: var(--accent-red);" onclick="deleteInterview(${item.id})" title="Zmazať pohovor">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M3 6h18"/>
@@ -1613,6 +2713,7 @@
         // Vykreslenie tabuľky users (DB Explorer záložka)
         function renderUsersTable(list) {
             const tbody = document.getElementById('tbodyUsers');
+            if (!tbody) return;
             if (!list || list.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" class="empty-view">Žiadni používatelia v databáze.</td></tr>`;
                 return;
@@ -1636,8 +2737,7 @@
                     actionHtml = `<span style="font-size: 0.74rem; color: var(--text-dim); font-weight: 600;">Posledný Superadmin</span>`;
                 } else if (isSuperAdmin) {
                     const btnLabel = isTargetSuper ? 'Zmazať Superadmina' : 'Zmazať';
-                    const btnColor = isTargetSuper ? 'var(--accent-red)' : 'var(--accent-red)';
-                    actionHtml = `<button class="btn-secondary" style="padding: 4px 8px; color: ${btnColor}; border-color: rgba(239, 68, 68, 0.4);" onclick="deleteUser(${u.id}, '${escapeHtml(u.username)}', '${escapeHtml(u.ures_tag)}')">${btnLabel}</button>`;
+                    actionHtml = `<button class="btn-secondary" style="padding: 4px 8px; color: var(--accent-red); border-color: rgba(239, 68, 68, 0.4);" onclick="deleteUser(${u.id}, '${escapeHtml(u.username)}', '${escapeHtml(u.ures_tag)}')">${btnLabel}</button>`;
                 } else {
                     actionHtml = `<span style="font-size: 0.74rem; color: var(--text-dim);">-</span>`;
                 }
@@ -1728,6 +2828,7 @@
         // Vykreslenie tabuľky hr_admin
         function renderHrAdminTable(list) {
             const tbody = document.getElementById('tbodyHrAdmin');
+            if (!tbody) return;
             if (!list || list.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" class="empty-view">Žiadne záznamy v tabuľke hr_admin.</td></tr>`;
                 return;
@@ -1756,6 +2857,7 @@
         // Vykreslenie enum vyhodnotenia
         function renderVyhodnotenieTable(list) {
             const tbody = document.getElementById('tbodyVyhodnotenie');
+            if (!tbody) return;
             tbody.innerHTML = list.map(item => `
                 <tr>
                     <td><span class="code-pill" style="color: #fff; font-weight: 700;">'${escapeHtml(item.kod)}'</span></td>
@@ -1774,6 +2876,7 @@
         // Vykreslenie interview_analyza
         function renderAnalyzaTable(list) {
             const tbody = document.getElementById('tbodyAnalyza');
+            if (!tbody) return;
             if (!list || list.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="empty-view">Zatiaľ žiadne dáta multimodálnej analýzy.</td></tr>`;
                 return;
@@ -1795,6 +2898,7 @@
         // Vykreslenie audit_logs
         function renderAuditLogsTable(list) {
             const tbody = document.getElementById('tbodyAuditLogs');
+            if (!tbody) return;
             if (!list || list.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="empty-view">Audit log je prázdny.</td></tr>`;
                 return;
@@ -1819,11 +2923,18 @@
             const title = document.getElementById('intTitle').value.trim();
             const respondentName = document.getElementById('intRespondentName').value.trim();
             const respondentEmail = document.getElementById('intRespondentEmail').value.trim();
-            const hrId = parseInt(document.getElementById('intHrSelect').value);
             const datum = document.getElementById('intDatum').value.replace('T', ' ');
             const vyhodnotenie = document.getElementById('intVyhodnotenie').value;
             const poznamky = document.getElementById('intPoznamky').value.trim();
             let customRoom = document.getElementById('intCustomRoom').value.trim();
+
+            const isSuper = currentUser && currentUser.ures_tag === 'SUPERADMIN';
+            let hrId;
+            if (isSuper) {
+                hrId = parseInt(document.getElementById('intHrSelect').value);
+            } else if (currentUser) {
+                hrId = currentUser.id; // Pre HR sa automaticky nastavuje jeho vlastné ID
+            }
 
             if (customRoom) {
                 customRoom = customRoom.toLowerCase().replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-');
@@ -1854,15 +2965,22 @@
                     return;
                 }
 
-                // Zobrazenie vygenerovaného linku
+                lastCreatedInterview = data;
+
+                // Zobrazenie výsledkového panelu
                 const panel = document.getElementById('resultPanel');
                 const urlInput = document.getElementById('resultUrl');
                 const meta = document.getElementById('resultMeta');
+                const alertText = document.getElementById('invitationAlertText');
 
                 panel.classList.add('active');
                 urlInput.value = data.meetingUrl;
-                meta.textContent = `Miestnosť: ${data.room_id} · Respondent: ${respondentName}`;
+                meta.textContent = `Miestnosť: ${data.room_id} · Respondent: ${respondentName} · HR: ${data.hrName || ''}`;
                 document.getElementById('copyBtnText').textContent = 'Kopírovať odkaz';
+
+                if (alertText) {
+                    alertText.innerHTML = `✉️ Automatická pozvánka s presným časom (<strong>${data.datum}</strong>) bola odoslaná na e-mail: <strong>${escapeHtml(respondentEmail)}</strong>.`;
+                }
 
                 // Reset formulára
                 document.getElementById('intTitle').value = '';
@@ -1871,6 +2989,7 @@
                 document.getElementById('intPoznamky').value = '';
                 document.getElementById('intCustomRoom').value = '';
 
+                // Aktualizácia dát a kalendára
                 loadLiveDb();
             } catch (err) {
                 alert('Chyba pri ukladaní do DB: ' + err.message);
@@ -1994,7 +3113,7 @@
             const targetPane = document.getElementById(`pane-${tabName}`);
             if (targetPane) targetPane.classList.add('active');
 
-            const activeBtn = Array.from(tabs).find(b => b.getAttribute('onclick').includes(tabName));
+            const activeBtn = Array.from(tabs).find(b => b.getAttribute('onclick')?.includes(tabName));
             if (activeBtn) activeBtn.classList.add('active');
         }
 
