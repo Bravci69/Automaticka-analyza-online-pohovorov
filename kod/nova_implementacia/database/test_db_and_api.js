@@ -144,11 +144,18 @@ async function runTests() {
   console.log('   ✅ Superadmin úspešne odstránil iného Superadmina z databázy!');
 
   // Pokus zmazať posledného existujúceho Superadmina (admin) iným autorom - musí zlyhať
+  let failedToDeleteLast = false;
   try {
     dbModule.deleteUser(adminAuth.id, 'iný_autor');
-    throw new Error('❌ Nemalo byť možné zmazať posledného Superadmina v systéme!');
+    failedToDeleteLast = true;
   } catch (err) {
     console.log(`   ✅ Ochrana posledného Superadmina v databáze funguje: "${err.message}"`);
+    if (!err.message.includes('aspoň jeden aktívny SUPERADMIN')) {
+      throw err;
+    }
+  }
+  if (failedToDeleteLast) {
+    throw new Error('❌ Nemalo byť možné zmazať posledného Superadmina v systéme!');
   }
 
   // 12. Kontrola live snapshotu databázy
