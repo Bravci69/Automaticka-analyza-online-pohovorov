@@ -90,11 +90,12 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
+            overflow-y: auto;
             position: relative;
         }
 
-        /* Jemná moderná radiálna mriežka v pozadí */
-        body::before {
+        /* Jemná moderná radiálna mriežka v pozadí (iba pre hlavnú stránku) */
+        body.page-index::before {
             content: '';
             position: fixed;
             top: 0;
@@ -197,8 +198,8 @@
             background: #1c2333;
         }
 
-        /* Hlavný obsah */
-        main {
+        /* Hlavný obsah index stránky */
+        body.page-index main {
             flex: 1;
             position: relative;
             z-index: 1;
@@ -477,13 +478,15 @@
             padding: 0;
         }
 
-        body {
+        body.page-admin {
             font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-base);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         /* Navigácia */
@@ -636,13 +639,30 @@
             color: var(--accent-red);
         }
 
-        /* Layout */
+        /* Layout - HR Admin konzola */
+        body.page-admin main,
+        main.admin-main,
         main {
             flex: 1;
             max-width: 1320px;
             margin: 0 auto;
             width: 100%;
             padding: 32px 24px 60px;
+            display: block !important; /* DÔLEŽITÉ: block namiesto flex, aby deti neboli zmrštené */
+        }
+
+        .page-admin .stats-grid,
+        .admin-main .stats-grid {
+            width: 100%;
+        }
+
+        .page-admin .card,
+        .admin-main .card,
+        .page-admin .calendar-card,
+        .admin-main .calendar-card,
+        .page-admin .db-card,
+        .admin-main .db-card {
+            width: 100%;
         }
 
         .page-header {
@@ -1461,6 +1481,83 @@
             gap: 10px;
         }
 
+        /* --------------------------------------------------------------------- */
+        /* Responzívne prispôsobenie HR Admin rozhrania pre tablety a mobily     */
+        /* --------------------------------------------------------------------- */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+                gap: 14px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body.page-admin .nav-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+            body.page-admin .nav-actions {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            body.page-admin main,
+            main.admin-main {
+                padding: 20px 14px 40px !important;
+            }
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 14px 16px;
+            }
+            .stat-number {
+                font-size: 1.5rem;
+            }
+            .form-grid-3 {
+                grid-template-columns: 1fr !important;
+                gap: 12px;
+            }
+            .card {
+                padding: 20px 16px;
+            }
+            #calMonthContainer {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .calendar-grid {
+                min-width: 600px;
+            }
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .filter-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            .btn-action,
+            .btn-create {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
 /* =============================================================================
    3. ŠTÝLY PRE VIDEOKONFERENCIU & EYE-TRACKING (MEETING.HTML)
 ============================================================================= */
@@ -1490,12 +1587,13 @@
             padding: 0;
         }
 
-        body {
+        body.page-meeting {
             font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-base);
             color: var(--text-main);
             height: 100vh;
-            overflow: hidden;
+            max-height: 100vh;
+            overflow: hidden; /* Iba pre pohovorové okno videokonferencie */
             display: flex;
             flex-direction: column;
         }
