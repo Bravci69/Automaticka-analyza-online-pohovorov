@@ -16,11 +16,11 @@ const dbModule = require('../database/db');
 // Inicializácia DB schémy a seed admin účtu
 dbModule.initDatabase();
 
-const PORT = parseInt(process.env.PORT || '45681');
+const PORT = parseInt(process.env.PORT || '10670');
 
 // Cesty k SSL certifikátom (Caddy na VPS)
-const SSL_KEY_PATH = 'C:/ProgramData/caddy/storage/certificates/local/85.239.155.67/85.239.155.67.key';
-const SSL_CERT_PATH = 'C:/ProgramData/caddy/storage/certificates/local/85.239.155.67/85.239.155.67.crt';
+const SSL_KEY_PATH = 'C:/ProgramData/caddy/storage/certificates/local/host2.fxcomputers.net/host2.fxcomputers.net.key';
+const SSL_CERT_PATH = 'C:/ProgramData/caddy/storage/certificates/local/host2.fxcomputers.net/host2.fxcomputers.net.crt';
 
 // MIME typy pre statické súbory
 const MIME_TYPES = {
@@ -284,7 +284,7 @@ async function handleRequest(req, res) {
 
       const roomId = body.roomId || body.room_id || generateRoomId();
       const protocol = isHttps ? 'https' : 'http';
-      const host = req.headers.host || `85.239.155.67:${PORT}`;
+      const host = req.headers.host || `host2.fxcomputers.net:${PORT}`;
       const link_meeting = body.link_meeting || `${protocol}://${host}/meeting/${roomId}`;
 
       // PRIRAĎOVANIE HR:
@@ -421,7 +421,7 @@ async function handleRequest(req, res) {
         if (!existing) {
           const adminUser = dbModule.getAllUsers()[0];
           const protocol = isHttps ? 'https' : 'http';
-          const host = req.headers.host || `85.239.155.67:${PORT}`;
+          const host = req.headers.host || `host2.fxcomputers.net:${PORT}`;
           const link_meeting = `${protocol}://${host}/meeting/${roomId}`;
           try {
             dbModule.createInterview(
@@ -510,7 +510,7 @@ if (fs.existsSync(SSL_KEY_PATH) && fs.existsSync(SSL_CERT_PATH)) {
 
   server.on('clientError', (err, socket) => {
     if (err.code === 'ERR_SSL_HTTP_REQUEST' || (err.message && err.message.includes('http request'))) {
-      const redirectUrl = `https://85.239.155.67:${PORT}/`;
+      const redirectUrl = `https://host2.fxcomputers.net:${PORT}/`;
       socket.end(
         'HTTP/1.1 301 Moved Permanently\r\n' +
         `Location: ${redirectUrl}\r\n` +
