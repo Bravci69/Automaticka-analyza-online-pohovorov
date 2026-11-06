@@ -6,6 +6,7 @@
 
 const https = require('node:https');
 const http = require('node:http');
+const net = require('node:net');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -18,9 +19,11 @@ dbModule.initDatabase();
 
 const PORT = parseInt(process.env.PORT || '10670');
 
-// Cesty k SSL certifikátom (Caddy na VPS)
-const SSL_KEY_PATH = 'C:/ProgramData/caddy/storage/certificates/local/host2.fxcomputers.net/host2.fxcomputers.net.key';
-const SSL_CERT_PATH = 'C:/ProgramData/caddy/storage/certificates/local/host2.fxcomputers.net/host2.fxcomputers.net.crt';
+// Cesty k SSL certifikátom (vlastné certifikáty v priečinku ssl/ alebo Caddy)
+const localKeyPath = path.join(__dirname, 'ssl', 'server.key');
+const localCertPath = path.join(__dirname, 'ssl', 'server.crt');
+const SSL_KEY_PATH = process.env.SSL_KEY_PATH || (fs.existsSync(localKeyPath) ? localKeyPath : 'C:/ProgramData/caddy/storage/certificates/local/host2.fxcomputers.net/host2.fxcomputers.net.key');
+const SSL_CERT_PATH = process.env.SSL_CERT_PATH || (fs.existsSync(localCertPath) ? localCertPath : 'C:/ProgramData/caddy/storage/certificates/local/host2.fxcomputers.net/host2.fxcomputers.net.crt');
 
 // MIME typy pre statické súbory
 const MIME_TYPES = {
@@ -505,20 +508,35 @@ if (fs.existsSync(SSL_KEY_PATH) && fs.existsSync(SSL_CERT_PATH)) {
     key: fs.readFileSync(SSL_KEY_PATH),
     cert: fs.readFileSync(SSL_CERT_PATH),
   };
-  server = https.createServer(options, handleRequest);
+  const httpsServer = https.createServer(options, handleRequest);
   isHttps = true;
 
-  server.on('clientError', (err, socket) => {
-    if (err.code === 'ERR_SSL_HTTP_REQUEST' || (err.message && err.message.includes('http request'))) {
-      const redirectUrl = `https://host2.fxcomputers.net:${PORT}/`;
-      socket.end(
-        'HTTP/1.1 301 Moved Permanently\r\n' +
-        `Location: ${redirectUrl}\r\n` +
-        'Connection: close\r\n\r\n'
-      );
-      return;
-    }
-    socket.destroy(err);
+  // HTTP fallback / redirect server: ak používateľ zadá http:// namiesto https://
+  const httpServer = http.createServer((req, res) => {
+    const rawHost = req.headers.host || 'host2.fxcomputers.net';
+    const host = rawHost.split(':')[0];
+    const target = `https://${host}:${PORT}${req.url}`;
+    res.writeHead(302, {
+      'Location': target,
+      'Content-Type': 'text/html; charset=utf-8'
+    });
+    res.end(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${target}"></head><body>Presmerovanie na zabezpečenú verziu: <a href="${target}">${target}</a></body></html>`);
+  });
+
+  // Inteligentný TCP multiplexer: deteguje TLS handshake (0x16) vs bežný HTTP request
+  server = net.createServer(socket => {
+    socket.on('error', () => {});
+    socket.once('data', chunk => {
+      if (!chunk || chunk.length === 0) return;
+      socket.pause();
+      socket.unshift(chunk);
+      if (chunk[0] === 0x16) {
+        httpsServer.emit('connection', socket);
+      } else {
+        httpServer.emit('connection', socket);
+      }
+      process.nextTick(() => socket.resume());
+    });
   });
 } else {
   server = http.createServer(handleRequest);
@@ -531,6 +549,7 @@ server.listen(PORT, '0.0.0.0', () => {
 ╔══════════════════════════════════════════════════════════╗
 ║  Analýza Online Pohovorov - Server & SQLite DB           ║
 ║  ${protocol}://0.0.0.0:${PORT}                                  ║
+║  (Automatický redirect HTTP -> HTTPS aktívny)            ║
 ║                                                          ║
 ║  Stránky:                                                ║
 ║    /           - Hlavná stránka                          ║

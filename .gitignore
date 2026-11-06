@@ -24,6 +24,7 @@ dist/
 # Logs & temp
 *.log
 output.log
+scratch/
 
 # Database (runtime SQLite files)
 *.db
