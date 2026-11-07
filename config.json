@@ -1,0 +1,8 @@
+{
+  "host": "host2.fxcomputers.net",
+  "port": 13191,
+  "ssl": {
+    "key": "kod/nova_implementacia/server/ssl/server.key",
+    "cert": "kod/nova_implementacia/server/ssl/server.crt"
+  }
+}

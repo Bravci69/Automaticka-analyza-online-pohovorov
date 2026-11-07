@@ -17,13 +17,35 @@ const dbModule = require('../database/db');
 // Inicializácia DB schémy a seed admin účtu
 dbModule.initDatabase();
 
-const PORT = parseInt(process.env.PORT || '10670');
+// Načítanie konfigurácie z config.json
+function loadConfig() {
+  const possiblePaths = [
+    path.join(__dirname, 'config.json'),
+    path.join(__dirname, '..', 'config.json'),
+    path.join(process.cwd(), 'config.json'),
+    path.join(process.cwd(), 'kod/nova_implementacia/server/config.json'),
+  ];
+  for (const p of possiblePaths) {
+    try {
+      if (fs.existsSync(p)) {
+        return JSON.parse(fs.readFileSync(p, 'utf8'));
+      }
+    } catch (_) {}
+  }
+  return {};
+}
+
+const config = loadConfig();
+const HOST = process.env.HOST || config.host || 'host2.fxcomputers.net';
+const PORT = parseInt(process.env.PORT || config.port || 13191, 10);
 
 // Cesty k SSL certifikátom (vlastné certifikáty v priečinku ssl/ alebo Caddy)
 const localKeyPath = path.join(__dirname, 'ssl', 'server.key');
 const localCertPath = path.join(__dirname, 'ssl', 'server.crt');
-const SSL_KEY_PATH = process.env.SSL_KEY_PATH || (fs.existsSync(localKeyPath) ? localKeyPath : 'C:/ProgramData/caddy/storage/certificates/local/host2.fxcomputers.net/host2.fxcomputers.net.key');
-const SSL_CERT_PATH = process.env.SSL_CERT_PATH || (fs.existsSync(localCertPath) ? localCertPath : 'C:/ProgramData/caddy/storage/certificates/local/host2.fxcomputers.net/host2.fxcomputers.net.crt');
+const configKeyPath = config.ssl?.key ? (path.isAbsolute(config.ssl.key) ? config.ssl.key : path.join(__dirname, config.ssl.key)) : null;
+const configCertPath = config.ssl?.cert ? (path.isAbsolute(config.ssl.cert) ? config.ssl.cert : path.join(__dirname, config.ssl.cert)) : null;
+const SSL_KEY_PATH = process.env.SSL_KEY_PATH || (configKeyPath && fs.existsSync(configKeyPath) ? configKeyPath : (fs.existsSync(localKeyPath) ? localKeyPath : `C:/ProgramData/caddy/storage/certificates/local/${HOST}/${HOST}.key`));
+const SSL_CERT_PATH = process.env.SSL_CERT_PATH || (configCertPath && fs.existsSync(configCertPath) ? configCertPath : (fs.existsSync(localCertPath) ? localCertPath : `C:/ProgramData/caddy/storage/certificates/local/${HOST}/${HOST}.crt`));
 
 // MIME typy pre statické súbory
 const MIME_TYPES = {
@@ -287,7 +309,7 @@ async function handleRequest(req, res) {
 
       const roomId = body.roomId || body.room_id || generateRoomId();
       const protocol = isHttps ? 'https' : 'http';
-      const host = req.headers.host || `host2.fxcomputers.net:${PORT}`;
+      const host = req.headers.host || `${HOST}:${PORT}`;
       const link_meeting = body.link_meeting || `${protocol}://${host}/meeting/${roomId}`;
 
       // PRIRAĎOVANIE HR:
@@ -424,7 +446,7 @@ async function handleRequest(req, res) {
         if (!existing) {
           const adminUser = dbModule.getAllUsers()[0];
           const protocol = isHttps ? 'https' : 'http';
-          const host = req.headers.host || `host2.fxcomputers.net:${PORT}`;
+          const host = req.headers.host || `${HOST}:${PORT}`;
           const link_meeting = `${protocol}://${host}/meeting/${roomId}`;
           try {
             dbModule.createInterview(
@@ -513,7 +535,7 @@ if (fs.existsSync(SSL_KEY_PATH) && fs.existsSync(SSL_CERT_PATH)) {
 
   // HTTP fallback / redirect server: ak používateľ zadá http:// namiesto https://
   const httpServer = http.createServer((req, res) => {
-    const rawHost = req.headers.host || 'host2.fxcomputers.net';
+    const rawHost = req.headers.host || HOST;
     const host = rawHost.split(':')[0];
     const target = `https://${host}:${PORT}${req.url}`;
     res.writeHead(302, {

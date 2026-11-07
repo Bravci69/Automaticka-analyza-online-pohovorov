@@ -1,0 +1,8 @@
+{
+  "host": "host2.fxcomputers.net",
+  "port": 13191,
+  "ssl": {
+    "key": "ssl/server.key",
+    "cert": "ssl/server.crt"
+  }
+}

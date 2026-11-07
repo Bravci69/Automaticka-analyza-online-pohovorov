@@ -17,6 +17,29 @@ const SCHEMA_PATH = path.join(DB_DIR, 'schema.sql');
 // Globálny emitter pre okamžité Real-Time zmeny
 const dbEvents = new EventEmitter();
 
+// Načítanie konfigurácie z config.json
+function loadConfig() {
+  const possiblePaths = [
+    path.join(__dirname, '../server/config.json'),
+    path.join(__dirname, 'config.json'),
+    path.join(__dirname, '..', 'config.json'),
+    path.join(process.cwd(), 'config.json'),
+    path.join(process.cwd(), 'kod/nova_implementacia/server/config.json'),
+  ];
+  for (const p of possiblePaths) {
+    try {
+      if (fs.existsSync(p)) {
+        return JSON.parse(fs.readFileSync(p, 'utf8'));
+      }
+    } catch (_) {}
+  }
+  return {};
+}
+
+const appConfig = loadConfig();
+const APP_HOST = process.env.HOST || appConfig.host || 'host2.fxcomputers.net';
+const APP_PORT = parseInt(process.env.PORT || appConfig.port || 13191, 10);
+
 // Zabezpečenie existencie priečinka pre databázu
 if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
@@ -140,7 +163,7 @@ function initDatabase() {
         `${adminUser.meno} ${adminUser.priezvisko}`,
         'Ján Ukážkový',
         'jan.ukazkovy@example.com',
-        'http://localhost:45681/meeting/bp-demo-pohovor',
+        `https://${APP_HOST}:${APP_PORT}/meeting/bp-demo-pohovor`,
         'bp-demo-pohovor',
         'Frontend / AI Developer',
         'rozpracovane',
