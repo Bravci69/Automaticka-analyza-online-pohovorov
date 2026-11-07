@@ -14,7 +14,10 @@ if %errorlevel% neq 0 (
 if exist "%~dp0nastav_firewall.ps1" (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0nastav_firewall.ps1"
 ) else (
-    echo [AutWorldBP] Chyba: Subor nastav_firewall.ps1 sa nenasiel.
+    echo [AutWorldBP] Chyba: Subor nastav_firewall.ps1 sa nenasiel v priecinku %~dp0
+    pause
+    exit /b 1
 )
 
 pause
+
