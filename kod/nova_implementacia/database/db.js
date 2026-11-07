@@ -37,8 +37,8 @@ function loadConfig() {
 }
 
 const appConfig = loadConfig();
-const APP_HOST = process.env.HOST || appConfig.host || 'host2.fxcomputers.net';
-const APP_PORT = parseInt(process.env.PORT || appConfig.port || 13191, 10);
+const APP_HOST = appConfig.host || process.env.HOST || 'host2.fxcomputers.net';
+const APP_PORT = parseInt(appConfig.port || process.env.PORT || 13191, 10);
 
 // Zabezpečenie existencie priečinka pre databázu
 if (!fs.existsSync(DB_DIR)) {

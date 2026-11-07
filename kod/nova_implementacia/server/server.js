@@ -18,6 +18,7 @@ const dbModule = require('../database/db');
 dbModule.initDatabase();
 
 // Načítanie konfigurácie z config.json
+let loadedConfigPath = null;
 function loadConfig() {
   const possiblePaths = [
     path.join(__dirname, 'config.json'),
@@ -28,6 +29,7 @@ function loadConfig() {
   for (const p of possiblePaths) {
     try {
       if (fs.existsSync(p)) {
+        loadedConfigPath = p;
         return JSON.parse(fs.readFileSync(p, 'utf8'));
       }
     } catch (_) {}
@@ -36,8 +38,10 @@ function loadConfig() {
 }
 
 const config = loadConfig();
-const HOST = process.env.HOST || config.host || 'host2.fxcomputers.net';
-const PORT = parseInt(process.env.PORT || config.port || 13191, 10);
+const HOST = config.host || process.env.HOST || 'host2.fxcomputers.net';
+const PORT = parseInt(config.port || process.env.PORT || 13191, 10);
+console.log(`[Config] Konfigurácia načítaná z: ${loadedConfigPath || 'predvolené'}`);
+console.log(`[Config] HOST: ${HOST}, PORT: ${PORT}`);
 
 // Cesty k SSL certifikátom (vlastné certifikáty v priečinku ssl/ alebo Caddy)
 const localKeyPath = path.join(__dirname, 'ssl', 'server.key');
