@@ -56,12 +56,14 @@ function renderCamError(isSecureIssue, errMsg) {
     `;
 }
 
-const JITSI_SERVER = 'meet.jit.si';
+const urlParams = new URLSearchParams(window.location.search);
+const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
         let jitsiClient = null;
         let activeRoom = '';
         let localStream = null;
         let isCamOn = true;
         let isMicOn = true;
+        let isLeavingSession = false;
 
         // Eye-tracking & MediaPipe stav
         let faceMesh = null;
@@ -95,6 +97,36 @@ const JITSI_SERVER = 'meet.jit.si';
             document.getElementById('roomNameLabel').textContent = activeRoom;
             document.getElementById('callSessionLabel').textContent = activeRoom;
             document.title = `${activeRoom} · Analýza Pohovorov`;
+
+            // Umožnenie rýchleho skopírovania odkazu na meeting
+            const lobbyChip = document.getElementById('roomChip');
+            if (lobbyChip) {
+                lobbyChip.style.cursor = 'pointer';
+                lobbyChip.title = 'Kliknutím skopírujete priamy odkaz na meeting';
+                lobbyChip.onclick = async () => {
+                    try {
+                        await navigator.clipboard.writeText(window.location.href);
+                        const lbl = document.getElementById('roomNameLabel');
+                        const orig = lbl.textContent;
+                        lbl.textContent = '✓ Odkaz skopírovaný!';
+                        setTimeout(() => lbl.textContent = orig, 2000);
+                    } catch (e) {}
+                };
+            }
+
+            const headerChip = document.getElementById('callSessionLabel');
+            if (headerChip) {
+                headerChip.style.cursor = 'pointer';
+                headerChip.title = 'Kliknutím skopírujete priamy odkaz na meeting';
+                headerChip.onclick = async () => {
+                    try {
+                        await navigator.clipboard.writeText(window.location.href);
+                        const orig = headerChip.textContent;
+                        headerChip.textContent = '✓ Odkaz skopírovaný!';
+                        setTimeout(() => headerChip.textContent = orig, 2000);
+                    } catch (e) {}
+                };
+            }
 
             const nameInput = document.getElementById('candidateName');
             nameInput.focus();
@@ -195,13 +227,20 @@ const JITSI_SERVER = 'meet.jit.si';
                 height: '100%',
                 lang: 'sk',
                 userInfo: { displayName: userName },
+                // HTML5 sandbox bráni nechcenému presmerovaniu top okna
+                sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-presentation',
                 configOverwrite: {
                     startWithAudioMuted: !isMicOn,
                     startWithVideoMuted: !isCamOn,
                     prejoinPageEnabled: false,
+                    prejoinConfig: { enabled: false },
                     disableDeepLinking: true,
                     disableInviteFunctions: true,
                     hideConferenceSubject: true,
+                    enableWelcomePage: false,
+                    enableClosePage: false,
+                    doNotStoreRoom: true,
+                    disableThirdPartyRequests: false,
                     resolution: 720,
                     notifications: [],
                     toolbarButtons: [
@@ -218,7 +257,7 @@ const JITSI_SERVER = 'meet.jit.si';
                     ],
                     SHOW_JITSI_WATERMARK: false,
                     SHOW_WATERMARK_FOR_GUESTS: false,
-                    DEFAULT_BACKGROUND: '#090b10',
+                    DEFAULT_BACKGROUND: '#08060c',
                     DISABLE_JOIN_LEAVE_NOTIFICATIONS: true
                 }
             };
@@ -228,6 +267,10 @@ const JITSI_SERVER = 'meet.jit.si';
 
                 jitsiClient.addEventListener('videoConferenceJoined', () => {
                     document.getElementById('stageLoader').classList.add('hidden');
+                });
+
+                jitsiClient.addEventListener('videoConferenceLeft', () => {
+                    leaveSession();
                 });
 
                 jitsiClient.addEventListener('readyToClose', () => {
@@ -241,16 +284,18 @@ const JITSI_SERVER = 'meet.jit.si';
             } catch (err) {
                 console.error('Jitsi error:', err);
                 document.getElementById('stageLoader').innerHTML = `
-                    <p style="color: var(--accent-red); font-size: 0.95rem;">Chyba pripojenia</p>
+                    <p style="color: var(--accent-red); font-size: 0.95rem;">Chyba pripojenia videohovoru</p>
                     <button onclick="window.location.reload()" style="padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">Skúsiť znova</button>
                 `;
             }
         }
 
         function leaveSession() {
+            if (isLeavingSession) return;
+            isLeavingSession = true;
             stopEyeTracking();
             if (jitsiClient) {
-                jitsiClient.dispose();
+                try { jitsiClient.dispose(); } catch (e) {}
                 jitsiClient = null;
             }
             if (localStream) {

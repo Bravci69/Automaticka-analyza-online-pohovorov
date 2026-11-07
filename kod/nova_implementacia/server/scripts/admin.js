@@ -69,10 +69,10 @@ let currentUser = null;
             if (currentUser) {
                 const initials = (currentUser.meno[0] || 'A') + (currentUser.priezvisko[0] || 'D');
                 const isSuper = currentUser.ures_tag === 'SUPERADMIN';
-                const roleColor = isSuper ? '#818cf8' : '#34d399';
+                const roleColor = isSuper ? '#a78bfa' : '#34d399';
                 container.innerHTML = `
                     <div class="user-pill">
-                        <div class="user-avatar" style="background: ${isSuper ? 'linear-gradient(135deg, #6366f1, #a855f7)' : 'linear-gradient(135deg, #10b981, #06b6d4)'}">${escapeHtml(initials)}</div>
+                        <div class="user-avatar" style="background: ${isSuper ? '#7c3aed' : '#059669'};">${escapeHtml(initials)}</div>
                         <div class="user-details">
                             <span class="user-name">${escapeHtml(currentUser.meno)} ${escapeHtml(currentUser.priezvisko)}</span>
                             <span class="user-role-badge" style="color: ${roleColor};">${escapeHtml(currentUser.ures_tag)}</span>
@@ -529,7 +529,7 @@ let currentUser = null;
                     });
 
                     if (dayInterviews.length > 3) {
-                        chipsHtml += `<div style="font-size: 0.65rem; color: #a5b4fc; font-weight: 700; text-align: right;">+${dayInterviews.length - 3} ďalšie</div>`;
+                        chipsHtml += `<div style="font-size: 0.65rem; color: #c4b5fd; font-weight: 700; text-align: right;">+${dayInterviews.length - 3} ďalšie</div>`;
                     }
 
                     cell.innerHTML = `
@@ -722,7 +722,7 @@ let currentUser = null;
                     <div class="interview-schedule-item">
                         <div class="schedule-time-box" style="min-width: 110px;">
                             <span class="schedule-time-val" style="font-size: 1.05rem;">${dateVal}</span>
-                            <span class="schedule-date-val" style="color: #a5b4fc; font-weight: 700; font-size: 0.82rem;">⏰ ${timeVal}</span>
+                            <span class="schedule-date-val" style="color: #c4b5fd; font-weight: 700; font-size: 0.82rem;">⏰ ${timeVal}</span>
                         </div>
 
                         <div class="schedule-details">
@@ -877,7 +877,7 @@ let currentUser = null;
                                 <span>${escapeHtml(item.meno_hr)}</span>
                             </div>
                         </td>
-                        <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #a5b4fc;">${escapeHtml(item.datum)}</td>
+                        <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #c4b5fd;">${escapeHtml(item.datum)}</td>
                         <td><span class="code-pill">${escapeHtml(item.room_id)}</span></td>
                         <td>
                             <select class="select-enum-inline ${badgeClass}" onchange="changeEvaluation(${item.id}, this.value)">
@@ -930,14 +930,14 @@ let currentUser = null;
             tbody.innerHTML = list.map(u => {
                 const isTargetSuper = u.ures_tag === 'SUPERADMIN';
                 const roleBadge = isTargetSuper 
-                    ? `<span class="badge-role-tag" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);">${u.ures_tag}</span>`
+                    ? `<span class="badge-role-tag" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border-color: rgba(139, 92, 246, 0.4);">${u.ures_tag}</span>`
                     : `<span class="badge-role-tag" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">${u.ures_tag}</span>`;
 
                 const shortHash = u.password_hash.substring(0, 16) + '...';
 
                 let actionHtml = '';
                 if (currentUser && (currentUser.id === u.id || currentUser.username === u.username)) {
-                    actionHtml = `<span style="font-size: 0.74rem; color: #a5b4fc; font-weight: 600;">Váš účet</span>`;
+                    actionHtml = `<span style="font-size: 0.74rem; color: #c4b5fd; font-weight: 600;">Váš účet</span>`;
                 } else if (isTargetSuper && superadminCount <= 1) {
                     actionHtml = `<span style="font-size: 0.74rem; color: var(--text-dim); font-weight: 600;">Posledný Superadmin</span>`;
                 } else if (isSuperAdmin) {
@@ -993,12 +993,12 @@ let currentUser = null;
                 const isSelf = currentUser && (currentUser.id === u.id || currentUser.username === u.username);
 
                 const roleBadge = isTargetSuper 
-                    ? `<span class="badge-role-tag" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);">${escapeHtml(u.ures_tag)}</span>`
+                    ? `<span class="badge-role-tag" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border-color: rgba(139, 92, 246, 0.4);">${escapeHtml(u.ures_tag)}</span>`
                     : `<span class="badge-role-tag" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">${escapeHtml(u.ures_tag)}</span>`;
 
                 let actionCell = '';
                 if (isSelf) {
-                    actionCell = `<span style="font-size: 0.74rem; color: #a5b4fc; font-weight: 600;">👤 Váš prihlásený účet</span>`;
+                    actionCell = `<span style="font-size: 0.74rem; color: #c4b5fd; font-weight: 600;">👤 Váš prihlásený účet</span>`;
                 } else if (isTargetSuper && superadminCount <= 1) {
                     actionCell = `<span style="font-size: 0.74rem; color: var(--text-dim); font-weight: 600;" title="V systéme musí zostať aspoň 1 Superadmin">🔒 Posledný Superadmin</span>`;
                 } else {
@@ -1044,10 +1044,10 @@ let currentUser = null;
                     <td><span class="code-pill">#${item.id}</span></td>
                     <td><span class="code-pill" style="color: #38bdf8;">FK: users(#${item.user_id})</span></td>
                     <td style="font-weight: 700; color: #fff;">${escapeHtml(item.meno)} ${escapeHtml(item.priezvisko)}</td>
-                    <td><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #a5b4fc;">@${escapeHtml(item.username)}</span></td>
+                    <td><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #c4b5fd;">@${escapeHtml(item.username)}</span></td>
                     <td><span class="badge-role-tag">${escapeHtml(item.ures_tag)}</span></td>
                     <td>
-                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 700; font-size: 0.82rem;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(139, 92, 246, 0.15); color: #a78bfa; font-weight: 700; font-size: 0.82rem;">
                             ${item.pocet_interviews}
                         </span>
                     </td>
@@ -1114,7 +1114,7 @@ let currentUser = null;
                     <td><span class="code-pill">#${item.id}</span></td>
                     <td style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--text-dim);">${escapeHtml(item.cas)}</td>
                     <td><span class="badge-role-tag" style="font-size: 0.7rem;">${escapeHtml(item.akcia)}</span></td>
-                    <td style="font-weight: 600; color: #a5b4fc;">${escapeHtml(item.autor)}</td>
+                    <td style="font-weight: 600; color: #c4b5fd;">${escapeHtml(item.autor)}</td>
                     <td style="color: var(--text-muted); font-size: 0.82rem;">${escapeHtml(item.detaily)}</td>
                 </tr>
             `).join('');

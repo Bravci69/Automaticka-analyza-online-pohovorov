@@ -553,15 +553,15 @@ function generateInterviewInvitation(interview) {
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
     .email-card { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06); }
-    .email-header { background: linear-gradient(135deg, #4f46e5, #6366f1); padding: 30px 24px; color: white; text-align: center; }
+    .email-header { background: #7c3aed; padding: 30px 24px; color: white; text-align: center; }
     .email-header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
     .email-header p { margin: 6px 0 0; opacity: 0.9; font-size: 13px; }
     .email-body { padding: 32px 28px; line-height: 1.6; }
-    .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #4f46e5; border-radius: 8px; padding: 18px 20px; margin: 24px 0; }
+    .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #7c3aed; border-radius: 8px; padding: 18px 20px; margin: 24px 0; }
     .info-row { display: flex; margin-bottom: 8px; font-size: 14px; }
     .info-label { font-weight: 600; width: 140px; color: #64748b; }
     .info-value { font-weight: 700; color: #0f172a; }
-    .btn-join { display: inline-block; background: #4f46e5; color: #ffffff !important; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; text-align: center; margin: 20px 0; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35); }
+    .btn-join { display: inline-block; background: #7c3aed; color: #ffffff !important; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; text-align: center; margin: 20px 0; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35); }
     .btn-container { text-align: center; }
     .notice { font-size: 12px; color: #64748b; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; padding: 12px; margin-top: 20px; }
     .email-footer { background: #f8fafc; padding: 16px 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
@@ -590,7 +590,7 @@ function generateInterviewInvitation(interview) {
 
       <p style="font-size: 13px; color: #475569; word-break: break-all;">
         Priamy odkaz na pripojenie k videohovoru:<br>
-        <a href="${interview.link_meeting}" style="color: #4f46e5;">${interview.link_meeting}</a>
+        <a href="${interview.link_meeting}" style="color: #7c3aed;">${interview.link_meeting}</a>
       </p>
 
       <div class="notice">

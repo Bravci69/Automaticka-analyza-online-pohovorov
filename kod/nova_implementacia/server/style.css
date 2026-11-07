@@ -12,7 +12,7 @@
     top: 0;
     left: 0;
     width: 100%;
-    background: linear-gradient(90deg, #7c2d12, #991b1b);
+    background: #7f1d1d;
     color: #fef2f2;
     padding: 10px 20px;
     z-index: 99999;
@@ -59,17 +59,17 @@
    1. ŠTÝLY PRE HLAVNÚ STRÁNKU (INDEX.HTML)
 ============================================================================= */
 :root {
-            --bg-base: #090b10;
-            --bg-surface: #0f131c;
-            --bg-elevated: #161b26;
-            --border-subtle: rgba(255, 255, 255, 0.07);
-            --border-active: rgba(99, 102, 241, 0.4);
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --primary-glow: rgba(99, 102, 241, 0.25);
+            --bg-base: #08060c;
+            --bg-surface: #110d1a;
+            --bg-elevated: #191426;
+            --border-subtle: #251e36;
+            --border-active: #8b5cf6;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --primary-glow: rgba(139, 92, 246, 0.25);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --text-dim: #64748b;
+            --text-dim: #6b7280;
             --accent-green: #10b981;
             --radius-sm: 8px;
             --radius-md: 14px;
@@ -94,18 +94,9 @@
             position: relative;
         }
 
-        /* Jemná moderná radiálna mriežka v pozadí (iba pre hlavnú stránku) */
+        /* Čisté jednofarebné moderné pozadie bez gradientov */
         body.page-index::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 1200px;
-            height: 600px;
-            background: radial-gradient(circle at top center, rgba(99, 102, 241, 0.12), transparent 70%);
-            pointer-events: none;
-            z-index: 0;
+            display: none;
         }
 
         /* Navigácia */
@@ -115,7 +106,7 @@
             z-index: 50;
             width: 100%;
             border-bottom: 1px solid var(--border-subtle);
-            background: rgba(9, 11, 16, 0.85);
+            background: rgba(8, 6, 12, 0.92);
             backdrop-filter: blur(16px);
         }
 
@@ -140,7 +131,7 @@
             width: 36px;
             height: 36px;
             border-radius: var(--radius-sm);
-            background: linear-gradient(135deg, #4f46e5, #818cf8);
+            background: #7c3aed;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -217,13 +208,13 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(99, 102, 241, 0.08);
-            border: 1px solid rgba(99, 102, 241, 0.22);
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid rgba(139, 92, 246, 0.25);
             padding: 6px 14px;
             border-radius: 999px;
             font-size: 0.8rem;
             font-weight: 600;
-            color: #a5b4fc;
+            color: #c4b5fd;
             margin-bottom: 24px;
             letter-spacing: 0.02em;
         }
@@ -249,9 +240,7 @@
         }
 
         .hero-title span {
-            background: linear-gradient(135deg, #ffffff 40%, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ffffff;
         }
 
         .hero-desc {
@@ -340,8 +329,64 @@
             box-shadow: 0 4px 14px var(--primary-glow);
         }
 
+        .join-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 18px 0;
+            color: var(--text-dim);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+        }
+
+        .join-divider::before,
+        .join-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .join-divider span {
+            padding: 0 12px;
+        }
+
+        .btn-create-meeting {
+            width: 100%;
+            background: var(--bg-elevated);
+            color: #ffffff;
+            border: 1px solid #3b3056;
+            border-radius: var(--radius-sm);
+            padding: 12px 20px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-create-meeting svg {
+            color: var(--primary);
+            transition: transform 0.2s ease;
+        }
+
+        .btn-create-meeting:hover {
+            background: #251d38;
+            border-color: var(--primary);
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.25);
+        }
+
+        .btn-create-meeting:hover svg {
+            transform: scale(1.1);
+        }
+
         .join-footer {
-            margin-top: 14px;
+            margin-top: 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -386,13 +431,13 @@
             width: 38px;
             height: 38px;
             border-radius: var(--radius-sm);
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(139, 92, 246, 0.1);
             border: 1px solid var(--border-subtle);
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 16px;
-            color: #a5b4fc;
+            color: #c4b5fd;
         }
 
         .spec-title {
@@ -447,15 +492,15 @@
    2. ŠTÝLY PRE HR ADMIN KONZOLU & KALENDÁR (ADMIN.HTML)
 ============================================================================= */
 :root {
-            --bg-base: #090b10;
-            --bg-surface: #0f131c;
-            --bg-elevated: #161b26;
-            --bg-input: #0c1017;
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-active: rgba(99, 102, 241, 0.5);
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --primary-glow: rgba(99, 102, 241, 0.3);
+            --bg-base: #08060c;
+            --bg-surface: #110d1a;
+            --bg-elevated: #191426;
+            --bg-input: #0d0a14;
+            --border-subtle: #251e36;
+            --border-active: #8b5cf6;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --primary-glow: rgba(139, 92, 246, 0.25);
             --accent-green: #10b981;
             --accent-green-bg: rgba(16, 185, 129, 0.12);
             --accent-red: #ef4444;
@@ -466,7 +511,7 @@
             --accent-amber-bg: rgba(245, 158, 11, 0.12);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --text-dim: #64748b;
+            --text-dim: #6b7280;
             --radius-sm: 8px;
             --radius-md: 14px;
             --radius-lg: 20px;
@@ -496,7 +541,7 @@
             z-index: 50;
             width: 100%;
             border-bottom: 1px solid var(--border-subtle);
-            background: rgba(9, 11, 16, 0.9);
+            background: rgba(8, 6, 12, 0.92);
             backdrop-filter: blur(16px);
         }
 
@@ -522,7 +567,7 @@
             width: 38px;
             height: 38px;
             border-radius: var(--radius-sm);
-            background: linear-gradient(135deg, #4f46e5, #818cf8);
+            background: #7c3aed;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -595,7 +640,7 @@
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #6366f1, #10b981);
+            background: #7c3aed;
             color: white;
             display: flex;
             align-items: center;
@@ -619,7 +664,7 @@
         .user-role-badge {
             font-size: 0.65rem;
             font-weight: 700;
-            color: #818cf8;
+            color: #a78bfa;
             letter-spacing: 0.04em;
         }
 
@@ -775,9 +820,9 @@
         .badge-role-tag {
             font-size: 0.7rem;
             font-weight: 700;
-            background: rgba(99, 102, 241, 0.15);
-            color: #a5b4fc;
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: rgba(139, 92, 246, 0.15);
+            color: #c4b5fd;
+            border: 1px solid rgba(139, 92, 246, 0.3);
             padding: 3px 8px;
             border-radius: 6px;
             letter-spacing: 0.04em;
@@ -863,16 +908,16 @@
         }
 
         .btn-secondary:hover {
-            background: #1e2638;
-            border-color: rgba(255, 255, 255, 0.2);
+            background: #251d38;
+            border-color: rgba(139, 92, 246, 0.4);
         }
 
         /* Výsledkový panel pre link */
         .result-panel {
             display: none;
             margin-top: 20px;
-            background: rgba(99, 102, 241, 0.08);
-            border: 1px solid rgba(99, 102, 241, 0.35);
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.35);
             border-radius: var(--radius-sm);
             padding: 18px;
         }
@@ -898,12 +943,12 @@
             flex: 1;
             min-width: 280px;
             background: var(--bg-base);
-            border: 1px solid rgba(99, 102, 241, 0.4);
+            border: 1px solid rgba(139, 92, 246, 0.4);
             border-radius: var(--radius-sm);
             padding: 10px 14px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.86rem;
-            color: #a5b4fc;
+            color: #c4b5fd;
             outline: none;
         }
 
@@ -1008,7 +1053,7 @@
             padding: 3px 8px;
             border-radius: 6px;
             font-size: 0.78rem;
-            color: #a5b4fc;
+            color: #c4b5fd;
             display: inline-block;
         }
 
@@ -1142,12 +1187,12 @@
         }
 
         .banner-hint {
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.25);
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.25);
             border-radius: var(--radius-sm);
             padding: 10px 12px;
             font-size: 0.78rem;
-            color: #a5b4fc;
+            color: #c4b5fd;
             margin-bottom: 18px;
             display: flex;
             align-items: center;
@@ -1309,9 +1354,9 @@
             font-size: 0.7rem;
             padding: 3px 6px;
             border-radius: 4px;
-            background: rgba(99, 102, 241, 0.2);
-            color: #c7d2fe;
-            border-left: 3px solid #6366f1;
+            background: rgba(139, 92, 246, 0.2);
+            color: #ddd6fe;
+            border-left: 3px solid #8b5cf6;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -1403,7 +1448,7 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 1.2rem;
             font-weight: 800;
-            color: #a5b4fc;
+            color: #c4b5fd;
         }
 
         .schedule-date-val {
@@ -1562,17 +1607,17 @@
    3. ŠTÝLY PRE VIDEOKONFERENCIU & EYE-TRACKING (MEETING.HTML)
 ============================================================================= */
 :root {
-            --bg-base: #090b10;
-            --bg-surface: #0f131c;
-            --bg-elevated: #161b26;
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-active: rgba(99, 102, 241, 0.4);
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --primary-glow: rgba(99, 102, 241, 0.25);
+            --bg-base: #08060c;
+            --bg-surface: #110d1a;
+            --bg-elevated: #191426;
+            --border-subtle: #251e36;
+            --border-active: #8b5cf6;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --primary-glow: rgba(139, 92, 246, 0.25);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --text-dim: #64748b;
+            --text-dim: #6b7280;
             --accent-green: #10b981;
             --accent-amber: #f59e0b;
             --accent-red: #ef4444;
@@ -1608,7 +1653,7 @@
             justify-content: center;
             padding: 24px;
             position: relative;
-            background: radial-gradient(circle at center, #111522 0%, #090b10 100%);
+            background: var(--bg-base);
         }
 
         .lobby-view.hidden {
@@ -1714,13 +1759,13 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(99, 102, 241, 0.08);
-            border: 1px solid rgba(99, 102, 241, 0.2);
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid rgba(139, 92, 246, 0.3);
             padding: 4px 10px;
             border-radius: 6px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.78rem;
-            color: #a5b4fc;
+            color: #c4b5fd;
             margin-bottom: 16px;
         }
 
@@ -2140,7 +2185,7 @@
         }
 
         .metric-val {
-            color: #a5b4fc;
+            color: #c4b5fd;
             font-weight: 500;
         }
 
