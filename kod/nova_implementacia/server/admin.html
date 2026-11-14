@@ -815,6 +815,105 @@
         </div>
     </div>
 
+    <!-- Modal pre presunutie pohovoru na iný dátum / čas -->
+    <div class="modal-overlay" id="rescheduleModal">
+        <div class="modal-dialog" style="max-width: 520px;">
+            <div class="modal-header">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(56, 189, 248, 0.2); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; color: #38bdf8;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                        <line x1="16" x2="16" y1="2" y2="6"/>
+                        <line x1="8" x2="8" y1="2" y2="6"/>
+                        <line x1="3" x2="21" y1="10" y2="10"/>
+                        <path d="m9 16 2 2 4-4"/>
+                    </svg>
+                </div>
+                <h3>Presunúť pohovor na iný termín</h3>
+                <p id="rescheduleModalSubtitle">Zmena dátumu a času pohovoru pre kandidáta.</p>
+            </div>
+
+            <input type="hidden" id="rescheduleInterviewId" />
+
+            <div style="background: var(--bg-base); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 16px; font-size: 0.82rem;">
+                <div style="color: var(--text-dim); margin-bottom: 4px;">Pohovor: <strong style="color: #fff;" id="rescheduleModalJob"></strong></div>
+                <div style="color: var(--text-dim); margin-bottom: 4px;">Kandidát: <strong style="color: #fff;" id="rescheduleModalCandidate"></strong></div>
+                <div style="color: var(--text-dim);">Aktuálny termín: <strong style="color: #c4b5fd;" id="rescheduleModalCurrentDate"></strong></div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">Nový dátum a čas pohovoru:</label>
+                <input type="datetime-local" id="rescheduleNewDateTime" class="form-input" required />
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">Dôvod presunutia (voliteľné):</label>
+                <input type="text" id="rescheduleReasonInput" class="form-input" placeholder="napr. Na žiadosť kandidáta / Zmena rozvrhu HR" />
+            </div>
+
+            <div style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 8px;">
+                <input type="checkbox" id="rescheduleNotifyCandidate" checked style="margin-top: 3px;" />
+                <label for="rescheduleNotifyCandidate" style="font-size: 0.8rem; color: var(--text-muted); cursor: pointer; line-height: 1.4;">
+                    Automaticky odoslať uchádzačovi e-mail s novým termínom a aktualizovaným <strong>.ics</strong> kalendárovým súborom
+                </label>
+            </div>
+
+            <div id="rescheduleStatusBox" style="padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 16px; display: none;"></div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn-secondary" onclick="closeRescheduleModal()">Zrušiť</button>
+                <button type="button" class="btn-primary" id="btnConfirmReschedule" onclick="submitRescheduleInterview()">
+                    Potvrdiť nový termín
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pre zrušenie pohovoru -->
+    <div class="modal-overlay" id="cancelInterviewModal">
+        <div class="modal-dialog" style="max-width: 500px;">
+            <div class="modal-header">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(239, 68, 68, 0.2); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; color: #ef4444;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                </div>
+                <h3>Zrušiť online pohovor</h3>
+                <p id="cancelModalSubtitle">Naozaj chcete zrušiť naplánovaný online pohovor?</p>
+            </div>
+
+            <input type="hidden" id="cancelInterviewId" />
+
+            <div style="background: var(--bg-base); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 16px; font-size: 0.82rem;">
+                <div style="color: var(--text-dim); margin-bottom: 4px;">Pohovor: <strong style="color: #fff;" id="cancelModalJob"></strong></div>
+                <div style="color: var(--text-dim); margin-bottom: 4px;">Kandidát: <strong style="color: #fff;" id="cancelModalCandidate"></strong></div>
+                <div style="color: var(--text-dim);">Plánovaný termín: <strong style="color: #f87171;" id="cancelModalDate"></strong></div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">Dôvod zrušenia (voliteľné, zobrazí sa v e-maile uchádzačovi):</label>
+                <input type="text" id="cancelReasonInput" class="form-input" placeholder="napr. Pozícia bola obsadená / Odvolanie účasti" />
+            </div>
+
+            <div style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 8px;">
+                <input type="checkbox" id="cancelNotifyCandidate" checked style="margin-top: 3px;" />
+                <label for="cancelNotifyCandidate" style="font-size: 0.8rem; color: var(--text-muted); cursor: pointer; line-height: 1.4;">
+                    Odoslať uchádzačovi oficiálny e-mail o zrušení pohovoru so storno <strong>.ics</strong> kalendárovou prílohou
+                </label>
+            </div>
+
+            <div id="cancelStatusBox" style="padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 16px; display: none;"></div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn-secondary" onclick="closeCancelInterviewModal()">Ponechať pohovor</button>
+                <button type="button" class="btn-primary" style="background: #dc2626;" id="btnConfirmCancel" onclick="submitCancelInterview()">
+                    Potvrdiť zrušenie pohovoru
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Pätička -->
     <footer>
         <div class="footer-inner">

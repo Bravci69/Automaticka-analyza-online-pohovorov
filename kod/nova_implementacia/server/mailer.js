@@ -307,7 +307,103 @@ async function sendInterviewReminder(interviewOrId) {
 }
 
 // =============================================================================
-// 3. Testovací email
+// 3. Odoslanie e-mailu pri zmene termínu pohovoru (presunutie)
+// =============================================================================
+
+async function sendInterviewRescheduled(interviewOrId, oldDatum, reason = '') {
+  let interview = interviewOrId;
+  if (typeof interviewOrId === 'number' || typeof interviewOrId === 'string') {
+    interview = dbModule.getInterviewById(parseInt(interviewOrId, 10));
+  }
+  if (!interview) {
+    return { ok: false, error: 'Pohovor nebol nájdený v databáze.' };
+  }
+  const cfg = getEmailConfig();
+  const rescheduled = dbModule.generateInterviewReschedule(interview, oldDatum, reason);
+
+  const mailOptions = {
+    from: cfg.from,
+    to: interview.mail_respondenta,
+    subject: rescheduled.subject,
+    text: rescheduled.text,
+    html: rescheduled.html,
+    attachments: [
+      {
+        filename: `novy-termin-${interview.room_id || interview.id}.ics`,
+        content: rescheduled.ics,
+        contentType: 'text/calendar; charset=utf-8; method=REQUEST',
+      },
+    ],
+  };
+
+  try {
+    const transporter = createTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Mailer] ✅ E-mail o presune termínu pohovoru #${interview.id} odoslaný na: ${interview.mail_respondenta} (MessageId: ${info.messageId})`);
+
+    dbModule.logAudit(
+      'EMAIL_PRESUN_ODOSLANY',
+      'Mailer',
+      `E-mail s novým termínom "${interview.datum}" pohovoru "${interview.titul_pozicia}" úspešne odoslaný uchádzačovi ${interview.meno_respondenta} (${interview.mail_respondenta}).`
+    );
+
+    return { ok: true, messageId: info.messageId, newDatum: interview.datum };
+  } catch (err) {
+    console.error(`[Mailer] ❌ Chyba pri odosielaní e-mailu o presune termínu na ${interview.mail_respondenta}:`, err.message);
+    return { ok: false, error: err.message };
+  }
+}
+
+// =============================================================================
+// 4. Odoslanie e-mailu pri zrušení pohovoru
+// =============================================================================
+
+async function sendInterviewCancelled(interviewOrId, reason = '') {
+  let interview = interviewOrId;
+  if (typeof interviewOrId === 'number' || typeof interviewOrId === 'string') {
+    interview = dbModule.getInterviewById(parseInt(interviewOrId, 10));
+  }
+  if (!interview) {
+    return { ok: false, error: 'Pohovor nebol nájdený v databáze.' };
+  }
+  const cfg = getEmailConfig();
+  const cancelled = dbModule.generateInterviewCancellation(interview, reason);
+
+  const mailOptions = {
+    from: cfg.from,
+    to: interview.mail_respondenta,
+    subject: cancelled.subject,
+    text: cancelled.text,
+    html: cancelled.html,
+    attachments: [
+      {
+        filename: `zrusenie-${interview.room_id || interview.id}.ics`,
+        content: cancelled.ics,
+        contentType: 'text/calendar; charset=utf-8; method=CANCEL',
+      },
+    ],
+  };
+
+  try {
+    const transporter = createTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Mailer] ✅ E-mail o zrušení pohovoru #${interview.id} odoslaný na: ${interview.mail_respondenta} (MessageId: ${info.messageId})`);
+
+    dbModule.logAudit(
+      'EMAIL_ZRUSENIE_ODOSLANE',
+      'Mailer',
+      `E-mail o zrušení pohovoru "${interview.titul_pozicia}" úspešne odoslaný uchádzačovi ${interview.meno_respondenta} (${interview.mail_respondenta}).`
+    );
+
+    return { ok: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`[Mailer] ❌ Chyba pri odosielaní e-mailu o zrušení pohovoru na ${interview.mail_respondenta}:`, err.message);
+    return { ok: false, error: err.message };
+  }
+}
+
+// =============================================================================
+// 5. Testovací email
 // =============================================================================
 
 async function sendTestEmail(toEmail) {
@@ -343,5 +439,7 @@ module.exports = {
   verifySmtp,
   sendInterviewConfirmation,
   sendInterviewReminder,
+  sendInterviewRescheduled,
+  sendInterviewCancelled,
   sendTestEmail,
 };

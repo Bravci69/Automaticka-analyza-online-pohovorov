@@ -1109,6 +1109,12 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
+        .status-zruseny {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
         .select-enum-inline {
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
@@ -1382,6 +1388,13 @@
             background: var(--accent-sky-bg);
             color: #7dd3fc;
             border-left-color: var(--accent-sky);
+        }
+
+        .event-chip.chip-zruseny {
+            background: rgba(100, 116, 139, 0.15);
+            color: #94a3b8;
+            border-left-color: #ef4444;
+            text-decoration: line-through;
         }
 
         /* Denný rozvrh (Day Agenda) */

@@ -132,6 +132,15 @@ function getAuthUser(req) {
   return dbModule.getSessionUser(token);
 }
 
+function canManageInterview(caller, interview) {
+  if (!caller) return false;
+  // Superadmin môže spravovať všetky pohovory
+  if (caller.ures_tag === 'SUPERADMIN') return true;
+  // HR konzultant môže spravovať svoje vlastné pohovory
+  if (interview && (caller.id === interview.hr_id || caller.username === interview.hr_username)) return true;
+  return false;
+}
+
 function generateRoomId() {
   const chars = 'abcdefghijklmnopqrstuvwxyz';
   const segments = [];
@@ -454,6 +463,79 @@ async function handleRequest(req, res) {
       }
     }
 
+    // POST /api/interviews/:id/reschedule - Presun pohovoru na iný dátum alebo čas
+    if (pathname.match(/^\/api\/interviews\/\d+\/reschedule$/) && req.method === 'POST') {
+      const caller = getAuthUser(req) || { username: 'admin', ures_tag: 'SUPERADMIN', id: 1 };
+      const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0], 10);
+      const interview = dbModule.getInterviewById(id);
+      if (!interview) {
+        return sendJson(res, 404, { error: 'Pohovor neexistuje.' });
+      }
+
+      if (!canManageInterview(caller, interview)) {
+        return sendJson(res, 403, { error: 'Nemáte oprávnenie presunúť tento pohovor. Môžete upravovať iba svoje vlastné pohovory.' });
+      }
+
+      const body = await parseJsonBody(req);
+      const { datum, reason, notifyCandidate } = body;
+      if (!datum) {
+        return sendJson(res, 400, { error: 'Zadajte nový dátum a čas pohovoru.' });
+      }
+
+      try {
+        const updated = dbModule.rescheduleInterview(id, datum, caller.username);
+        let emailResult = { ok: false };
+        if (notifyCandidate !== false) {
+          emailResult = await mailer.sendInterviewRescheduled(updated, updated.oldDatum, reason || '');
+        }
+
+        return sendJson(res, 200, {
+          ok: true,
+          interview: updated,
+          emailSent: emailResult.ok,
+          emailError: emailResult.error || null,
+          message: `Pohovor bol úspešne presunutý na termín ${updated.datum}.${emailResult.ok ? ' Uchádzačovi bol odoslaný aktualizovaný e-mail s novým .ics kalendárom.' : ''}`,
+        });
+      } catch (err) {
+        return sendJson(res, 400, { error: err.message });
+      }
+    }
+
+    // POST /api/interviews/:id/cancel - Zrušenie pohovoru
+    if (pathname.match(/^\/api\/interviews\/\d+\/cancel$/) && req.method === 'POST') {
+      const caller = getAuthUser(req) || { username: 'admin', ures_tag: 'SUPERADMIN', id: 1 };
+      const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0], 10);
+      const interview = dbModule.getInterviewById(id);
+      if (!interview) {
+        return sendJson(res, 404, { error: 'Pohovor neexistuje.' });
+      }
+
+      if (!canManageInterview(caller, interview)) {
+        return sendJson(res, 403, { error: 'Nemáte oprávnenie zrušiť tento pohovor. Môžete rušiť iba svoje vlastné pohovory.' });
+      }
+
+      const body = await parseJsonBody(req);
+      const { reason, notifyCandidate } = body;
+
+      try {
+        const cancelled = dbModule.cancelInterview(id, caller.username, reason || '');
+        let emailResult = { ok: false };
+        if (notifyCandidate !== false) {
+          emailResult = await mailer.sendInterviewCancelled(cancelled, reason || '');
+        }
+
+        return sendJson(res, 200, {
+          ok: true,
+          interview: cancelled,
+          emailSent: emailResult.ok,
+          emailError: emailResult.error || null,
+          message: `Pohovor #${id} bol úspešne zrušený.${emailResult.ok ? ' Uchádzačovi bol odoslaný e-mail o zrušení pohovoru.' : ''}`,
+        });
+      } catch (err) {
+        return sendJson(res, 400, { error: err.message });
+      }
+    }
+
     // GET /api/email/status - Overenie stavu e-mailovej konfigurácie a SMTP
     if (pathname === '/api/email/status' && req.method === 'GET') {
       const cfg = mailer.getEmailConfig();
@@ -509,8 +591,13 @@ async function handleRequest(req, res) {
 
     // PATCH /api/interviews/:id/vyhodnotenie - Zmena statusu vyhodnotenia
     if (pathname.match(/^\/api\/interviews\/\d+\/vyhodnotenie$/) && req.method === 'PATCH') {
-      const caller = getAuthUser(req) || { username: 'admin' };
-      const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0]);
+      const caller = getAuthUser(req) || { username: 'admin', ures_tag: 'SUPERADMIN', id: 1 };
+      const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0], 10);
+      const interview = dbModule.getInterviewById(id);
+      if (interview && !canManageInterview(caller, interview)) {
+        return sendJson(res, 403, { error: 'Nemáte oprávnenie upravovať vyhodnotenie tohto pohovoru.' });
+      }
+
       const { vyhodnotenie } = await parseJsonBody(req);
       try {
         dbModule.updateInterviewEvaluation(id, vyhodnotenie, caller.username);
@@ -525,10 +612,15 @@ async function handleRequest(req, res) {
       (pathname.startsWith('/api/interviews/') || pathname.startsWith('/api/meetings/')) &&
       req.method === 'DELETE'
     ) {
-      const caller = getAuthUser(req) || { username: 'admin' };
+      const caller = getAuthUser(req) || { username: 'admin', ures_tag: 'SUPERADMIN', id: 1 };
       const rawId = pathname.replace(/^\/api\/(interviews|meetings)\//, '');
       const numId = parseInt(rawId);
       const targetId = isNaN(numId) ? rawId : numId;
+
+      const interview = dbModule.getInterviewById(targetId);
+      if (interview && !canManageInterview(caller, interview)) {
+        return sendJson(res, 403, { error: 'Nemáte oprávnenie vymazať tento pohovor.' });
+      }
 
       dbModule.deleteInterview(targetId, caller.username);
       return sendJson(res, 200, { ok: true });

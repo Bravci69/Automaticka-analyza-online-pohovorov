@@ -117,6 +117,12 @@ function initDatabase() {
       farba: '#ef4444',
       popis: 'Kandidát na základe vyhodnotenia nepostupuje.',
     },
+    {
+      kod: 'zruseny',
+      nazov: 'Zrušený',
+      farba: '#dc2626',
+      popis: 'Pohovor bol zrušený HR konzultantom alebo administrátorom.',
+    },
   ];
 
   const stmtEnum = db.prepare(`
@@ -415,11 +421,15 @@ function getAllHrAdmins() {
 }
 
 function updateHrInterviewStats(hrUserId) {
-  // Spočítanie počtu pohovorov
+  // Spočítanie počtu pohovorov a najbližšieho aktívneho termínu
   const stats = db.prepare(`
     SELECT 
       COUNT(*) AS cnt,
-      MIN(datum) AS najblizsi_datum
+      COALESCE(
+        MIN(CASE WHEN datum >= datetime('now', 'localtime') AND vyhodnotenie != 'zruseny' THEN datum END),
+        MIN(CASE WHEN vyhodnotenie != 'zruseny' THEN datum END),
+        MIN(datum)
+      ) AS najblizsi_datum
     FROM interview
     WHERE hr_id = ?
   `).get(hrUserId);
@@ -528,7 +538,7 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-function generateIcsContent(interview) {
+function generateIcsContent(interview, options = {}) {
   const parseDate = (dStr) => {
     if (!dStr) return new Date();
     const d = new Date(String(dStr).replace(' ', 'T'));
@@ -547,34 +557,49 @@ function generateIcsContent(interview) {
   const dtStart = formatIcsDate(startDate);
   const dtEnd = formatIcsDate(endDate);
 
-  const cleanTitle = (interview.titul_pozicia || 'Online pohovor').replace(/[\r\n]+/g, ' ');
-  const desc = `Pozvánka na online výberový pohovor na pozíciu ${cleanTitle}.\\n\\nKandidát: ${interview.meno_respondenta}\\nHR Konzultant: ${interview.meno_hr}\\n\\nPripojenie na pohovor:\\n${interview.link_meeting}\\n\\nSystém automatickej multimodálnej analýzy pohovorov (FIIT STU).`;
+  const method = options.method || 'REQUEST';
+  const status = options.status || (method === 'CANCEL' ? 'CANCELLED' : 'CONFIRMED');
+  const sequence = options.sequence !== undefined ? options.sequence : (method === 'CANCEL' ? 2 : 0);
 
-  return [
+  const cleanTitle = (interview.titul_pozicia || 'Online pohovor').replace(/[\r\n]+/g, ' ');
+  const defaultDesc = method === 'CANCEL'
+    ? `Online výberový pohovor na pozíciu ${cleanTitle} bol zrušený.\\n\\nKandidát: ${interview.meno_respondenta}\\nHR Konzultant: ${interview.meno_hr}`
+    : `Pozvánka na online výberový pohovor na pozíciu ${cleanTitle}.\\n\\nKandidát: ${interview.meno_respondenta}\\nHR Konzultant: ${interview.meno_hr}\\n\\nPripojenie na pohovor:\\n${interview.link_meeting}\\n\\nSystém automatickej multimodálnej analýzy pohovorov (FIIT STU).`;
+  
+  const desc = options.description || defaultDesc;
+  const summary = options.summary || (method === 'CANCEL' ? `ZRUŠENÉ: Online pohovor: ${cleanTitle}` : `Online pohovor: ${cleanTitle}`);
+
+  const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//FIIT STU//Automaticka analyza online pohovorov//SK',
     'CALSCALE:GREGORIAN',
-    'METHOD:REQUEST',
+    `METHOD:${method}`,
     'BEGIN:VEVENT',
     `UID:${uid}`,
     `DTSTAMP:${now}`,
     `DTSTART:${dtStart}`,
     `DTEND:${dtEnd}`,
-    `SUMMARY:Online pohovor: ${cleanTitle}`,
+    `SUMMARY:${summary}`,
     `DESCRIPTION:${desc}`,
-    `LOCATION:${interview.link_meeting}`,
-    `URL:${interview.link_meeting}`,
-    'STATUS:CONFIRMED',
-    'SEQUENCE:0',
-    'BEGIN:VALARM',
-    'TRIGGER:-PT15M',
-    'ACTION:DISPLAY',
-    'DESCRIPTION:Pripomienka: Online pohovor začína o 15 minút',
-    'END:VALARM',
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\r\n');
+    `LOCATION:${interview.link_meeting || 'Online'}`,
+    `URL:${interview.link_meeting || ''}`,
+    `STATUS:${status}`,
+    `SEQUENCE:${sequence}`,
+  ];
+
+  if (method !== 'CANCEL') {
+    lines.push(
+      'BEGIN:VALARM',
+      'TRIGGER:-PT15M',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:Pripomienka: Online pohovor začína o 15 minút',
+      'END:VALARM'
+    );
+  }
+
+  lines.push('END:VEVENT', 'END:VCALENDAR');
+  return lines.join('\r\n');
 }
 
 function generateInterviewInvitation(interview) {
@@ -810,6 +835,212 @@ FIIT STU v Bratislave
   };
 }
 
+function generateInterviewReschedule(interview, oldDatum, reason = '') {
+  const formattedNewDatum = formatDateTimeSk(interview.datum);
+  const formattedOldDatum = oldDatum ? formatDateTimeSk(oldDatum) : 'Pôvodný termín';
+  const title = interview.titul_pozicia || 'Online pohovor';
+  const subject = `Zmena termínu online pohovoru: ${title} – FIIT STU`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
+    .email-card { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06); }
+    .email-header { background: #0284c7; padding: 30px 24px; color: white; text-align: center; }
+    .email-header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+    .email-header p { margin: 6px 0 0; opacity: 0.9; font-size: 13px; }
+    .email-body { padding: 32px 28px; line-height: 1.6; }
+    .reschedule-box { background: #f0f9ff; border: 1px solid #bae6fd; border-left: 4px solid #0284c7; border-radius: 8px; padding: 18px 20px; margin: 24px 0; }
+    .info-row { display: flex; margin-bottom: 8px; font-size: 14px; }
+    .info-label { font-weight: 600; width: 140px; color: #64748b; }
+    .info-value { font-weight: 700; color: #0f172a; }
+    .old-date { text-decoration: line-through; color: #94a3b8; font-weight: normal; }
+    .new-date { color: #0369a1; font-weight: 800; font-size: 15px; }
+    .btn-join { display: inline-block; background: #0284c7; color: #ffffff !important; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; text-align: center; margin: 20px 0; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35); }
+    .btn-container { text-align: center; }
+    .notice { font-size: 12px; color: #64748b; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; padding: 12px; margin-top: 20px; }
+    .reason-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #475569; margin: 16px 0; }
+    .email-footer { background: #f8fafc; padding: 16px 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="email-card">
+    <div class="email-header">
+      <h1>Presun termínu online pohovoru</h1>
+      <p>Automatická analýza pohovorov · FIIT Slovenská technická univerzita</p>
+    </div>
+    <div class="email-body">
+      <p>Dobrý deň <strong>${escapeHtml(interview.meno_respondenta)}</strong>,</p>
+      <p>informujeme Vás o zmene termínu Vášho online výberového pohovoru na pozíciu <strong>${escapeHtml(title)}</strong>.</p>
+
+      <div class="reschedule-box">
+        <div class="info-row"><span class="info-label">📅 Nový termín:</span><span class="info-value new-date">${escapeHtml(formattedNewDatum)}</span></div>
+        <div class="info-row"><span class="info-label">⏳ Pôvodný termín:</span><span class="info-value old-date">${escapeHtml(formattedOldDatum)}</span></div>
+        <div class="info-row"><span class="info-label">👔 HR Konzultant:</span><span class="info-value">${escapeHtml(interview.meno_hr)}</span></div>
+        <div class="info-row"><span class="info-label">💼 Pracovná pozícia:</span><span class="info-value">${escapeHtml(title)}</span></div>
+        <div class="info-row"><span class="info-label">🔑 ID miestnosti:</span><span class="info-value"><code>${escapeHtml(interview.room_id)}</code></span></div>
+      </div>
+
+      ${reason ? `<div class="reason-box"><strong>Dôvod zmeny termínu:</strong> ${escapeHtml(reason)}</div>` : ''}
+
+      <div class="btn-container">
+        <a href="${interview.link_meeting}" class="btn-join">Vstúpiť do virtuálnej miestnosti</a>
+      </div>
+
+      <p style="font-size: 13px; color: #475569; word-break: break-all;">
+        Odkaz na pripojenie zostáva nezmenený:<br>
+        <a href="${interview.link_meeting}" style="color: #0284c7;">${interview.link_meeting}</a>
+      </p>
+
+      <div class="notice">
+        <strong>💡 Informácia k novému termínu:</strong><br>
+        V prílohe tohto e-mailu nájdete aktualizovaný kalendárový súbor (.ics), ktorý automaticky aktualizuje termín vo Vašom kalendári. Deň pred novým termínom Vám zašleme krátku pripomienku.
+      </div>
+    </div>
+    <div class="email-footer">
+      Bakalárska práca · FIIT STU v Bratislave · Systém automatickej analýzy online pohovorov
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const plainText = `
+Dobrý deň ${interview.meno_respondenta},
+
+Informujeme Vás o zmene termínu Vášho online výberového pohovoru na pozíciu: ${title}
+
+📅 NOVÝ TERMÍN: ${formattedNewDatum}
+⏳ PÔVODNÝ TERMÍN: ${formattedOldDatum}
+👔 HR KONZULTANT: ${interview.meno_hr}
+💼 PRACOVNÁ POZÍCIA: ${title}
+${reason ? `💬 DÔVOD ZMENY: ${reason}\n` : ''}
+🌐 LINK NA PRIPOJENIE:
+${interview.link_meeting}
+
+V prílohe nájdete aktualizovaný kalendárový súbor (.ics) s novým termínom.
+
+S pozdravom,
+Tím automatickej analýzy online pohovorov
+FIIT STU v Bratislave
+  `.trim();
+
+  const ics = generateIcsContent(interview, {
+    method: 'REQUEST',
+    sequence: 2,
+    summary: `Online pohovor: ${title} (Nový termín)`,
+  });
+
+  return {
+    subject,
+    recipientEmail: interview.mail_respondenta,
+    recipientName: interview.meno_respondenta,
+    newDatum: interview.datum,
+    oldDatum,
+    formattedNewDatum,
+    formattedOldDatum,
+    html: htmlContent,
+    text: plainText,
+    ics,
+  };
+}
+
+function generateInterviewCancellation(interview, reason = '') {
+  const formattedDatum = formatDateTimeSk(interview.datum);
+  const title = interview.titul_pozicia || 'Online pohovor';
+  const subject = `Zrušenie online pohovoru: ${title} – FIIT STU`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
+    .email-card { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06); }
+    .email-header { background: #dc2626; padding: 30px 24px; color: white; text-align: center; }
+    .email-header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+    .email-header p { margin: 6px 0 0; opacity: 0.9; font-size: 13px; }
+    .email-body { padding: 32px 28px; line-height: 1.6; }
+    .cancel-box { background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #dc2626; border-radius: 8px; padding: 18px 20px; margin: 24px 0; }
+    .info-row { display: flex; margin-bottom: 8px; font-size: 14px; }
+    .info-label { font-weight: 600; width: 140px; color: #64748b; }
+    .info-value { font-weight: 700; color: #0f172a; }
+    .reason-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 12px 14px; font-size: 13px; color: #475569; margin: 16px 0; }
+    .email-footer { background: #f8fafc; padding: 16px 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="email-card">
+    <div class="email-header">
+      <h1>Zrušenie online pohovoru</h1>
+      <p>Automatická analýza pohovorov · FIIT Slovenská technická univerzita</p>
+    </div>
+    <div class="email-body">
+      <p>Dobrý deň <strong>${escapeHtml(interview.meno_respondenta)}</strong>,</p>
+      <p>dovoľujeme si Vás informovať, že online výberový pohovor na pozíciu <strong>${escapeHtml(title)}</strong> bol zrušený.</p>
+
+      <div class="cancel-box">
+        <div class="info-row"><span class="info-label">📅 Pôvodný termín:</span><span class="info-value"><strike>${escapeHtml(formattedDatum)}</strike></span></div>
+        <div class="info-row"><span class="info-label">👔 HR Konzultant:</span><span class="info-value">${escapeHtml(interview.meno_hr)}</span></div>
+        <div class="info-row"><span class="info-label">💼 Pracovná pozícia:</span><span class="info-value">${escapeHtml(title)}</span></div>
+        <div class="info-row"><span class="info-label">Status:</span><span class="info-value" style="color: #dc2626;">ZRUŠENÝ</span></div>
+      </div>
+
+      ${reason ? `<div class="reason-box"><strong>Dôvod zrušenia:</strong> ${escapeHtml(reason)}</div>` : ''}
+
+      <p style="font-size: 13px; color: #64748b; margin-top: 20px;">
+        V prílohe nájdete storno kalendárového záznamu (.ics), ktorý automaticky označí udalosť vo Vašom kalendári ako zrušenú.
+      </p>
+    </div>
+    <div class="email-footer">
+      Bakalárska práca · FIIT STU v Bratislave · Systém automatickej analýzy online pohovorov
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const plainText = `
+Dobrý deň ${interview.meno_respondenta},
+
+Dovoľujeme si Vás informovať, že online výberový pohovor na pozíciu: ${title} bol zrušený.
+
+📅 PÔVODNÝ TERMÍN: ${formattedDatum}
+👔 HR KONZULTANT: ${interview.meno_hr}
+💼 PRACOVNÁ POZÍCIA: ${title}
+STATUS: ZRUŠENÝ
+${reason ? `💬 DÔVOD ZRUŠENIA: ${reason}\n` : ''}
+
+V prílohe nájdete storno kalendárového záznamu (.ics).
+
+S pozdravom,
+Tím automatickej analýzy online pohovorov
+FIIT STU v Bratislave
+  `.trim();
+
+  const ics = generateIcsContent(interview, {
+    method: 'CANCEL',
+    status: 'CANCELLED',
+    sequence: 3,
+    summary: `ZRUŠENÉ: Online pohovor: ${title}`,
+  });
+
+  return {
+    subject,
+    recipientEmail: interview.mail_respondenta,
+    recipientName: interview.meno_respondenta,
+    datum: interview.datum,
+    formattedDatum,
+    html: htmlContent,
+    text: plainText,
+    ics,
+  };
+}
+
 function createInterview({
   datum,
   hr_id,
@@ -935,6 +1166,82 @@ function deleteInterview(id, author = 'admin') {
   return true;
 }
 
+function rescheduleInterview(id, newDatum, author = 'admin') {
+  const existing = db.prepare('SELECT * FROM interview WHERE id = ?').get(id);
+  if (!existing) throw new Error('Pohovor s daným ID neexistuje!');
+
+  const cleanDatum = String(newDatum).trim().replace('T', ' ');
+  if (!cleanDatum) throw new Error('Zadajte platný nový dátum a čas pohovoru.');
+
+  const oldDatum = existing.datum;
+
+  db.prepare(`
+    UPDATE interview 
+    SET 
+      datum = ?,
+      vyhodnotenie = CASE WHEN vyhodnotenie = 'zruseny' THEN 'neprebehlo' ELSE vyhodnotenie END,
+      reminder_sent = 0,
+      reminder_sent_at = NULL
+    WHERE id = ?
+  `).run(cleanDatum, id);
+
+  updateHrInterviewStats(existing.hr_id);
+
+  logAudit(
+    'PRESUN_POHOVORU',
+    author,
+    `Pohovor #${id} (${existing.meno_respondenta}) presunutý z "${oldDatum}" na nový termín "${cleanDatum}"`
+  );
+
+  notifyDbChange('INTERVIEW_RESCHEDULED', {
+    interviewId: id,
+    oldDatum,
+    newDatum: cleanDatum,
+  });
+
+  const updated = getInterviewById(id);
+  return {
+    ...updated,
+    oldDatum,
+  };
+}
+
+function cancelInterview(id, author = 'admin', reason = '') {
+  const existing = db.prepare('SELECT * FROM interview WHERE id = ?').get(id);
+  if (!existing) throw new Error('Pohovor s daným ID neexistuje!');
+
+  let note = existing.poznamky || '';
+  if (reason) {
+    const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 16);
+    note = note ? `${note}\n[Zrušené ${timestamp}]: ${reason}` : `[Zrušené ${timestamp}]: ${reason}`;
+  }
+
+  db.prepare(`
+    UPDATE interview 
+    SET 
+      vyhodnotenie = 'zruseny',
+      poznamky = ?,
+      reminder_sent = 1,
+      reminder_sent_at = datetime('now', 'localtime')
+    WHERE id = ?
+  `).run(note, id);
+
+  updateHrInterviewStats(existing.hr_id);
+
+  logAudit(
+    'ZRUSENIE_POHOVORU',
+    author,
+    `Pohovor #${id} (${existing.meno_respondenta}) bol zrušený.${reason ? ' Dôvod: ' + reason : ''}`
+  );
+
+  notifyDbChange('INTERVIEW_CANCELLED', {
+    interviewId: id,
+    reason,
+  });
+
+  return getInterviewById(id);
+}
+
 // =============================================================================
 // ČÍSELNÍK VYHODNOTENÍ (vyhodnotenie)
 // =============================================================================
@@ -1007,7 +1314,7 @@ function getInterviewsNeedingReminder() {
     FROM interview i
     JOIN users u ON i.hr_id = u.id
     WHERE (i.reminder_sent = 0 OR i.reminder_sent IS NULL)
-      AND i.vyhodnotenie NOT IN ('nepostupil', 'postupil')
+      AND i.vyhodnotenie NOT IN ('nepostupil', 'postupil', 'zruseny')
     ORDER BY i.datum ASC
   `).all();
 
@@ -1081,10 +1388,14 @@ module.exports = {
   getInterviewsByHr,
   generateInterviewInvitation,
   generateInterviewReminder,
+  generateInterviewReschedule,
+  generateInterviewCancellation,
   getInterviewsNeedingReminder,
   markReminderSent,
   generateIcsContent,
   createInterview,
+  rescheduleInterview,
+  cancelInterview,
   updateInterviewEvaluation,
   deleteInterview,
   getAllVyhodnotenia,

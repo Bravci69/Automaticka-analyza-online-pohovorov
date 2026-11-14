@@ -7,7 +7,7 @@ PRAGMA foreign_keys = ON;
 
 -- -----------------------------------------------------------------------------
 -- 1. TABUĽKA: vyhodnotenie (Enum číselník výsledkov pohovoru)
--- Hodnoty: rozpracovane, neprebehlo, postupil, nepostupil
+-- Hodnoty: rozpracovane, neprebehlo, postupil, nepostupil, zruseny
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS vyhodnotenie (
     kod TEXT PRIMARY KEY,

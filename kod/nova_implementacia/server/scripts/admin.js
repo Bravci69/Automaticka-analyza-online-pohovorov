@@ -681,6 +681,14 @@ let currentUser = null;
                                 ✉️ Pozvánka
                             </button>
 
+                            <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem; color: #38bdf8;" onclick="openRescheduleModal(${item.id})" title="Presunúť pohovor na iný dátum alebo čas">
+                                🗓️ Presunúť
+                            </button>
+                            ${item.vyhodnotenie !== 'zruseny' ? `
+                            <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem; color: #f87171;" onclick="openCancelInterviewModal(${item.id})" title="Zrušiť tento pohovor">
+                                ❌ Zrušiť
+                            </button>` : ''}
+
                             <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem;" onclick="downloadInterviewIcs(${item.id})" title="Stiahnuť .ics do kalendára">
                                 📅 .ics
                             </button>
@@ -749,6 +757,13 @@ let currentUser = null;
                             <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; color: #38bdf8;" onclick="sendInterviewReminder(${item.id})" title="Odoslať pripomienku 1 deň pred pohovorom">
                                 🔔 Pripomienka
                             </button>
+                            <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; color: #38bdf8;" onclick="openRescheduleModal(${item.id})" title="Presunúť pohovor na iný dátum alebo čas">
+                                🗓️ Presunúť
+                            </button>
+                            ${item.vyhodnotenie !== 'zruseny' ? `
+                            <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; color: #f87171;" onclick="openCancelInterviewModal(${item.id})" title="Zrušiť tento pohovor">
+                                ❌ Zrušiť
+                            </button>` : ''}
                             <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem;" onclick="downloadInterviewIcs(${item.id})">
                                 📅 .ics
                             </button>
@@ -1049,6 +1064,13 @@ let currentUser = null;
                             <button class="btn-secondary" style="padding: 5px 8px; color: #38bdf8;" onclick="sendInterviewReminder(${item.id})" title="Odoslať pripomienku 1 deň pred pohovorom">
                                 🔔
                             </button>
+                            <button class="btn-secondary" style="padding: 5px 8px; color: #38bdf8;" onclick="openRescheduleModal(${item.id})" title="Presunúť pohovor na iný termín">
+                                🗓️
+                            </button>
+                            ${item.vyhodnotenie !== 'zruseny' ? `
+                            <button class="btn-secondary" style="padding: 5px 8px; color: #f87171;" onclick="openCancelInterviewModal(${item.id})" title="Zrušiť pohovor">
+                                ❌
+                            </button>` : ''}
                             <button class="btn-secondary" style="padding: 5px 8px; color: var(--accent-red);" onclick="deleteInterview(${item.id})" title="Zmazať pohovor">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M3 6h18"/>
@@ -1517,6 +1539,183 @@ let currentUser = null;
             document.body.appendChild(dlAnchor);
             dlAnchor.click();
             dlAnchor.remove();
+        }
+
+        // -------------------------------------------------------------
+        // PRESUNUTIE A ZRUŠENIE POHOVORU (Reschedule & Cancel Modals)
+        // -------------------------------------------------------------
+
+        function findInterviewById(id) {
+            if (!lastSnapshot?.tables?.interview) return null;
+            return lastSnapshot.tables.interview.find(i => i.id === id);
+        }
+
+        function openRescheduleModal(id) {
+            const item = findInterviewById(id);
+            if (!item) {
+                alert('Pohovor nebol nájdený.');
+                return;
+            }
+
+            document.getElementById('rescheduleInterviewId').value = item.id;
+            document.getElementById('rescheduleModalJob').textContent = item.titul_pozicia || 'Pohovor';
+            document.getElementById('rescheduleModalCandidate').textContent = `${item.meno_respondenta} (${item.mail_respondenta})`;
+            document.getElementById('rescheduleModalCurrentDate').textContent = item.datum;
+
+            const dtInput = document.getElementById('rescheduleNewDateTime');
+            if (item.datum && item.datum.includes(' ')) {
+                dtInput.value = item.datum.replace(' ', 'T').substring(0, 16);
+            } else {
+                dtInput.value = '';
+            }
+
+            document.getElementById('rescheduleReasonInput').value = '';
+            document.getElementById('rescheduleNotifyCandidate').checked = true;
+
+            const statusBox = document.getElementById('rescheduleStatusBox');
+            statusBox.style.display = 'none';
+            statusBox.textContent = '';
+
+            document.getElementById('rescheduleModal').classList.add('active');
+        }
+
+        function closeRescheduleModal() {
+            document.getElementById('rescheduleModal').classList.remove('active');
+        }
+
+        async function submitRescheduleInterview() {
+            const id = document.getElementById('rescheduleInterviewId').value;
+            const dtVal = document.getElementById('rescheduleNewDateTime').value;
+            const reason = document.getElementById('rescheduleReasonInput').value.trim();
+            const notifyCandidate = document.getElementById('rescheduleNotifyCandidate').checked;
+
+            if (!dtVal) {
+                alert('Zadajte prosím nový dátum a čas pohovoru.');
+                return;
+            }
+
+            const cleanDatum = dtVal.replace('T', ' ');
+            const statusBox = document.getElementById('rescheduleStatusBox');
+            const btn = document.getElementById('btnConfirmReschedule');
+            btn.disabled = true;
+            btn.textContent = 'Presúvam...';
+
+            statusBox.style.display = 'block';
+            statusBox.style.background = 'rgba(56, 189, 248, 0.15)';
+            statusBox.style.color = '#38bdf8';
+            statusBox.textContent = 'Aktualizujem termín pohovoru v databáze a generujem aktualizáciu...';
+
+            try {
+                const res = await fetch(`/api/interviews/${id}/reschedule`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                    body: JSON.stringify({
+                        datum: cleanDatum,
+                        reason: reason,
+                        notifyCandidate: notifyCandidate,
+                    }),
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Zlyhal presun pohovoru.');
+
+                statusBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                statusBox.style.color = '#34d399';
+                statusBox.textContent = '✅ ' + (data.message || 'Pohovor bol úspešne presunutý!');
+
+                loadLiveDb();
+
+                setTimeout(() => {
+                    closeRescheduleModal();
+                    btn.disabled = false;
+                    btn.textContent = 'Potvrdiť nový termín';
+                }, 1200);
+            } catch (err) {
+                statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                statusBox.style.color = '#f87171';
+                statusBox.textContent = '❌ Chyba: ' + err.message;
+                btn.disabled = false;
+                btn.textContent = 'Potvrdiť nový termín';
+            }
+        }
+
+        function openCancelInterviewModal(id) {
+            const item = findInterviewById(id);
+            if (!item) {
+                alert('Pohovor nebol nájdený.');
+                return;
+            }
+
+            document.getElementById('cancelInterviewId').value = item.id;
+            document.getElementById('cancelModalJob').textContent = item.titul_pozicia || 'Pohovor';
+            document.getElementById('cancelModalCandidate').textContent = `${item.meno_respondenta} (${item.mail_respondenta})`;
+            document.getElementById('cancelModalDate').textContent = item.datum;
+            document.getElementById('cancelReasonInput').value = '';
+            document.getElementById('cancelNotifyCandidate').checked = true;
+
+            const statusBox = document.getElementById('cancelStatusBox');
+            statusBox.style.display = 'none';
+            statusBox.textContent = '';
+
+            document.getElementById('cancelInterviewModal').classList.add('active');
+        }
+
+        function closeCancelInterviewModal() {
+            document.getElementById('cancelInterviewModal').classList.remove('active');
+        }
+
+        async function submitCancelInterview() {
+            const id = document.getElementById('cancelInterviewId').value;
+            const reason = document.getElementById('cancelReasonInput').value.trim();
+            const notifyCandidate = document.getElementById('cancelNotifyCandidate').checked;
+
+            const statusBox = document.getElementById('cancelStatusBox');
+            const btn = document.getElementById('btnConfirmCancel');
+            btn.disabled = true;
+            btn.textContent = 'Ruším pohovor...';
+
+            statusBox.style.display = 'block';
+            statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+            statusBox.style.color = '#f87171';
+            statusBox.textContent = 'Ruším pohovor v databáze a odosielam storno e-mail...';
+
+            try {
+                const res = await fetch(`/api/interviews/${id}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                    body: JSON.stringify({
+                        reason: reason,
+                        notifyCandidate: notifyCandidate,
+                    }),
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Zlyhalo zrušenie pohovoru.');
+
+                statusBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                statusBox.style.color = '#34d399';
+                statusBox.textContent = '✅ ' + (data.message || 'Pohovor bol úspešne zrušený!');
+
+                loadLiveDb();
+
+                setTimeout(() => {
+                    closeCancelInterviewModal();
+                    btn.disabled = false;
+                    btn.textContent = 'Potvrdiť zrušenie pohovoru';
+                }, 1200);
+            } catch (err) {
+                statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                statusBox.style.color = '#f87171';
+                statusBox.textContent = '❌ Chyba: ' + err.message;
+                btn.disabled = false;
+                btn.textContent = 'Potvrdiť zrušenie pohovoru';
+            }
         }
 
         function escapeHtml(str) {

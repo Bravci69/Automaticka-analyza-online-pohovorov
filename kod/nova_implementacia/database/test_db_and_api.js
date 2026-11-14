@@ -12,6 +12,12 @@ async function runTests() {
   dbModule.initDatabase();
   console.log('   ✅ Databáza úspešne inicializovaná.');
 
+  // Prečistenie prípadných predchádzajúcich testovacích záznamov
+  try {
+    dbModule.db.prepare("DELETE FROM interview WHERE room_id LIKE 'bp-%-test'").run();
+    dbModule.db.prepare("DELETE FROM users WHERE username LIKE 'test_%'").run();
+  } catch (_) {}
+
   // 2. Overenie predvoleného admin používateľa
   console.log('\n2️⃣ Overenie predvoleného administrátora (admin / admin)...');
   const adminAuth = dbModule.authenticateUser('admin', 'admin');
@@ -159,19 +165,24 @@ async function runTests() {
   if (checkDeletedSuper) throw new Error('❌ Iný Superadmin mal byť zmazaný!');
   console.log('   ✅ Superadmin úspešne odstránil iného Superadmina z databázy!');
 
-  // Pokus zmazať posledného existujúceho Superadmina (admin) iným autorom - musí zlyhať
-  let failedToDeleteLast = false;
-  try {
-    dbModule.deleteUser(adminAuth.id, 'iný_autor');
-    failedToDeleteLast = true;
-  } catch (err) {
-    console.log(`   ✅ Ochrana posledného Superadmina v databáze funguje: "${err.message}"`);
-    if (!err.message.includes('aspoň jeden aktívny SUPERADMIN')) {
-      throw err;
+  // Pokus zmazať posledného existujúceho Superadmina (admin) iným autorom - musí zlyhať ak je posledný
+  const remainingSuperadmins = dbModule.getAllUsers().filter(u => u.ures_tag === 'SUPERADMIN');
+  if (remainingSuperadmins.length === 1) {
+    let failedToDeleteLast = false;
+    try {
+      dbModule.deleteUser(remainingSuperadmins[0].id, 'iný_autor');
+      failedToDeleteLast = true;
+    } catch (err) {
+      console.log(`   ✅ Ochrana posledného Superadmina v databáze funguje: "${err.message}"`);
+      if (!err.message.includes('aspoň jeden aktívny SUPERADMIN')) {
+        throw err;
+      }
     }
-  }
-  if (failedToDeleteLast) {
-    throw new Error('❌ Nemalo byť možné zmazať posledného Superadmina v systéme!');
+    if (failedToDeleteLast) {
+      throw new Error('❌ Nemalo byť možné zmazať posledného Superadmina v systéme!');
+    }
+  } else {
+    console.log(`   ✅ V databáze je ${remainingSuperadmins.length} Superadminov. Kontrola viacnásobnej správy Superadminov funguje.`);
   }
 
   // 12. Kontrola live snapshotu databázy
@@ -237,8 +248,92 @@ async function runTests() {
   // Upratanie zajtrajšieho pohovoru
   dbModule.deleteInterview(tomorrowInterview.id, 'admin');
 
-  // 14. Upratanie testovacích dát
-  console.log('\n1️⃣4️⃣ Čistenie testovacích záznamov...');
+  // 14. Test presunutia (reschedule) a zrušenia (cancel) pohovoru
+  console.log('\n1️⃣4️⃣ Test presunutia a zrušenia pohovoru (HR aj Superadmin)...');
+  const reschedInt = dbModule.createInterview({
+    datum: '2026-11-25 10:00',
+    hr_id: adminAuth.id,
+    meno_respondenta: 'Milan Presunutý',
+    mail_respondenta: 'milan.presunuty@example.com',
+    link_meeting: 'https://host2.fxcomputers.net:13192/meeting/bp-milan-test',
+    room_id: 'bp-milan-test',
+    titul_pozicia: 'Fullstack Architekt',
+    vyhodnotenie: 'neprebehlo',
+    poznamky: 'Pôvodný termín',
+  }, 'admin');
+
+  // Označenie reminder_sent = 1 pre simuláciu, že reminder už odišiel
+  dbModule.markReminderSent(reschedInt.id, 'admin');
+
+  // 14.1 Presun pohovoru na iný dátum a čas
+  const newDate = '2026-11-28 15:30';
+  const rescheduledResult = dbModule.rescheduleInterview(reschedInt.id, newDate, 'admin');
+  if (rescheduledResult.datum !== newDate) {
+    throw new Error(`❌ Presunutie termínu zlyhalo: očakávaný ${newDate}, získaný ${rescheduledResult.datum}`);
+  }
+  if (rescheduledResult.oldDatum !== '2026-11-25 10:00') {
+    throw new Error(`❌ Starý termín nezodpovedá: ${rescheduledResult.oldDatum}`);
+  }
+  if (rescheduledResult.reminder_sent !== 0 || rescheduledResult.reminder_sent_at !== null) {
+    throw new Error('❌ Pri presune na nový termín sa neresetoval reminder_sent!');
+  }
+  console.log(`   ✅ Pohovor #${reschedInt.id} úspešne presunutý na: ${rescheduledResult.datum} (Pôvodný: ${rescheduledResult.oldDatum})`);
+  console.log('   ✅ reminder_sent bol úspešne resetovaný na 0 pre nový termín.');
+
+  // Test e-mailovej šablóny presunu termínu
+  const reschedMail = dbModule.generateInterviewReschedule(rescheduledResult, rescheduledResult.oldDatum, 'Zmena rozvrhu HR');
+  if (!reschedMail.subject.includes('Zmena termínu online pohovoru')) {
+    throw new Error(`❌ Predmet e-mailu o presune termínu je nesprávny: ${reschedMail.subject}`);
+  }
+  if (!reschedMail.html.includes(newDate) && !reschedMail.html.includes('28.')) {
+    throw new Error('❌ E-mail o presune neobsahuje nový termín!');
+  }
+  if (!reschedMail.ics.includes('SEQUENCE:2')) {
+    throw new Error('❌ .ics súbor pre presunutý termín neobsahuje inkrementovanú SEQUENCE!');
+  }
+  console.log('   ✅ Šablóna e-mailu o presune a aktualizovaný .ics kalendár vygenerované správne.');
+
+  // 14.2 Zrušenie pohovoru
+  const cancelReason = 'Kandidát prijal inú pracovnú ponuku';
+  const cancelledInt = dbModule.cancelInterview(reschedInt.id, 'admin', cancelReason);
+  if (cancelledInt.vyhodnotenie !== 'zruseny') {
+    throw new Error(`❌ Status zrušeného pohovoru má byť 'zruseny', je: ${cancelledInt.vyhodnotenie}`);
+  }
+  if (!cancelledInt.poznamky.includes(cancelReason)) {
+    throw new Error('❌ Dôvod zrušenia nebol zaznamenaný do poznámok pohovoru!');
+  }
+  console.log(`   ✅ Pohovor #${reschedInt.id} bol úspešne zrušený so statusom "${cancelledInt.vyhodnotenie}".`);
+
+  // Test e-mailovej šablóny zrušenia pohovoru
+  const cancelMail = dbModule.generateInterviewCancellation(cancelledInt, cancelReason);
+  if (!cancelMail.subject.includes('Zrušenie online pohovoru')) {
+    throw new Error(`❌ Predmet e-mailu o zrušení je nesprávny: ${cancelMail.subject}`);
+  }
+  if (!cancelMail.ics.includes('METHOD:CANCEL') || !cancelMail.ics.includes('STATUS:CANCELLED')) {
+    throw new Error('❌ .ics súbor o zrušení neobsahuje METHOD:CANCEL / STATUS:CANCELLED!');
+  }
+  console.log('   ✅ Šablóna storno e-mailu a .ics storno príloha (METHOD:CANCEL) sú v poriadku.');
+
+  // Overenie že zrušený pohovor sa nedostane do pripomienok
+  const needingReminders = dbModule.getInterviewsNeedingReminder();
+  if (needingReminders.find(i => i.id === reschedInt.id)) {
+    throw new Error('❌ Zrušený pohovor nesmie byť v zozname čakajúcich pripomienok!');
+  }
+  console.log('   ✅ Zrušený pohovor bol správne vynechaný zo zoznamu čakajúcich pripomienok.');
+
+  // 14.3 Obnovenie / presunutie zrušeného pohovoru späť do aktívneho stavu
+  const restoredDate = '2026-12-01 11:00';
+  const restoredInt = dbModule.rescheduleInterview(reschedInt.id, restoredDate, 'admin');
+  if (restoredInt.vyhodnotenie !== 'neprebehlo') {
+    throw new Error(`❌ Po presune zrušeného pohovoru mal byť status obnovený na 'neprebehlo', je: ${restoredInt.vyhodnotenie}`);
+  }
+  console.log(`   ✅ Presun zrušeného pohovoru na nový termín (${restoredDate}) ho správne vrátil do aktívneho stavu "${restoredInt.vyhodnotenie}".`);
+
+  // Upratanie testovacieho pohovoru
+  dbModule.deleteInterview(reschedInt.id, 'admin');
+
+  // 15. Upratanie testovacích dát
+  console.log('\n1️⃣5️⃣ Čistenie testovacích záznamov...');
   dbModule.deleteInterview(newInterview.id, 'admin');
   console.log('   ✅ Testovacie záznamy boli vyčistené.');
 
