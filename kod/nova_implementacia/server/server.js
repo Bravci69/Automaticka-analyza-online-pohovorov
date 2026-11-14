@@ -38,7 +38,7 @@ function loadConfig() {
         if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
         return JSON.parse(content);
       }
-    } catch (_) {}
+    } catch (_) { }
   }
   return {};
 }
@@ -425,12 +425,12 @@ async function handleRequest(req, res) {
         return sendJson(res, 404, { error: 'Pohovor neexistuje.' });
       }
       const invitation = dbModule.generateInterviewInvitation(interview);
-      
+
       // Skutočné odoslanie emailu cez SMTP
       const sendResult = await mailer.sendInterviewConfirmation(interview);
 
-      return sendJson(res, 200, { 
-        ok: true, 
+      return sendJson(res, 200, {
+        ok: true,
         message: sendResult.ok ? 'Pozvánka bola úspešne odoslaná na e-mail uchádzača.' : `Pozvánka vygenerovaná, ale odoslanie zlyhalo: ${sendResult.error}`,
         invitation,
         emailSent: sendResult.ok,
@@ -583,8 +583,8 @@ async function handleRequest(req, res) {
         ok: true,
         user: updated.user,
         smtp: verifyResult,
-        message: verifyResult.ok 
-          ? 'Heslo aplikácie bolo úspešne uložené a overené s Google SMTP!' 
+        message: verifyResult.ok
+          ? 'Heslo aplikácie bolo úspešne uložené a overené s Google SMTP!'
           : `Heslo bolo uložené, ale Google hlási: ${verifyResult.error}`,
       });
     }
@@ -737,7 +737,7 @@ if (fs.existsSync(SSL_KEY_PATH) && fs.existsSync(SSL_CERT_PATH)) {
 
   // Inteligentný TCP multiplexer: deteguje TLS handshake (0x16) vs bežný HTTP request
   server = net.createServer(socket => {
-    socket.on('error', () => {});
+    socket.on('error', () => { });
     socket.once('data', chunk => {
       if (!chunk || chunk.length === 0) return;
       socket.pause();
