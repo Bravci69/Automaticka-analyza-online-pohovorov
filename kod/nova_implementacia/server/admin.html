@@ -49,14 +49,14 @@
                 <p id="pageHeaderDesc">Real-time prístup k SQLite databáze, registrácia kandidátov a správa HR rolí.</p>
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn-secondary" onclick="openEmailConfigModal()" title="Nastavenia odosielania e-mailov a Google Hesla aplikácie">
+                <button class="btn-secondary" id="btnEmailSmtpConfig" onclick="openEmailConfigModal()" title="Nastavenia odosielania e-mailov a Google Hesla aplikácie">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #38bdf8;">
                         <rect width="20" height="16" x="2" y="4" rx="2"/>
                         <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
                     </svg>
                     E-mail SMTP
                 </button>
-                <button class="btn-secondary" onclick="forceSync()" title="Manuálne obnoviť všetky dáta z databázy">
+                <button class="btn-secondary" id="btnRefreshDb" onclick="forceSync()" title="Manuálne obnoviť všetky dáta z databázy">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                         <path d="M3 3v5h5"/>

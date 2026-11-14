@@ -166,10 +166,18 @@ let currentUser = null;
                 dbCard.style.display = isSuper ? 'block' : 'none';
             }
 
-            // 3. Export JSON v hlavičke (len pre Superadmina)
+            // 3. Tlačidlá v hlavičke (len pre Superadmina: Export JSON, E-mail SMTP, Obnoviť DB)
             const exportBtn = document.getElementById('btnExportDbJson');
             if (exportBtn) {
                 exportBtn.style.display = isSuper ? 'inline-flex' : 'none';
+            }
+            const smtpBtn = document.getElementById('btnEmailSmtpConfig');
+            if (smtpBtn) {
+                smtpBtn.style.display = isSuper ? 'inline-flex' : 'none';
+            }
+            const refreshBtn = document.getElementById('btnRefreshDb');
+            if (refreshBtn) {
+                refreshBtn.style.display = isSuper ? 'inline-flex' : 'none';
             }
 
             // 4. Titulky a popis stránky

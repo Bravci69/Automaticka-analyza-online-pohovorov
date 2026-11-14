@@ -167,6 +167,51 @@ function initDatabase() {
     console.log('✅ Databáza inicializovaná. Vytvorený predvolený používateľ admin / admin');
   }
 
+  // 2b. Kontrola a vytvorenie / aktualizácia superadmina: autworld (Jakub Chmura)
+  const existingAutworld = db.prepare('SELECT id FROM users WHERE username = ?').get('autworld');
+  if (!existingAutworld) {
+    const salt = generateSalt();
+    const hash = hashPassword('Captain99@', salt);
+
+    const autInsert = db.prepare(`
+      INSERT INTO users (username, meno, priezvisko, mail, password_hash, password_salt, ures_tag)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run('autworld', 'Jakub', 'Chmura', 'jakubchmura9@gmail.com', hash, salt, 'SUPERADMIN');
+
+    const autUserId = Number(autInsert.lastInsertRowid);
+
+    db.prepare(`
+      INSERT OR REPLACE INTO hr_admin (user_id, pocet_interviews, datum_interview)
+      VALUES (?, 0, NULL)
+    `).run(autUserId);
+
+    db.prepare(`
+      INSERT INTO audit_logs (akcia, autor, detaily)
+      VALUES (?, ?, ?)
+    `).run(
+      'INICIALIZACIA',
+      'SYSTEM',
+      'Vytvorený účet "autworld" (Jakub Chmura) s rolou SUPERADMIN.'
+    );
+
+    console.log('✅ Vytvorený superadmin používateľ autworld (Jakub Chmura) s heslom');
+  } else {
+    // Aktualizácia hesla a roly pre autworld na SUPERADMIN
+    const salt = generateSalt();
+    const hash = hashPassword('Captain99@', salt);
+    db.prepare(`
+      UPDATE users 
+      SET meno = 'Jakub', priezvisko = 'Chmura', mail = COALESCE(mail, 'jakubchmura9@gmail.com'),
+          password_hash = ?, password_salt = ?, ures_tag = 'SUPERADMIN'
+      WHERE username = 'autworld'
+    `).run(hash, salt);
+
+    db.prepare(`
+      INSERT OR IGNORE INTO hr_admin (user_id, pocet_interviews, datum_interview)
+      VALUES (?, 0, NULL)
+    `).run(existingAutworld.id);
+  }
+
   // 3. Kontrola či existuje aspoň jeden ukážkový pohovor pre vizualizáciu
   const interviewCount = db.prepare('SELECT COUNT(*) AS cnt FROM interview').get().cnt;
   if (interviewCount === 0) {
