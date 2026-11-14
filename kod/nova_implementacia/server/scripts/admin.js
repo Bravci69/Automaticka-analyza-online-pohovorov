@@ -19,13 +19,67 @@ let currentUser = null;
             'Júl', 'August', 'September', 'Október', 'November', 'December'
         ];
 
-        // Inicializácia formulára s predvoleným dátumom (zajtra o 10:00)
+        function populate24hTimeSelectors(hourSelectId, minuteSelectId, defaultHour = '10', defaultMinute = '00') {
+            const hourEl = document.getElementById(hourSelectId);
+            const minEl = document.getElementById(minuteSelectId);
+            if (!hourEl || !minEl) return;
+
+            hourEl.innerHTML = '';
+            for (let h = 0; h < 24; h++) {
+                const hStr = String(h).padStart(2, '0');
+                const opt = document.createElement('option');
+                opt.value = hStr;
+                opt.textContent = hStr;
+                if (hStr === defaultHour) opt.selected = true;
+                hourEl.appendChild(opt);
+            }
+
+            minEl.innerHTML = '';
+            for (let m = 0; m < 60; m += 5) {
+                const mStr = String(m).padStart(2, '0');
+                const opt = document.createElement('option');
+                opt.value = mStr;
+                opt.textContent = mStr;
+                if (mStr === defaultMinute) opt.selected = true;
+                minEl.appendChild(opt);
+            }
+        }
+
+        function syncCreateInterviewDatum() {
+            const dateInput = document.getElementById('intDate');
+            const hourSelect = document.getElementById('intTimeHour');
+            const minSelect = document.getElementById('intTimeMinute');
+            const hidden = document.getElementById('intDatum');
+            if (dateInput && hourSelect && minSelect && hidden) {
+                hidden.value = `${dateInput.value}T${hourSelect.value}:${minSelect.value}`;
+            }
+        }
+
+        // Inicializácia formulára s predvoleným dátumom (zajtra o 10:00) v 24h formáte
         window.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+            populate24hTimeSelectors('intTimeHour', 'intTimeMinute', '10', '00');
+            populate24hTimeSelectors('rescheduleHour', 'rescheduleMinute', '10', '00');
+
             const tmr = new Date(Date.now() + 24 * 3600 * 1000);
-            tmr.setHours(10, 0, 0, 0);
-            const dateStr = `${tmr.getFullYear()}-${pad(tmr.getMonth() + 1)}-${pad(tmr.getDate())}T${pad(tmr.getHours())}:${pad(tmr.getMinutes())}`;
-            const dtInput = document.getElementById('intDatum');
-            if (dtInput) dtInput.value = dateStr;
+            const tmrStr = `${tmr.getFullYear()}-${pad(tmr.getMonth() + 1)}-${pad(tmr.getDate())}`;
+
+            const dateInput = document.getElementById('intDate');
+            if (dateInput) {
+                dateInput.min = todayStr; // Fyzický zákaz výberu minulých dátumov v kalendári
+                dateInput.value = tmrStr;
+                dateInput.addEventListener('change', syncCreateInterviewDatum);
+            }
+
+            const hourSel = document.getElementById('intTimeHour');
+            if (hourSel) hourSel.addEventListener('change', syncCreateInterviewDatum);
+
+            const minSel = document.getElementById('intTimeMinute');
+            if (minSel) minSel.addEventListener('change', syncCreateInterviewDatum);
+
+            syncCreateInterviewDatum();
 
             initAuth();
             setupRealtimeSync();
@@ -775,10 +829,25 @@ let currentUser = null;
 
         // Tlačidlo "+ Naplánovať pohovor na tento deň"
         function scheduleForSelectedDay() {
-            const dtInput = document.getElementById('intDatum');
-            if (dtInput) {
-                dtInput.value = `${selectedDate}T10:00`;
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+            if (selectedDate < todayStr) {
+                alert('Pohovor nie je možné naplánovať do minulosti.\nZvoľte prosím dnešný alebo budúci deň v kalendári.');
+                return;
             }
+
+            const dateInput = document.getElementById('intDate');
+            if (dateInput) {
+                dateInput.value = selectedDate;
+            }
+            const hourSel = document.getElementById('intTimeHour');
+            if (hourSel) hourSel.value = '10';
+            const minSel = document.getElementById('intTimeMinute');
+            if (minSel) minSel.value = '00';
+
+            syncCreateInterviewDatum();
+
             const createCard = document.getElementById('createInterviewCard');
             if (createCard) {
                 createCard.scrollIntoView({ behavior: 'smooth' });
@@ -1296,7 +1365,29 @@ let currentUser = null;
             const title = document.getElementById('intTitle').value.trim();
             const respondentName = document.getElementById('intRespondentName').value.trim();
             const respondentEmail = document.getElementById('intRespondentEmail').value.trim();
-            const datum = document.getElementById('intDatum').value.replace('T', ' ');
+
+            const dateInput = document.getElementById('intDate');
+            const hourInput = document.getElementById('intTimeHour');
+            const minInput = document.getElementById('intTimeMinute');
+
+            let dateVal = dateInput ? dateInput.value : '';
+            let hourVal = hourInput ? hourInput.value : '10';
+            let minVal = minInput ? minInput.value : '00';
+
+            if (!dateVal) {
+                alert('Zvoľte prosím dátum konania pohovoru.');
+                return;
+            }
+
+            const datum = `${dateVal} ${hourVal}:${minVal}`;
+            const targetDate = new Date(`${dateVal}T${hourVal}:${minVal}`);
+            const now = new Date();
+
+            if (targetDate.getTime() < now.getTime() - 30000) {
+                alert('⚠️ Termín pohovoru nemôže byť nastavený do minulosti!\nVyberte prosím aktuálny alebo budúci dátum a čas v 24-hodinovom formáte.');
+                return;
+            }
+
             const vyhodnotenie = document.getElementById('intVyhodnotenie').value;
             const poznamky = document.getElementById('intPoznamky').value.trim();
             let customRoom = document.getElementById('intCustomRoom').value.trim();
@@ -1562,11 +1653,29 @@ let currentUser = null;
             document.getElementById('rescheduleModalCandidate').textContent = `${item.meno_respondenta} (${item.mail_respondenta})`;
             document.getElementById('rescheduleModalCurrentDate').textContent = item.datum;
 
-            const dtInput = document.getElementById('rescheduleNewDateTime');
-            if (item.datum && item.datum.includes(' ')) {
-                dtInput.value = item.datum.replace(' ', 'T').substring(0, 16);
-            } else {
-                dtInput.value = '';
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+            const parts = (item.datum || '').split(' ');
+            const dPart = parts[0] || todayStr;
+            const tPart = parts[1] || '10:00';
+            const [hPart, mPart] = tPart.split(':');
+
+            const dateInput = document.getElementById('rescheduleDate');
+            if (dateInput) {
+                dateInput.min = todayStr; // Fyzický zákaz výberu minulých dní
+                dateInput.value = dPart >= todayStr ? dPart : todayStr;
+            }
+
+            const hourSel = document.getElementById('rescheduleHour');
+            if (hourSel) hourSel.value = String(hPart || '10').padStart(2, '0');
+
+            const minSel = document.getElementById('rescheduleMinute');
+            if (minSel) {
+                const rawM = parseInt(mPart || '0', 10);
+                const roundedM = Math.round(rawM / 5) * 5;
+                const clampedM = roundedM >= 60 ? 55 : roundedM;
+                minSel.value = String(clampedM).padStart(2, '0');
             }
 
             document.getElementById('rescheduleReasonInput').value = '';
@@ -1585,18 +1694,36 @@ let currentUser = null;
 
         async function submitRescheduleInterview() {
             const id = document.getElementById('rescheduleInterviewId').value;
-            const dtVal = document.getElementById('rescheduleNewDateTime').value;
+            const dateInput = document.getElementById('rescheduleDate');
+            const hourInput = document.getElementById('rescheduleHour');
+            const minInput = document.getElementById('rescheduleMinute');
+
+            const dateVal = dateInput ? dateInput.value : '';
+            const hourVal = hourInput ? hourInput.value : '10';
+            const minVal = minInput ? minInput.value : '00';
             const reason = document.getElementById('rescheduleReasonInput').value.trim();
             const notifyCandidate = document.getElementById('rescheduleNotifyCandidate').checked;
 
-            if (!dtVal) {
-                alert('Zadajte prosím nový dátum a čas pohovoru.');
+            if (!dateVal) {
+                alert('Zadajte prosím nový dátum pohovoru.');
                 return;
             }
 
-            const cleanDatum = dtVal.replace('T', ' ');
+            const cleanDatum = `${dateVal} ${hourVal}:${minVal}`;
+            const targetDate = new Date(`${dateVal}T${hourVal}:${minVal}`);
+            const now = new Date();
+
             const statusBox = document.getElementById('rescheduleStatusBox');
             const btn = document.getElementById('btnConfirmReschedule');
+
+            if (targetDate.getTime() < now.getTime() - 30000) {
+                statusBox.style.display = 'block';
+                statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                statusBox.style.color = '#f87171';
+                statusBox.textContent = '❌ Nový termín pohovoru nemôže byť v minulosti! Vyberte prosím budúci dátum a čas (24-hodinový formát).';
+                return;
+            }
+
             btn.disabled = true;
             btn.textContent = 'Presúvam...';
 

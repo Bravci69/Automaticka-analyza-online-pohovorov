@@ -73,7 +73,9 @@ async function runTests() {
 
   // 7. Vytvorenie pohovoru pre kandidáta a automatická pozvánka
   console.log('\n7️⃣ Vytvorenie pohovoru (interview) a automatická pozvánka...');
-  const interviewDatum = '2026-11-10 14:00';
+  const futureDate = new Date(Date.now() + 5 * 24 * 3600 * 1000);
+  const pad = n => String(n).padStart(2, '0');
+  const interviewDatum = `${futureDate.getFullYear()}-${pad(futureDate.getMonth() + 1)}-${pad(futureDate.getDate())} 14:00`;
   const newInterview = dbModule.createInterview({
     datum: interviewDatum,
     hr_id: luciaHr.user_id,
@@ -328,6 +330,34 @@ async function runTests() {
     throw new Error(`❌ Po presune zrušeného pohovoru mal byť status obnovený na 'neprebehlo', je: ${restoredInt.vyhodnotenie}`);
   }
   console.log(`   ✅ Presun zrušeného pohovoru na nový termín (${restoredDate}) ho správne vrátil do aktívneho stavu "${restoredInt.vyhodnotenie}".`);
+
+  // 14.4 Test zákazu nastavenia pohovoru a presunutia do minulosti
+  console.log('   ⭐ Test zákazu nastavenia pohovoru a presunutia do minulosti...');
+  let pastCreateError = false;
+  try {
+    dbModule.createInterview({
+      datum: '2020-01-01 10:00',
+      hr_id: adminAuth.id,
+      meno_respondenta: 'Minulý Kandidát',
+      mail_respondenta: 'minuly@example.com',
+      link_meeting: 'https://host2.fxcomputers.net:13192/meeting/bp-past-test',
+      room_id: 'bp-past-test',
+      titul_pozicia: 'Tester',
+    }, 'admin');
+  } catch (err) {
+    pastCreateError = true;
+    console.log(`   ✅ Správne zamietnuté vytvorenie pohovoru v minulosti: "${err.message}"`);
+  }
+  if (!pastCreateError) throw new Error('❌ createInterview dovolil vytvoriť pohovor v minulosti!');
+
+  let pastReschedError = false;
+  try {
+    dbModule.rescheduleInterview(restoredInt.id, '2021-05-10 14:00', 'admin');
+  } catch (err) {
+    pastReschedError = true;
+    console.log(`   ✅ Správne zamietnuté presunutie pohovoru do minulosti: "${err.message}"`);
+  }
+  if (!pastReschedError) throw new Error('❌ rescheduleInterview dovolil presunúť pohovor do minulosti!');
 
   // Upratanie testovacieho pohovoru
   dbModule.deleteInterview(reschedInt.id, 'admin');

@@ -1051,9 +1051,20 @@ function createInterview({
   titul_pozicia,
   vyhodnotenie = 'neprebehlo',
   poznamky = '',
-}, author = 'admin') {
+}, author = 'admin', options = {}) {
   if (!datum || !hr_id || !meno_respondenta || !mail_respondenta || !link_meeting || !room_id) {
     throw new Error('Chýbajú povinné údaje pre pohovor!');
+  }
+
+  const cleanDatum = String(datum).trim().replace('T', ' ');
+  const parsedDate = new Date(cleanDatum.replace(' ', 'T'));
+  if (isNaN(parsedDate.getTime())) {
+    throw new Error('Neplatný formát dátumu a času.');
+  }
+
+  // Kontrola, aby termín pohovoru nebol v minulosti (tolerancia 60 sekúnd na odoslanie požiadavky)
+  if (!options?.allowPast && parsedDate.getTime() < Date.now() - 60000) {
+    throw new Error('Termín pohovoru nemôže byť v minulosti. Zadajte prosím aktuálny alebo budúci dátum a čas.');
   }
 
   const hrUser = db.prepare('SELECT meno, priezvisko FROM users WHERE id = ?').get(hr_id);
@@ -1166,12 +1177,22 @@ function deleteInterview(id, author = 'admin') {
   return true;
 }
 
-function rescheduleInterview(id, newDatum, author = 'admin') {
+function rescheduleInterview(id, newDatum, author = 'admin', options = {}) {
   const existing = db.prepare('SELECT * FROM interview WHERE id = ?').get(id);
   if (!existing) throw new Error('Pohovor s daným ID neexistuje!');
 
   const cleanDatum = String(newDatum).trim().replace('T', ' ');
   if (!cleanDatum) throw new Error('Zadajte platný nový dátum a čas pohovoru.');
+
+  const parsedDate = new Date(cleanDatum.replace(' ', 'T'));
+  if (isNaN(parsedDate.getTime())) {
+    throw new Error('Neplatný formát dátumu a času.');
+  }
+
+  // Kontrola, aby termín pohovoru nebol v minulosti (tolerancia 60 sekúnd na odoslanie požiadavky)
+  if (!options?.allowPast && parsedDate.getTime() < Date.now() - 60000) {
+    throw new Error('Nový termín pohovoru nemôže byť v minulosti. Zadajte prosím budúci dátum a čas.');
+  }
 
   const oldDatum = existing.datum;
 

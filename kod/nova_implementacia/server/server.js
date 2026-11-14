@@ -347,7 +347,24 @@ async function handleRequest(req, res) {
         hr_id = caller.id;
       }
 
-      const datum = body.datum || new Date().toISOString().replace('T', ' ').substring(0, 16);
+      const rawDatum = body.datum || body.date;
+      if (!rawDatum) {
+        return sendJson(res, 400, { error: 'Zadajte termín pohovoru (dátum a čas).' });
+      }
+
+      const datum = String(rawDatum).trim().replace('T', ' ');
+      const parsedDate = new Date(datum.replace(' ', 'T'));
+      if (isNaN(parsedDate.getTime())) {
+        return sendJson(res, 400, { error: 'Neplatný formát dátumu a času.' });
+      }
+
+      // Kontrola, aby termín pohovoru nebol nastavený do minulosti (tolerancia 60 sekúnd na odoslanie požiadavky)
+      if (parsedDate.getTime() < Date.now() - 60000) {
+        return sendJson(res, 400, {
+          error: 'Termín pohovoru nemôže byť nastavený do minulosti. Zadajte prosím aktuálny alebo budúci dátum a čas (24-hodinový formát).'
+        });
+      }
+
       const meno_respondenta = body.meno_respondenta || body.respondentName || 'Uchádzač';
       const mail_respondenta = body.mail_respondenta || body.respondentEmail || 'uchadzac@example.com';
       const titul_pozicia = body.titul_pozicia || body.title || 'Pohovor';
@@ -482,8 +499,21 @@ async function handleRequest(req, res) {
         return sendJson(res, 400, { error: 'Zadajte nový dátum a čas pohovoru.' });
       }
 
+      const cleanDatum = String(datum).trim().replace('T', ' ');
+      const parsedDate = new Date(cleanDatum.replace(' ', 'T'));
+      if (isNaN(parsedDate.getTime())) {
+        return sendJson(res, 400, { error: 'Neplatný formát dátumu a času.' });
+      }
+
+      // Kontrola, aby nový termín nebol v minulosti
+      if (parsedDate.getTime() < Date.now() - 60000) {
+        return sendJson(res, 400, {
+          error: 'Nový termín pohovoru nemôže byť v minulosti. Zadajte prosím aktuálny alebo budúci dátum a čas (24-hodinový formát).'
+        });
+      }
+
       try {
-        const updated = dbModule.rescheduleInterview(id, datum, caller.username);
+        const updated = dbModule.rescheduleInterview(id, cleanDatum, caller.username);
         let emailResult = { ok: false };
         if (notifyCandidate !== false) {
           emailResult = await mailer.sendInterviewRescheduled(updated, updated.oldDatum, reason || '');
