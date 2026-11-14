@@ -865,10 +865,122 @@ let currentUser = null;
                         loadDatabaseLive();
                     }
                 } else {
-                    alert('Chyba pri odosielaní pripomienky: ' + (data.error || 'Neznáma chyba'));
+                    const err = data.error || 'Neznáma chyba';
+                    if (err.includes('BadCredentials') || err.includes('Heslo aplikácie') || err.includes('535')) {
+                        openEmailConfigModal(err, interviewId);
+                    } else {
+                        alert('Chyba pri odosielaní pripomienky: ' + err);
+                    }
                 }
             } catch (e) {
                 alert('Chyba komunikácie: ' + e.message);
+            }
+        }
+
+        let pendingRetryInterviewId = null;
+
+        async function openEmailConfigModal(errorNotice, retryInterviewId) {
+            pendingRetryInterviewId = retryInterviewId || null;
+            const modal = document.getElementById('emailConfigModal');
+            const statusBox = document.getElementById('smtpStatusBox');
+            if (!modal) return;
+
+            if (errorNotice && statusBox) {
+                statusBox.style.display = 'block';
+                statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                statusBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                statusBox.style.color = '#f87171';
+                statusBox.innerHTML = `<strong>⚠️ Google odmietol prihlásenie (BadCredentials):</strong><br>Google pre účet oncall.noreply@gmail.com vyžaduje namiesto bežného hesla 16-miestne <strong>Heslo aplikácie (App Password)</strong>. Získate ho na <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: #38bdf8; text-decoration: underline;">myaccount.google.com/apppasswords</a>.`;
+            } else if (statusBox) {
+                statusBox.style.display = 'none';
+            }
+
+            try {
+                const res = await fetch('/api/email/status');
+                const data = await res.json();
+                if (data.ok) {
+                    if (document.getElementById('smtpEmailInput')) {
+                        document.getElementById('smtpEmailInput').value = data.user || 'oncall.noreply@gmail.com';
+                    }
+                }
+            } catch (_) {}
+
+            modal.classList.add('active');
+        }
+
+        function closeEmailConfigModal() {
+            const modal = document.getElementById('emailConfigModal');
+            if (modal) modal.classList.remove('active');
+            pendingRetryInterviewId = null;
+        }
+
+        async function testSmtpConnection() {
+            const statusBox = document.getElementById('smtpStatusBox');
+            if (statusBox) {
+                statusBox.style.display = 'block';
+                statusBox.style.background = 'rgba(56, 189, 248, 0.1)';
+                statusBox.style.border = '1px solid rgba(56, 189, 248, 0.3)';
+                statusBox.style.color = '#38bdf8';
+                statusBox.innerHTML = '⏳ Overujem spojenie so serverom smtp.gmail.com...';
+            }
+
+            try {
+                const res = await fetch('/api/email/status');
+                const data = await res.json();
+                if (data.smtp && data.smtp.ok) {
+                    statusBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                    statusBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    statusBox.style.color = '#34d399';
+                    statusBox.innerHTML = '✅ SMTP spojenie a prihlasovacie údaje sú 100% overené a funkčné!';
+                } else {
+                    statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                    statusBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    statusBox.style.color = '#f87171';
+                    statusBox.innerHTML = `❌ Overenie zlyhalo: ${data.smtp?.error || 'Neznáma chyba'}`;
+                }
+            } catch (e) {
+                if (statusBox) {
+                    statusBox.style.color = '#f87171';
+                    statusBox.innerHTML = '❌ Chyba komunikácie so serverom: ' + e.message;
+                }
+            }
+        }
+
+        async function saveEmailConfig() {
+            const email = document.getElementById('smtpEmailInput')?.value?.trim();
+            const pass = document.getElementById('smtpPasswordInput')?.value?.trim();
+
+            if (!pass && !email) {
+                alert('Zadajte Heslo aplikácie alebo e-mail.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/email/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                    body: JSON.stringify({ user: email, pass: pass })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    if (data.smtp && data.smtp.ok) {
+                        alert('✅ ' + data.message);
+                        closeEmailConfigModal();
+                        if (pendingRetryInterviewId) {
+                            const retryId = pendingRetryInterviewId;
+                            pendingRetryInterviewId = null;
+                            sendInterviewReminder(retryId);
+                        }
+                    } else {
+                        alert('⚠️ ' + data.message);
+                        testSmtpConnection();
+                    }
+                } else {
+                    alert('Chyba: ' + (data.error || 'Nepodarilo sa uložiť konfiguráciu'));
+                }
+            } catch (e) {
+                alert('Chyba spojenia: ' + e.message);
             }
         }
 

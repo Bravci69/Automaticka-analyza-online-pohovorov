@@ -68,21 +68,24 @@ function getEmailConfig() {
   const cfg = loadConfig();
   const emailCfg = cfg.email || {};
 
-  const host = process.env.EMAIL_HOST || emailCfg.host || 'smtp.gmail.com';
-  const port = parseInt(process.env.EMAIL_PORT || emailCfg.port || '465', 10);
-  const secure = process.env.EMAIL_SECURE !== undefined 
-    ? process.env.EMAIL_SECURE === 'true' 
-    : (emailCfg.secure !== undefined ? emailCfg.secure : (port === 465));
+  const host = emailCfg.host || process.env.EMAIL_HOST || 'smtp.gmail.com';
+  const port = parseInt(emailCfg.port || process.env.EMAIL_PORT || '465', 10);
+  const secure = emailCfg.secure !== undefined 
+    ? emailCfg.secure 
+    : (process.env.EMAIL_SECURE !== undefined ? process.env.EMAIL_SECURE === 'true' : (port === 465));
 
-  const user = process.env.EMAIL_USER || emailCfg.user || 'oncall.noreply@gmail.com';
-  let pass = process.env.EMAIL_PASS || emailCfg.pass || 'Captain99@';
+  const user = emailCfg.user || process.env.EMAIL_USER || 'oncall.noreply@gmail.com';
+  let pass = emailCfg.pass || process.env.EMAIL_PASS || 'Captain99@';
   
   // Odstránenie medzier ak používateľ zadal Google App Password vo formáte "xxxx xxxx xxxx xxxx"
-  if (typeof pass === 'string' && pass.replace(/\s+/g, '').length === 16 && !pass.includes('@')) {
-    pass = pass.replace(/\s+/g, '');
+  if (typeof pass === 'string') {
+    pass = pass.trim();
+    if (pass.replace(/\s+/g, '').length === 16 && !pass.includes('@')) {
+      pass = pass.replace(/\s+/g, '');
+    }
   }
 
-  const from = process.env.EMAIL_FROM || emailCfg.from || `"Automatická analýza pohovorov (FIIT STU)" <${user}>`;
+  const from = emailCfg.from || process.env.EMAIL_FROM || `"Automatická analýza pohovorov (FIIT STU)" <${user}>`;
 
   return {
     host,
@@ -92,6 +95,59 @@ function getEmailConfig() {
     pass,
     from,
   };
+}
+
+function updateEmailConfig({ user, pass }) {
+  const configPath = path.join(__dirname, 'config.json');
+  let current = {};
+  try {
+    if (fs.existsSync(configPath)) {
+      current = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    }
+  } catch (_) {}
+
+  current.email = current.email || {};
+  if (user) {
+    current.email.user = user.trim();
+    process.env.EMAIL_USER = user.trim();
+  }
+  if (pass) {
+    let cleanPass = pass.trim();
+    if (cleanPass.replace(/\s+/g, '').length === 16 && !cleanPass.includes('@')) {
+      cleanPass = cleanPass.replace(/\s+/g, '');
+    }
+    current.email.pass = cleanPass;
+    process.env.EMAIL_PASS = cleanPass;
+  }
+  fs.writeFileSync(configPath, JSON.stringify(current, null, 2), 'utf8');
+
+  // Aktualizácia .env súboru ak existuje
+  const envPath = path.join(__dirname, '.env');
+  try {
+    let envContent = '';
+    if (fs.existsSync(envPath)) {
+      envContent = fs.readFileSync(envPath, 'utf8');
+      if (pass) {
+        if (/^EMAIL_PASS=.*/m.test(envContent)) {
+          envContent = envContent.replace(/^EMAIL_PASS=.*/m, `EMAIL_PASS=${current.email.pass}`);
+        } else {
+          envContent += `\nEMAIL_PASS=${current.email.pass}`;
+        }
+      }
+      if (user) {
+        if (/^EMAIL_USER=.*/m.test(envContent)) {
+          envContent = envContent.replace(/^EMAIL_USER=.*/m, `EMAIL_USER=${current.email.user}`);
+        } else {
+          envContent += `\nEMAIL_USER=${current.email.user}`;
+        }
+      }
+    } else {
+      envContent = `EMAIL_USER=${current.email.user || 'oncall.noreply@gmail.com'}\nEMAIL_PASS=${current.email.pass}\n`;
+    }
+    fs.writeFileSync(envPath, envContent.trim() + '\n', 'utf8');
+  } catch (_) {}
+
+  return getEmailConfig();
 }
 
 function createTransporter() {
@@ -264,6 +320,7 @@ async function sendTestEmail(toEmail) {
 
 module.exports = {
   getEmailConfig,
+  updateEmailConfig,
   verifySmtp,
   sendInterviewConfirmation,
   sendInterviewReminder,

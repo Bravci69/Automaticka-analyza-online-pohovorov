@@ -478,6 +478,33 @@ async function handleRequest(req, res) {
       }
     }
 
+    // POST /api/email/config - Uloženie nového hesla (App Password) / odosielateľa
+    if (pathname === '/api/email/config' && req.method === 'POST') {
+      const caller = getAuthUser(req) || { username: 'admin' };
+      const body = await parseJsonBody(req);
+      if (!body.pass && !body.user) {
+        return sendJson(res, 400, { error: 'Zadajte heslo (App Password) alebo email.' });
+      }
+
+      const updated = mailer.updateEmailConfig({ user: body.user, pass: body.pass });
+      const verifyResult = await mailer.verifySmtp();
+
+      dbModule.logAudit(
+        'EMAIL_KONFIGURACIA_ZMENENA',
+        caller.username,
+        `Zmenené nastavenia odosielateľa e-mailov (${updated.user}). Výsledok overenia SMTP: ${verifyResult.ok ? 'ÚSPEŠNÉ' : verifyResult.error}`
+      );
+
+      return sendJson(res, 200, {
+        ok: true,
+        user: updated.user,
+        smtp: verifyResult,
+        message: verifyResult.ok 
+          ? 'Heslo aplikácie bolo úspešne uložené a overené s Google SMTP!' 
+          : `Heslo bolo uložené, ale Google hlási: ${verifyResult.error}`,
+      });
+    }
+
     // PATCH /api/interviews/:id/vyhodnotenie - Zmena statusu vyhodnotenia
     if (pathname.match(/^\/api\/interviews\/\d+\/vyhodnotenie$/) && req.method === 'PATCH') {
       const caller = getAuthUser(req) || { username: 'admin' };
