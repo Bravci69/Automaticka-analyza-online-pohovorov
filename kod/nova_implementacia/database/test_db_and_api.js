@@ -183,8 +183,62 @@ async function runTests() {
   console.log(`   ✅ Postúpili: ${snapshot.stats.postupili}`);
   console.log(`   ✅ Audit logy: ${snapshot.tables.audit_logs.length}`);
 
-  // 13. Upratanie testovacích dát
-  console.log('\n1️⃣3️⃣ Čistenie testovacích záznamov...');
+  // 13. Test automatických pripomienok 1 deň pred pohovorom
+  console.log('\n1️⃣3️⃣ Test generovania a plánovania pripomienok (1 deň vopred)...');
+  const tomorrowDate = new Date(Date.now() + 23 * 3600 * 1000);
+  const tomorrowDatumStr = `${tomorrowDate.getFullYear()}-${String(tomorrowDate.getMonth() + 1).padStart(2, '0')}-${String(tomorrowDate.getDate()).padStart(2, '0')} ${String(tomorrowDate.getHours()).padStart(2, '0')}:${String(tomorrowDate.getMinutes()).padStart(2, '0')}`;
+
+  const tomorrowInterview = dbModule.createInterview({
+    datum: tomorrowDatumStr,
+    hr_id: adminAuth.id,
+    meno_respondenta: 'Kandidát Zajtrajší',
+    mail_respondenta: 'zajtra@example.com',
+    link_meeting: 'https://host2.fxcomputers.net:13191/meeting/bp-zajtra-test',
+    room_id: 'bp-zajtra-test',
+    titul_pozicia: 'AI Engineer',
+    vyhodnotenie: 'neprebehlo',
+    poznamky: 'Pohovor na zajtra pre test pripomienky',
+  }, 'admin');
+
+  // Overenie šablóny pripomienky
+  const reminderData = dbModule.generateInterviewReminder(tomorrowInterview);
+  if (!reminderData.subject.startsWith('Pripomienka: Zajtra o')) {
+    throw new Error(`❌ Predmet pripomienky nezodpovedá požiadavke! Dostal: ${reminderData.subject}`);
+  }
+  if (!reminderData.html.includes(tomorrowInterview.link_meeting) || !reminderData.text.includes(tomorrowInterview.link_meeting)) {
+    throw new Error('❌ Pripomienka neobsahuje link na online meeting!');
+  }
+  console.log(`   ✅ Predmet pripomienky: "${reminderData.subject}"`);
+  console.log(`   ✅ Pripomienka obsahuje presný čas: ${reminderData.time} a meeting link: ${tomorrowInterview.link_meeting}`);
+
+  // Overenie detekcie plánovačom
+  const pending = dbModule.getInterviewsNeedingReminder();
+  const foundInPending = pending.find(i => i.id === tomorrowInterview.id);
+  if (!foundInPending) {
+    throw new Error('❌ getInterviewsNeedingReminder nenašiel zajtrajší pohovor!');
+  }
+  console.log(`   ✅ Plánovač úspešne identifikoval zajtrajší pohovor #${tomorrowInterview.id} na odoslanie pripomienky.`);
+
+  // Označenie ako odoslané
+  dbModule.markReminderSent(tomorrowInterview.id, 'Testovací plánovač');
+  const fetchedReminderInt = dbModule.getInterviewById(tomorrowInterview.id);
+  if (fetchedReminderInt.reminder_sent !== 1 || !fetchedReminderInt.reminder_sent_at) {
+    throw new Error('❌ markReminderSent neaktualizoval stĺpce reminder_sent v databáze!');
+  }
+  console.log(`   ✅ Pohovor #${tomorrowInterview.id} má správne nastavené reminder_sent = 1 (odoslané o: ${fetchedReminderInt.reminder_sent_at}).`);
+
+  // Overenie že po označení už nie je v pending
+  const pendingAfter = dbModule.getInterviewsNeedingReminder();
+  if (pendingAfter.find(i => i.id === tomorrowInterview.id)) {
+    throw new Error('❌ Pohovor by už nemal byť v zozname čakajúcich pripomienok!');
+  }
+  console.log('   ✅ Pohovor bol správne vyradený zo zoznamu čakajúcich (zabránenie duplicitám).');
+
+  // Upratanie zajtrajšieho pohovoru
+  dbModule.deleteInterview(tomorrowInterview.id, 'admin');
+
+  // 14. Upratanie testovacích dát
+  console.log('\n1️⃣4️⃣ Čistenie testovacích záznamov...');
   dbModule.deleteInterview(newInterview.id, 'admin');
   console.log('   ✅ Testovacie záznamy boli vyčistené.');
 

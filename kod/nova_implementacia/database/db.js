@@ -78,6 +78,17 @@ function initDatabase() {
   const schemaSql = fs.readFileSync(SCHEMA_PATH, 'utf-8');
   db.exec(schemaSql);
 
+  // Migrácia schémy pre podporu pripomienok (reminder_sent)
+  try {
+    db.exec('ALTER TABLE interview ADD COLUMN reminder_sent INTEGER NOT NULL DEFAULT 0;');
+  } catch (_) {}
+  try {
+    db.exec('ALTER TABLE interview ADD COLUMN reminder_sent_at TEXT;');
+  } catch (_) {}
+  try {
+    db.exec('CREATE INDEX IF NOT EXISTS idx_interview_reminder ON interview(reminder_sent, datum);');
+  } catch (_) {}
+
   // 1. Predvyplnenie enum hodnôt vyhodnotenia
   const enumValues = [
     {
@@ -673,6 +684,129 @@ FIIT STU v Bratislave
   };
 }
 
+function generateInterviewReminder(interview) {
+  const formattedDatum = formatDateTimeSk(interview.datum);
+  const time = (() => {
+    try {
+      const d = new Date(interview.datum.replace(' ', 'T'));
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch (_) {
+      return '10:00';
+    }
+  })();
+  const title = interview.titul_pozicia || 'Online pohovor';
+  const subject = `Pripomienka: Zajtra o ${time} máte online pohovor – ${title}`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
+    .email-card { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06); }
+    .email-header { background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px 24px; color: white; text-align: center; }
+    .email-header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+    .email-header p { margin: 6px 0 0; opacity: 0.95; font-size: 13px; }
+    .badge-tomorrow { display: inline-block; background: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 20px; padding: 5px 16px; font-weight: 700; font-size: 13px; margin-top: 12px; }
+    .email-body { padding: 32px 28px; line-height: 1.6; }
+    .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #10b981; border-radius: 8px; padding: 18px 20px; margin: 24px 0; }
+    .info-row { display: flex; margin-bottom: 8px; font-size: 14px; }
+    .info-label { font-weight: 600; width: 140px; color: #64748b; }
+    .info-value { font-weight: 700; color: #0f172a; }
+    .btn-join { display: inline-block; background: #059669; color: #ffffff !important; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 15px; text-align: center; margin: 20px 0; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35); }
+    .btn-container { text-align: center; }
+    .notice { font-size: 12px; color: #64748b; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 6px; padding: 12px; margin-top: 20px; }
+    .email-footer { background: #f8fafc; padding: 16px 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="email-card">
+    <div class="email-header">
+      <h1>Pripomienka online pohovoru</h1>
+      <p>Automatická analýza pohovorov · FIIT Slovenská technická univerzita</p>
+      <div class="badge-tomorrow">⏰ Váš pohovor sa uskutoční ZAJTRA o ${escapeHtml(time)}</div>
+    </div>
+    <div class="email-body">
+      <p>Dobrý deň <strong>${escapeHtml(interview.meno_respondenta)}</strong>,</p>
+      <p>dovoľujeme si Vám pripomenúť, že <strong>zajtra o ${escapeHtml(time)}</strong> máte naplánovaný online výberový pohovor na pracovnú pozíciu <strong>${escapeHtml(title)}</strong>.</p>
+      
+      <div class="info-box">
+        <div class="info-row"><span class="info-label">📅 Dátum a čas:</span><span class="info-value">Zajtra (${escapeHtml(formattedDatum)})</span></div>
+        <div class="info-row"><span class="info-label">⏰ Presný čas:</span><span class="info-value" style="color: #059669; font-size: 16px;">${escapeHtml(time)}</span></div>
+        <div class="info-row"><span class="info-label">👔 HR Konzultant:</span><span class="info-value">${escapeHtml(interview.meno_hr)}</span></div>
+        <div class="info-row"><span class="info-label">💼 Pracovná pozícia:</span><span class="info-value">${escapeHtml(title)}</span></div>
+        <div class="info-row"><span class="info-label">🔑 ID miestnosti:</span><span class="info-value"><code>${escapeHtml(interview.room_id)}</code></span></div>
+      </div>
+
+      <div class="btn-container">
+        <a href="${interview.link_meeting}" class="btn-join">Vstúpiť do virtuálnej miestnosti</a>
+      </div>
+
+      <p style="font-size: 13px; color: #475569; word-break: break-all;">
+        Priamy odkaz na pripojenie k videohovoru:<br>
+        <a href="${interview.link_meeting}" style="color: #059669;">${interview.link_meeting}</a>
+      </p>
+
+      <div class="notice">
+        <strong>💡 Dôležité odporúčania pred zajtrajším pohovorom:</strong><br>
+        • Pripojte sa prosím 5 minút pred stanoveným časom (${escapeHtml(time)}).<br>
+        • Pohovor prebieha priamo vo webovom prehliadači, nie je nutné inštalovať žiadny program.<br>
+        • Počas hovoru prebieha automatická analýza očného kontaktu a reči – odporúčame otestovať si funkčnosť webkamery a mikrofónu a zabezpečiť si tiché, dobre osvetlené prostredie.
+      </div>
+    </div>
+    <div class="email-footer">
+      Tento pripomienkový email bol odoslaný automatickým systémom FIIT STU v Bratislave.<br>
+      © ${new Date().getFullYear()} FIIT STU Bratislava · Všetky práva vyhradené.
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const plainText = `
+Dobrý deň ${interview.meno_respondenta},
+
+Pripomíname Vám, že ZAJTRA o ${time} máte naplánovaný online výberový pohovor na pozíciu: ${title}
+
+📅 DÁTUM A ČAS: Zajtra (${formattedDatum})
+⏰ ČAS POHOVORU: ${time}
+👔 HR KONZULTANT: ${interview.meno_hr}
+💼 PRACOVNÁ POZÍCIA: ${title}
+🔑 ID MIESTNOSTI: ${interview.room_id}
+
+🌐 LINK NA PRIPOJENIE:
+${interview.link_meeting}
+
+💡 ODPORÚČANIA:
+- Pripojte sa prosím 5 minút pred stanoveným časom (${time}).
+- Uistite sa, že máte funkčnú kameru a mikrofón v tichom prostredí.
+
+S pozdravom,
+Tím automatickej analýzy online pohovorov
+FIIT STU v Bratislave
+  `.trim();
+
+  const ics = generateIcsContent(interview);
+
+  return {
+    subject,
+    recipientEmail: interview.mail_respondenta,
+    recipientName: interview.meno_respondenta,
+    hrName: interview.meno_hr,
+    datum: interview.datum,
+    formattedDatum,
+    time,
+    meetingUrl: interview.link_meeting,
+    html: htmlContent,
+    text: plainText,
+    ics,
+    sentAt: new Date().toISOString(),
+    status: 'pripravena',
+  };
+}
+
 function createInterview({
   datum,
   hr_id,
@@ -696,9 +830,10 @@ function createInterview({
   const res = db.prepare(`
     INSERT INTO interview (
       datum, hr_id, meno_hr, meno_respondenta, mail_respondenta,
-      link_meeting, room_id, titul_pozicia, vyhodnotenie, poznamky
+      link_meeting, room_id, titul_pozicia, vyhodnotenie, poznamky,
+      reminder_sent, reminder_sent_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)
   `).run(
     datum,
     hr_id,
@@ -741,6 +876,8 @@ function createInterview({
     titul_pozicia: titul_pozicia || 'Pohovor',
     vyhodnotenie,
     poznamky,
+    reminder_sent: 0,
+    reminder_sent_at: null,
   };
 
   const invitation = generateInterviewInvitation(createdInterviewData);
@@ -861,6 +998,68 @@ function getLiveDatabaseSnapshot() {
   };
 }
 
+function getInterviewsNeedingReminder() {
+  const rows = db.prepare(`
+    SELECT i.*, u.username as hr_username, u.mail as hr_mail
+    FROM interview i
+    JOIN users u ON i.hr_id = u.id
+    WHERE (i.reminder_sent = 0 OR i.reminder_sent IS NULL)
+      AND i.vyhodnotenie NOT IN ('nepostupil', 'postupil')
+    ORDER BY i.datum ASC
+  `).all();
+
+  const now = new Date();
+
+  return rows.filter(item => {
+    if (!item.datum) return false;
+    const itemDate = new Date(item.datum.replace(' ', 'T'));
+    if (isNaN(itemDate.getTime())) return false;
+
+    const diffMs = itemDate.getTime() - now.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    // Pohovor už prebehol alebo začína o menej ako 10 minút - neposielame "zajtra o..."
+    if (diffMs < 10 * 60 * 1000) return false;
+
+    // Musí byť v časovom horizonte maximálne 26 hodín dopredu
+    if (diffHours > 26) return false;
+
+    // Kontrola kalendárneho dňa "zajtra" (alebo do 24 hodín)
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const isTomorrowCalendarDay = (
+      itemDate.getFullYear() === tomorrow.getFullYear() &&
+      itemDate.getMonth() === tomorrow.getMonth() &&
+      itemDate.getDate() === tomorrow.getDate()
+    );
+
+    // Splnené, ak je pohovor zajtra a je to v okne 26 hodín, alebo ak diffHours <= 24 a diffHours >= 0.5
+    return (isTomorrowCalendarDay && diffHours <= 26) || (diffHours <= 24 && diffHours >= 0.5);
+  });
+}
+
+function markReminderSent(id, author = 'system') {
+  const existing = db.prepare('SELECT id, meno_respondenta, mail_respondenta, datum, link_meeting, titul_pozicia FROM interview WHERE id = ?').get(id);
+  if (!existing) return false;
+
+  db.prepare(`
+    UPDATE interview
+    SET reminder_sent = 1,
+        reminder_sent_at = datetime('now', 'localtime')
+    WHERE id = ?
+  `).run(id);
+
+  logAudit(
+    'EMAIL_PRIPOMIENKA_ODOSLANA',
+    author,
+    `Pripomienka na online pohovor "${existing.titul_pozicia}" (termín: ${existing.datum}) bola úspešne odoslaná na email ${existing.meno_respondenta} (${existing.mail_respondenta}). Link: ${existing.link_meeting}`
+  );
+
+  notifyDbChange('INTERVIEW_REMINDER_SENT', { interviewId: id, datum: existing.datum });
+  return true;
+}
+
 module.exports = {
   db,
   dbEvents,
@@ -878,6 +1077,9 @@ module.exports = {
   getInterviewByRoomId,
   getInterviewsByHr,
   generateInterviewInvitation,
+  generateInterviewReminder,
+  getInterviewsNeedingReminder,
+  markReminderSent,
   generateIcsContent,
   createInterview,
   updateInterviewEvaluation,

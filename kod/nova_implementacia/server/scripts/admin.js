@@ -733,6 +733,9 @@ let currentUser = null;
                             <div class="schedule-meta-row">
                                 <span>👔 HR: <strong>${escapeHtml(item.meno_hr)}</strong></span>
                                 <span class="status-badge-enum ${badgeClass}">${escapeHtml(item.vyhodnotenie)}</span>
+                                ${item.reminder_sent 
+                                    ? `<span style="font-size: 0.72rem; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">🔔 Pripomienka odoslaná</span>` 
+                                    : `<span style="font-size: 0.72rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.25);">⏳ Pripomienka čaká (1 deň vopred)</span>`}
                             </div>
                         </div>
 
@@ -742,6 +745,9 @@ let currentUser = null;
                             </button>
                             <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem;" onclick="openInvitationModal(${item.id})">
                                 ✉️ Pozvánka
+                            </button>
+                            <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; color: #38bdf8;" onclick="sendInterviewReminder(${item.id})" title="Odoslať pripomienku 1 deň pred pohovorom">
+                                🔔 Pripomienka
                             </button>
                             <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem;" onclick="downloadInterviewIcs(${item.id})">
                                 📅 .ics
@@ -832,9 +838,34 @@ let currentUser = null;
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    alert('✅ Pozvánka na pohovor bola úspešne opätovne odoslaná uchádzačovi!');
+                    alert('✅ ' + (data.message || 'Pozvánka na pohovor bola úspešne opätovne odoslaná uchádzačovi!'));
                 } else {
                     alert('Chyba pri odosielaní: ' + (data.error || 'Neznáma chyba'));
+                }
+            } catch (e) {
+                alert('Chyba komunikácie: ' + e.message);
+            }
+        }
+
+        async function sendModalReminder() {
+            if (!currentModalInterviewId) return;
+            await sendInterviewReminder(currentModalInterviewId);
+        }
+
+        async function sendInterviewReminder(interviewId) {
+            try {
+                const res = await fetch(`/api/interviews/${interviewId}/send-reminder`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('🔔 ' + (data.message || 'Pripomienka na online pohovor bola úspešne odoslaná!'));
+                    if (typeof loadDatabaseLive === 'function') {
+                        loadDatabaseLive();
+                    }
+                } else {
+                    alert('Chyba pri odosielaní pripomienky: ' + (data.error || 'Neznáma chyba'));
                 }
             } catch (e) {
                 alert('Chyba komunikácie: ' + e.message);
@@ -902,6 +933,9 @@ let currentUser = null;
                             </button>
                             <button class="btn-secondary" style="padding: 5px 8px; color: #34d399;" onclick="openInvitationModal(${item.id})" title="Pozvánka">
                                 ✉️
+                            </button>
+                            <button class="btn-secondary" style="padding: 5px 8px; color: #38bdf8;" onclick="sendInterviewReminder(${item.id})" title="Odoslať pripomienku 1 deň pred pohovorom">
+                                🔔
                             </button>
                             <button class="btn-secondary" style="padding: 5px 8px; color: var(--accent-red);" onclick="deleteInterview(${item.id})" title="Zmazať pohovor">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

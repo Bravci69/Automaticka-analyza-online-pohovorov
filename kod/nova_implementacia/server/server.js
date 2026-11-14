@@ -14,6 +14,10 @@ const crypto = require('node:crypto');
 // Načítanie databázového modulu
 const dbModule = require('../database/db');
 
+// Načítanie emailového a plánovacieho modulu
+const mailer = require('./mailer');
+const reminderCron = require('./reminder_cron');
+
 // Inicializácia DB schémy a seed admin účtu
 dbModule.initDatabase();
 
@@ -355,6 +359,11 @@ async function handleRequest(req, res) {
           caller.username
         );
 
+        // Automatické okamžité odoslanie e-mailovej pozvánky uchádzačovi pri naplánovaní pohovoru
+        mailer.sendInterviewConfirmation(interview).catch(mailErr => {
+          console.error('[Server] Chyba pri asynchrónnom odosielaní pozvánky:', mailErr);
+        });
+
         return sendJson(res, 201, {
           ...interview,
           roomId: interview.room_id,
@@ -405,12 +414,68 @@ async function handleRequest(req, res) {
         return sendJson(res, 404, { error: 'Pohovor neexistuje.' });
       }
       const invitation = dbModule.generateInterviewInvitation(interview);
-      dbModule.logAudit(
-        'POZVANKA_OPATOVNE_ODOSLANA',
-        caller.username,
-        `Pozvánka na pohovor #${id} bola opätovne odoslaná na email ${interview.meno_respondenta} (${interview.mail_respondenta}).`
-      );
-      return sendJson(res, 200, { ok: true, message: 'Pozvánka bola úspešne odoslaná.', invitation });
+      
+      // Skutočné odoslanie emailu cez SMTP
+      const sendResult = await mailer.sendInterviewConfirmation(interview);
+
+      return sendJson(res, 200, { 
+        ok: true, 
+        message: sendResult.ok ? 'Pozvánka bola úspešne odoslaná na e-mail uchádzača.' : `Pozvánka vygenerovaná, ale odoslanie zlyhalo: ${sendResult.error}`,
+        invitation,
+        emailSent: sendResult.ok,
+        emailError: sendResult.error || null,
+      });
+    }
+
+    // POST /api/interviews/:id/send-reminder - Manuálne odoslanie pripomienky na pohovor
+    if (pathname.match(/^\/api\/interviews\/\d+\/send-reminder$/) && req.method === 'POST') {
+      const caller = getAuthUser(req) || { username: 'admin' };
+      const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0]);
+      const interview = dbModule.getInterviewById(id);
+      if (!interview) {
+        return sendJson(res, 404, { error: 'Pohovor neexistuje.' });
+      }
+
+      const sendResult = await mailer.sendInterviewReminder(interview);
+      if (sendResult.ok) {
+        dbModule.markReminderSent(id, caller.username);
+        return sendJson(res, 200, {
+          ok: true,
+          message: `Pripomienka na pohovor o ${sendResult.reminderTime} bola úspešne odoslaná na e-mail ${interview.mail_respondenta}.`,
+          time: sendResult.reminderTime,
+        });
+      } else {
+        return sendJson(res, 500, {
+          ok: false,
+          error: `Zlyhalo odoslanie pripomienky: ${sendResult.error}`,
+        });
+      }
+    }
+
+    // GET /api/email/status - Overenie stavu e-mailovej konfigurácie a SMTP
+    if (pathname === '/api/email/status' && req.method === 'GET') {
+      const cfg = mailer.getEmailConfig();
+      const smtpVerify = await mailer.verifySmtp();
+      return sendJson(res, 200, {
+        ok: true,
+        user: cfg.user,
+        host: cfg.host,
+        port: cfg.port,
+        secure: cfg.secure,
+        smtp: smtpVerify,
+      });
+    }
+
+    // POST /api/email/test - Odoslanie testovacieho emailu
+    if (pathname === '/api/email/test' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const recipient = body.to || body.recipient;
+      const testResult = await mailer.sendTestEmail(recipient);
+      if (testResult.ok) {
+        return sendJson(res, 200, { ok: true, message: `Testovací e-mail úspešne odoslaný na ${testResult.to}` });
+      } else {
+        return sendJson(res, 500, { ok: false, error: testResult.error });
+      }
     }
 
     // PATCH /api/interviews/:id/vyhodnotenie - Zmena statusu vyhodnotenia
@@ -571,11 +636,17 @@ if (fs.existsSync(SSL_KEY_PATH) && fs.existsSync(SSL_CERT_PATH)) {
 
 server.listen(PORT, '0.0.0.0', () => {
   const protocol = isHttps ? 'https' : 'http';
+  const emailCfg = mailer.getEmailConfig();
   console.log(`
 ╔══════════════════════════════════════════════════════════╗
 ║  Analýza Online Pohovorov - Server & SQLite DB           ║
 ║  ${protocol}://0.0.0.0:${PORT}                                  ║
 ║  (Automatický redirect HTTP -> HTTPS aktívny)            ║
+║                                                          ║
+║  E-mail & Pripomienky:                                   ║
+║    Odosielateľ: ${emailCfg.user.padEnd(41)}║
+║    SMTP Server: ${(emailCfg.host + ':' + emailCfg.port).padEnd(41)}║
+║    Pripomienky: Automatické (1 deň pred pohovorom)       ║
 ║                                                          ║
 ║  Stránky:                                                ║
 ║    /           - Hlavná stránka                          ║
@@ -587,4 +658,7 @@ server.listen(PORT, '0.0.0.0', () => {
 ║    Predvolený účet: admin / admin (SUPERADMIN)           ║
 ╚══════════════════════════════════════════════════════════╝
   `);
+
+  // Spustenie automatického plánovača pripomienok (deň pred pohovorom)
+  reminderCron.startReminderScheduler(60000);
 });

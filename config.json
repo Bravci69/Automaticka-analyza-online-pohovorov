@@ -4,6 +4,13 @@
   "ssl": {
     "key": "kod/nova_implementacia/server/ssl/server.key",
     "cert": "kod/nova_implementacia/server/ssl/server.crt"
+  },
+  "email": {
+    "service": "gmail",
+    "host": "smtp.gmail.com",
+    "port": 465,
+    "secure": true,
+    "user": "oncall.noreply@gmail.com",
+    "pass": "Captain99@"
   }
 }
-

@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS interview (
     titul_pozicia TEXT NOT NULL DEFAULT 'Pohovor',
     vyhodnotenie TEXT NOT NULL DEFAULT 'neprebehlo',
     poznamky TEXT,
+    reminder_sent INTEGER NOT NULL DEFAULT 0,
+    reminder_sent_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (hr_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (vyhodnotenie) REFERENCES vyhodnotenie(kod) ON UPDATE CASCADE

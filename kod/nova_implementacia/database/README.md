@@ -59,16 +59,27 @@ Záznamy o dohodnutých pohovoroch s kandidátmi.
 - `titul_pozicia` (TEXT, NOT NULL) - názov pracovnej pozície
 - `vyhodnotenie` (TEXT, NOT NULL, FOREIGN KEY na `vyhodnotenie.kod`)
 - `poznamky` (TEXT)
+- `reminder_sent` (INTEGER, DEFAULT 0) - príznak odoslania automatickej pripomienky 1 deň pred pohovorom
+- `reminder_sent_at` (TEXT) - čas odoslania pripomienkového e-mailu
 - `created_at` (TEXT, NOT NULL)
 
 ### 5. `audit_logs`
-Sledovanie všetkých operácií v systéme v reálnom čase (vytvorenie používateľa, registrácia pohovoru, zmena vyhodnotenia, prihlásenie).
+Sledovanie všetkých operácií v systéme v reálnom čase (vytvorenie používateľa, registrácia pohovoru, odoslanie pozvánky/pripomienky, zmena vyhodnotenia, prihlásenie).
 
 ### 6. `interview_analyza`
 Ukladá multimodálne výsledky analýzy z Jitsi stretnutia (skóre pozornosti, dominantná emócia, počet výplňových slov).
 
 ### 7. `sessions`
 Ukladá trvalé prihlasovacie relácie s platnosťou 30 dní (`token`, `user_id`, `created_at`, `expires_at`). Zabezpečuje, že používateľ zostane prihlásený 30 dní aj po reštarte servera.
+
+---
+
+## 📧 Automatické e-mailové notifikácie a pripomienky
+
+1. **Okamžité potvrdenie po naplánovaní pohovoru:**
+   - Kandidátovi sa po vytvorení termínu okamžite odošle potvrdzujúci e-mail s detailmi, termínom, priradeným HR, priamym odkazom na meeting a kalendárovou pozvánkou (`.ics`).
+2. **Automatická pripomienka 1 deň pred pohovorom:**
+   - Integrovaný plánovač (`reminder_cron.js`) kontroluje v minútových intervaloch blížiace sa pohovory a 1 deň pred termínom automaticky odošle kandidátovi e-mail: *"Zajtra o XX:XX máte pohovor..."* spolu s priamym linkom do virtuálnej miestnosti.
 
 ---
 
