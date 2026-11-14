@@ -29,7 +29,9 @@ function loadConfig() {
   for (const p of possiblePaths) {
     try {
       if (fs.existsSync(p)) {
-        return JSON.parse(fs.readFileSync(p, 'utf8'));
+        let content = fs.readFileSync(p, 'utf8');
+        if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
+        return JSON.parse(content);
       }
     } catch (_) {}
   }
@@ -528,7 +530,8 @@ function escapeHtml(str) {
 
 function generateIcsContent(interview) {
   const parseDate = (dStr) => {
-    const d = new Date(dStr.replace(' ', 'T'));
+    if (!dStr) return new Date();
+    const d = new Date(String(dStr).replace(' ', 'T'));
     if (isNaN(d.getTime())) return new Date();
     return d;
   };

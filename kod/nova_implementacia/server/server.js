@@ -34,7 +34,9 @@ function loadConfig() {
     try {
       if (fs.existsSync(p)) {
         loadedConfigPath = p;
-        return JSON.parse(fs.readFileSync(p, 'utf8'));
+        let content = fs.readFileSync(p, 'utf8');
+        if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
+        return JSON.parse(content);
       }
     } catch (_) {}
   }

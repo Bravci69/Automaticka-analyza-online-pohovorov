@@ -27,7 +27,8 @@ function loadEnv() {
   for (const envPath of envPaths) {
     if (fs.existsSync(envPath)) {
       try {
-        const content = fs.readFileSync(envPath, 'utf8');
+        let content = fs.readFileSync(envPath, 'utf8');
+        if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
         for (const line of content.split('\n')) {
           const trimmed = line.trim();
           if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
@@ -57,7 +58,9 @@ function loadConfig() {
   for (const p of possiblePaths) {
     try {
       if (fs.existsSync(p)) {
-        return JSON.parse(fs.readFileSync(p, 'utf8'));
+        let content = fs.readFileSync(p, 'utf8');
+        if (content.charCodeAt(0) === 0xFEFF) content = content.slice(1);
+        return JSON.parse(content);
       }
     } catch (_) {}
   }
@@ -102,7 +105,9 @@ function updateEmailConfig({ user, pass }) {
   let current = {};
   try {
     if (fs.existsSync(configPath)) {
-      current = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      let raw = fs.readFileSync(configPath, 'utf8');
+      if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
+      current = JSON.parse(raw);
     }
   } catch (_) {}
 
@@ -196,7 +201,14 @@ async function verifySmtp() {
 // 1. Odoslanie potvrdzujúcej pozvánky pri naplánovaní pohovoru
 // =============================================================================
 
-async function sendInterviewConfirmation(interview) {
+async function sendInterviewConfirmation(interviewOrId) {
+  let interview = interviewOrId;
+  if (typeof interviewOrId === 'number' || typeof interviewOrId === 'string') {
+    interview = dbModule.getInterviewById(parseInt(interviewOrId, 10));
+  }
+  if (!interview) {
+    return { ok: false, error: 'Pohovor nebol nájdený v databáze.' };
+  }
   const cfg = getEmailConfig();
   const invitation = dbModule.generateInterviewInvitation(interview);
 
@@ -250,7 +262,14 @@ async function sendInterviewConfirmation(interview) {
 // 2. Odoslanie pripomienky 1 deň pred online pohovorom
 // =============================================================================
 
-async function sendInterviewReminder(interview) {
+async function sendInterviewReminder(interviewOrId) {
+  let interview = interviewOrId;
+  if (typeof interviewOrId === 'number' || typeof interviewOrId === 'string') {
+    interview = dbModule.getInterviewById(parseInt(interviewOrId, 10));
+  }
+  if (!interview) {
+    return { ok: false, error: 'Pohovor nebol nájdený v databáze.' };
+  }
   const cfg = getEmailConfig();
   const reminder = dbModule.generateInterviewReminder(interview);
 
