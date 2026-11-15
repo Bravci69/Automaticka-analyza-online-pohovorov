@@ -420,15 +420,7 @@ let currentUser = null;
             }
 
             // Rozbaľovací zoznam zamestnancov / HR pre modal "Pozvať kolegu"
-            const colleagueSelect = document.getElementById('colleagueSelectUser');
-            if (colleagueSelect && users) {
-                const curColVal = colleagueSelect.value;
-                colleagueSelect.innerHTML = '<option value="">-- Vyberte zamestnanca zo zoznamu (voliteľné) --</option>' +
-                    users.filter(u => u.mail).map(u => `
-                        <option value="${escapeHtml(u.mail)}">${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)} &lt;${escapeHtml(u.mail)}&gt; (${escapeHtml(u.ures_tag)})</option>
-                    `).join('');
-                if (curColVal) colleagueSelect.value = curColVal;
-            }
+            populateColleagueSelect();
         }
 
         // -------------------------------------------------------------
@@ -1933,34 +1925,17 @@ let currentUser = null;
             if (!select) return;
 
             const users = (lastSnapshot && lastSnapshot.tables && lastSnapshot.tables.users) ? lastSnapshot.tables.users : [];
-            const superadmins = users.filter(u => u.ures_tag === 'SUPERADMIN');
-            const hrAdmins = users.filter(u => u.ures_tag !== 'SUPERADMIN');
+            const curVal = select.value;
+            const validUsers = users.filter(u => u.mail && ((u.meno && u.meno.trim()) || (u.priezvisko && u.priezvisko.trim())));
 
-            let html = '<option value="">-- Vyberte osobu z HR / Superadmin tímu --</option>';
-
-            if (superadmins.length > 0) {
-                html += '<optgroup label="👑 Superadmini">';
-                html += superadmins.map(u => {
-                    const mailText = u.mail ? ` · ${escapeHtml(u.mail)}` : '';
-                    return `<option value="${escapeHtml(u.mail || '')}" data-name="${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)}" data-role="SUPERADMIN" data-username="${escapeHtml(u.username)}">
-                        ${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)} (Superadmin)${mailText}
-                    </option>`;
-                }).join('');
-                html += '</optgroup>';
-            }
-
-            if (hrAdmins.length > 0) {
-                html += '<optgroup label="👔 HR Personalisti / Admini">';
-                html += hrAdmins.map(u => {
-                    const mailText = u.mail ? ` · ${escapeHtml(u.mail)}` : '';
-                    return `<option value="${escapeHtml(u.mail || '')}" data-name="${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)}" data-role="${escapeHtml(u.ures_tag)}" data-username="${escapeHtml(u.username)}">
-                        ${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)} (${escapeHtml(u.ures_tag)})${mailText}
-                    </option>`;
-                }).join('');
-                html += '</optgroup>';
-            }
+            let html = '<option value="">-- Vyberte člena tímu --</option>';
+            html += validUsers.map(u => {
+                const fullName = `${(u.meno || '').trim()} ${(u.priezvisko || '').trim()}`.trim() || (u.username || 'Používateľ');
+                return `<option value="${escapeHtml(u.mail || '')}" data-name="${escapeHtml(fullName)}" data-role="${escapeHtml(u.ures_tag || '')}" data-username="${escapeHtml(u.username || '')}">${escapeHtml(fullName)}</option>`;
+            }).join('');
 
             select.innerHTML = html;
+            if (curVal) select.value = curVal;
         }
 
         function onColleagueUserSelected(email) {

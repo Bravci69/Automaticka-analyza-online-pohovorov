@@ -1006,7 +1006,7 @@
                     Vyberte člena z HR adminov alebo Superadminov: <span style="color: #f87171;">*</span>
                 </label>
                 <select id="colleagueSelectUser" class="select-input" onchange="onColleagueUserSelected(this.value)">
-                    <option value="">-- Vyberte osobu z HR / Superadmin tímu --</option>
+                    <option value="">-- Vyberte člena tímu --</option>
                     <!-- Dynamicky naplnené z tables.users (Superadmini + HR) -->
                 </select>
                 <div id="colleagueUserPreviewBox" style="margin-top: 8px; font-size: 0.8rem; background: var(--bg-surface); border: 1px dashed var(--border-subtle); border-radius: 6px; padding: 8px 12px; color: var(--text-muted); display: none;"></div>
@@ -1025,10 +1025,10 @@
 
             <!-- Rola / Poznámka -->
             <div style="margin-bottom: 14px;">
-                <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">
+                <label for="colleagueNoteInput" style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">
                     Rola / Poznámka pre zamestnanca:
                 </label>
-                <input type="text" id="colleagueNoteInput" class="input-text" value="Pozorovateľ / Team Leader – účasť na technickom pohovore a počúvanie" />
+                <textarea id="colleagueNoteInput" class="input-text" rows="2" style="width: 100%; box-sizing: border-box; min-height: 58px; resize: vertical; line-height: 1.45; padding: 10px 12px; font-family: inherit; font-size: 0.88rem;">Pozorovateľ / Team Leader – účasť na technickom pohovore a počúvanie</textarea>
             </div>
 
             <div style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 8px;">
