@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS interview (
     titul_pozicia TEXT NOT NULL DEFAULT 'Pohovor',
     vyhodnotenie TEXT NOT NULL DEFAULT 'neprebehlo',
     poznamky TEXT,
+    dalsie_maily TEXT,
     reminder_sent INTEGER NOT NULL DEFAULT 0,
     reminder_sent_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),

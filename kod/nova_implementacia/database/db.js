@@ -134,6 +134,17 @@ function initDatabase() {
     stmtEnum.run(item.kod, item.nazov, item.farba, item.popis);
   }
 
+  // 1b. Migrácia tabuľky interview pre stĺpec dalsie_maily (ďalší zamestnanci / teamleaderi)
+  try {
+    const interviewCols = db.prepare("PRAGMA table_info(interview)").all();
+    if (!interviewCols.some(c => c.name === 'dalsie_maily')) {
+      db.prepare("ALTER TABLE interview ADD COLUMN dalsie_maily TEXT").run();
+      console.log('✅ Doplnený stĺpec dalsie_maily do tabuľky interview');
+    }
+  } catch (err) {
+    console.error('Chyba kontroly stĺpca dalsie_maily:', err.message);
+  }
+
   // 2. Kontrola a vytvorenie 1. používateľa: admin / admin (SUPERADMIN)
   const existingAdmin = db.prepare('SELECT id FROM users WHERE username = ?').get('admin');
 
@@ -583,6 +594,23 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+function parseEmailList(input) {
+  if (!input) return [];
+  if (Array.isArray(input)) {
+    return Array.from(new Set(
+      input
+        .map(e => String(e).trim().toLowerCase())
+        .filter(e => e.includes('@') && e.length > 3)
+    ));
+  }
+  return Array.from(new Set(
+    String(input)
+      .split(/[,;\s]+/)
+      .map(e => e.trim().toLowerCase())
+      .filter(e => e.includes('@') && e.length > 3)
+  ));
+}
+
 function generateIcsContent(interview, options = {}) {
   const parseDate = (dStr) => {
     if (!dStr) return new Date();
@@ -754,6 +782,143 @@ FIIT STU v Bratislave
     ics,
     sentAt: new Date().toISOString(),
     status: 'odoslana',
+  };
+}
+
+function generateColleagueInvitation(interview, options = {}) {
+  const formattedDatum = formatDateTimeSk(interview.datum);
+  const title = interview.titul_pozicia || 'Online pohovor';
+  const roleName = options.role || 'Pozorovateľ / Člen tímu';
+  const customNote = options.note || 'Boli ste prizvaný ako člen tímu / pozorovateľ na tento online výberový pohovor, aby ste mohli sledovať odpovede a reakcie kandidáta.';
+  const subject = `Pozvánka na online pohovor (Účasť tímu / Team Leader): ${title} – FIIT STU`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
+    .email-card { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06); }
+    .email-header { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 30px 24px; color: white; text-align: center; }
+    .email-header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+    .email-header p { margin: 6px 0 0; opacity: 0.9; font-size: 13px; }
+    .email-body { padding: 32px 28px; }
+    .greeting { font-size: 16px; font-weight: 600; margin-bottom: 14px; color: #0f172a; }
+    .text-p { font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 16px; }
+    .team-badge { display: inline-block; background: #ede9fe; color: #6d28d9; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; margin-bottom: 16px; }
+    .details-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px 20px; margin: 20px 0; }
+    .detail-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px dashed #e2e8f0; font-size: 13.5px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: #64748b; font-weight: 500; }
+    .detail-val { color: #0f172a; font-weight: 600; text-align: right; }
+    .btn-container { text-align: center; margin: 28px 0 20px; }
+    .meeting-btn { display: inline-block; background: #6d28d9; color: #ffffff !important; text-decoration: none; padding: 13px 32px; border-radius: 8px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 14px rgba(109, 40, 217, 0.35); }
+    .meeting-btn:hover { background: #5b21b6; }
+    .link-fallback { background: #f1f5f9; border-radius: 6px; padding: 10px 12px; font-family: monospace; font-size: 12px; word-break: break-all; color: #334155; margin-top: 10px; }
+    .note-box { background: #fdf4ff; border-left: 4px solid #a855f7; padding: 12px 14px; border-radius: 4px; margin: 18px 0; font-size: 13px; color: #701a75; }
+    .ics-hint { font-size: 12px; color: #64748b; margin-top: 20px; text-align: center; }
+    .footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; text-align: center; font-size: 11.5px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="email-card">
+    <div class="email-header">
+      <h1>Pozvánka na online pohovor pre tím</h1>
+      <p>Systém automatickej multimodálnej analýzy pohovorov · FIIT STU</p>
+    </div>
+    <div class="email-body">
+      <div class="team-badge">👥 ÚČASŤ TÍMU / POZOROVATEĽ</div>
+      <div class="greeting">Dobrý deň,</div>
+      <p class="text-p">
+        Boli ste prizvaný ako <strong>${escapeHtml(roleName)}</strong> na online výberový pohovor. Môžete sa pripojiť priamo cez odkaz nižšie, sledovať odpovede a reakcie kandidáta v reálnom čase a podieľať sa na vyhodnotení.
+      </p>
+
+      <div class="note-box">
+        <strong>Poznámka / Účel účasti:</strong><br>
+        ${escapeHtml(customNote)}
+      </div>
+
+      <div class="details-box">
+        <div class="detail-row">
+          <span class="detail-label">Pracovná pozícia:</span>
+          <span class="detail-val" style="color: #6d28d9;">${escapeHtml(interview.titul_pozicia || 'Pohovor')}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Kandidát (Uchádzač):</span>
+          <span class="detail-val">${escapeHtml(interview.meno_respondenta)} (${escapeHtml(interview.mail_respondenta)})</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Termín pohovoru:</span>
+          <span class="detail-val" style="color: #059669;">${formattedDatum}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Zodpovedný HR konzultant:</span>
+          <span class="detail-val">${escapeHtml(interview.meno_hr)}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Kód miestnosti (Room ID):</span>
+          <span class="detail-val">${escapeHtml(interview.room_id)}</span>
+        </div>
+      </div>
+
+      <div class="btn-container">
+        <a href="${interview.link_meeting}" class="meeting-btn" target="_blank">
+          Pripojiť sa k pohovoru
+        </a>
+        <div class="link-fallback">${interview.link_meeting}</div>
+      </div>
+
+      <p class="ics-hint">
+        📅 <strong>Kalendár:</strong> V prílohe nájdete súbor <code>.ics</code> pre automatické pridanie termínu do Vášho Google Calendar, Outlook alebo Apple Calendar.
+      </p>
+    </div>
+    <div class="footer">
+      FIIT Slovenská technická univerzita v Bratislave · Projekt automatickej analýzy online pohovorov<br>
+      Tento e-mail bol vygenerovaný automaticky na základe pozvánky od personalistu.
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const plainText = `
+Pozvánka na online pohovor (Účasť tímu / Team Leader)
+======================================================
+Dobrý deň,
+
+boli ste prizvaný ako ${roleName} na online výberový pohovor:
+
+- Pracovná pozícia: ${interview.titul_pozicia || 'Pohovor'}
+- Kandidát: ${interview.meno_respondenta} (${interview.mail_respondenta})
+- Termín: ${formattedDatum}
+- HR konzultant: ${interview.meno_hr}
+- Účel / Poznámka: ${customNote}
+
+Priamy odkaz na pripojenie k videohovoru:
+${interview.link_meeting}
+Kód miestnosti: ${interview.room_id}
+
+V prílohe nájdete súbor .ics pre automatické pridanie do Vášho kalendára.
+
+Automatická analýza online pohovorov · FIIT STU
+  `.trim();
+
+  const ics = generateIcsContent(interview, {
+    summary: `Online pohovor (Tím): ${interview.titul_pozicia || 'Pohovor'} – ${interview.meno_respondenta}`,
+    description: `Online pohovor na pozíciu ${interview.titul_pozicia || 'Pohovor'}.\\nKandidát: ${interview.meno_respondenta} (${interview.mail_respondenta})\\nHR: ${interview.meno_hr}\\nRola: ${roleName}\\n\\nOdkaz na videohovor:\\n${interview.link_meeting}`,
+  });
+
+  return {
+    subject,
+    recipientEmail: options.recipientEmail || '',
+    role: roleName,
+    note: customNote,
+    formattedDatum,
+    html: htmlContent,
+    text: plainText,
+    ics,
+    sentAt: new Date().toISOString(),
   };
 }
 
@@ -1096,6 +1261,7 @@ function createInterview({
   titul_pozicia,
   vyhodnotenie = 'neprebehlo',
   poznamky = '',
+  dalsie_maily = '',
 }, author = 'admin', options = {}) {
   if (!datum || !hr_id || !meno_respondenta || !mail_respondenta || !link_meeting || !room_id) {
     throw new Error('Chýbajú povinné údaje pre pohovor!');
@@ -1116,14 +1282,16 @@ function createInterview({
   if (!hrUser) throw new Error('Zadaný HR používateľ neexistuje!');
 
   const meno_hr = `${hrUser.meno} ${hrUser.priezvisko}`;
+  const cleanDalsieMaily = dalsie_maily ? parseEmailList(dalsie_maily).join(', ') : null;
 
   const res = db.prepare(`
     INSERT INTO interview (
       datum, hr_id, meno_hr, meno_respondenta, mail_respondenta,
       link_meeting, room_id, titul_pozicia, vyhodnotenie, poznamky,
+      dalsie_maily,
       reminder_sent, reminder_sent_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)
   `).run(
     datum,
     hr_id,
@@ -1134,7 +1302,8 @@ function createInterview({
     room_id,
     titul_pozicia || 'Pohovor',
     vyhodnotenie,
-    poznamky
+    poznamky,
+    cleanDalsieMaily
   );
 
   const interviewId = Number(res.lastInsertRowid);
@@ -1150,7 +1319,7 @@ function createInterview({
   logAudit(
     'VYTVORENIE_INTERVIEW',
     author,
-    `Vytvorený pohovor "${titul_pozicia || 'Pohovor'}" pre kandidáta "${meno_respondenta}" (HR: ${meno_hr}, Kód: ${room_id})`
+    `Vytvorený pohovor "${titul_pozicia || 'Pohovor'}" pre kandidáta "${meno_respondenta}" (HR: ${meno_hr}, Kód: ${room_id})${cleanDalsieMaily ? ' [Pozvaní kolegovia: ' + cleanDalsieMaily + ']' : ''}`
   );
 
   // Automatické vygenerovanie a odoslanie pozvánky na pohovor
@@ -1166,6 +1335,7 @@ function createInterview({
     titul_pozicia: titul_pozicia || 'Pohovor',
     vyhodnotenie,
     poznamky,
+    dalsie_maily: cleanDalsieMaily,
     reminder_sent: 0,
     reminder_sent_at: null,
   };
@@ -1184,6 +1354,27 @@ function createInterview({
     ...createdInterviewData,
     invitation,
   };
+}
+
+function addInterviewColleague(id, emails, author = 'admin') {
+  const existing = db.prepare('SELECT id, room_id, meno_respondenta, titul_pozicia, dalsie_maily FROM interview WHERE id = ?').get(id);
+  if (!existing) throw new Error('Pohovor neexistuje.');
+
+  const currentList = parseEmailList(existing.dalsie_maily);
+  const toAdd = parseEmailList(emails);
+  const combined = Array.from(new Set([...currentList, ...toAdd]));
+  const updatedStr = combined.length > 0 ? combined.join(', ') : null;
+
+  db.prepare('UPDATE interview SET dalsie_maily = ? WHERE id = ?').run(updatedStr, id);
+
+  logAudit(
+    'POZVANKA_KOLEGOVI_PRIDANA',
+    author,
+    `K pohovoru #${id} (${existing.titul_pozicia}) boli priradení ďalší zamestnanci / pozorovatelia: ${toAdd.join(', ')}`
+  );
+
+  notifyDbChange('INTERVIEW_COLLEAGUES_UPDATED', { interviewId: id, dalsie_maily: updatedStr });
+  return { id, dalsie_maily: updatedStr, added: toAdd };
 }
 
 function updateInterviewEvaluation(id, vyhodnotenie, author = 'admin') {
@@ -1452,7 +1643,9 @@ module.exports = {
   getInterviewById,
   getInterviewByRoomId,
   getInterviewsByHr,
+  parseEmailList,
   generateInterviewInvitation,
+  generateColleagueInvitation,
   generateInterviewReminder,
   generateInterviewReschedule,
   generateInterviewCancellation,
@@ -1460,6 +1653,7 @@ module.exports = {
   markReminderSent,
   generateIcsContent,
   createInterview,
+  addInterviewColleague,
   rescheduleInterview,
   cancelInterview,
   updateInterviewEvaluation,

@@ -259,6 +259,75 @@ async function sendInterviewConfirmation(interviewOrId) {
 }
 
 // =============================================================================
+// 1b. Odoslanie pozvánky na pohovor kolegovi / tímu / teamleaderovi
+// =============================================================================
+
+async function sendColleagueInvitation(interviewOrId, recipientEmail, options = {}) {
+  let interview = interviewOrId;
+  if (typeof interviewOrId === 'number' || typeof interviewOrId === 'string') {
+    interview = dbModule.getInterviewById(parseInt(interviewOrId, 10));
+  }
+  if (!interview) {
+    return { ok: false, error: 'Pohovor nebol nájdený v databáze.' };
+  }
+  if (!recipientEmail || typeof recipientEmail !== 'string' || !recipientEmail.includes('@')) {
+    return { ok: false, error: 'Neplatná e-mailová adresa zamestnanca.' };
+  }
+
+  const cleanEmail = recipientEmail.trim();
+  const cfg = getEmailConfig();
+  const colleagueInv = dbModule.generateColleagueInvitation(interview, {
+    recipientEmail: cleanEmail,
+    role: options.role || 'Pozorovateľ / Člen tímu',
+    note: options.note || options.poznámka || '',
+  });
+
+  const mailOptions = {
+    from: cfg.from,
+    to: cleanEmail,
+    subject: colleagueInv.subject,
+    text: colleagueInv.text,
+    html: colleagueInv.html,
+    attachments: [
+      {
+        filename: `tim-pohovor-${interview.room_id || interview.id}.ics`,
+        content: colleagueInv.ics,
+        contentType: 'text/calendar; charset=utf-8; method=REQUEST',
+      },
+    ],
+  };
+
+  try {
+    const transporter = createTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Mailer] ✅ Pozvánka pre tím/teamleadera na pohovor #${interview.id} úspešne odoslaná na: ${cleanEmail} (MessageId: ${info.messageId})`);
+
+    dbModule.logAudit(
+      'EMAIL_POZVANKA_KOLEGOVI',
+      options.author || 'Mailer',
+      `E-mailová pozvánka na pohovor "${interview.titul_pozicia}" (Kandidát: ${interview.meno_respondenta}) úspešne odoslaná kolegovi: ${cleanEmail}. Link: ${interview.link_meeting}`
+    );
+
+    return { ok: true, messageId: info.messageId, sentTo: cleanEmail };
+  } catch (err) {
+    console.error(`[Mailer] ❌ Chyba pri odosielaní pozvánky kolegovi na ${cleanEmail}:`, err.message);
+
+    let extraNote = '';
+    if (err.message && err.message.includes('BadCredentials')) {
+      extraNote = ' (Google vyžaduje Heslo aplikácie / App Password)';
+    }
+
+    dbModule.logAudit(
+      'EMAIL_CHYBA',
+      options.author || 'Mailer',
+      `Nepodarilo sa odoslať pozvánku kolegovi na ${cleanEmail}: ${err.message}${extraNote}`
+    );
+
+    return { ok: false, error: err.message + extraNote };
+  }
+}
+
+// =============================================================================
 // 2. Odoslanie pripomienky 1 deň pred online pohovorom
 // =============================================================================
 
@@ -292,6 +361,26 @@ async function sendInterviewReminder(interviewOrId) {
     const transporter = createTransporter();
     const info = await transporter.sendMail(mailOptions);
     console.log(`[Mailer] ✅ Pripomienkový e-mail pre pohovor #${interview.id} (zajtra o ${reminder.time}) odoslaný na: ${interview.mail_respondenta} (MessageId: ${info.messageId})`);
+
+    // Odoslanie pripomienky aj ďalším pozvaným zamestnancom / tímu
+    if (interview.dalsie_maily) {
+      const colleagues = dbModule.parseEmailList(interview.dalsie_maily);
+      for (const cEmail of colleagues) {
+        try {
+          await transporter.sendMail({
+            from: cfg.from,
+            to: cEmail,
+            subject: `Pripomienka (Účasť tímu): Zajtra o ${reminder.time} je online pohovor – ${interview.titul_pozicia || 'Pohovor'}`,
+            text: `Dobrý deň,\n\npripomíname Vám, že zajtra o ${reminder.time} sa koná online výberový pohovor, na ktorý ste boli prizvaný ako člen tímu.\n\nKandidát: ${interview.meno_respondenta} (${interview.mail_respondenta})\nPracovná pozícia: ${interview.titul_pozicia || 'Pohovor'}\nHR Konzultant: ${interview.meno_hr}\n\nPriamy odkaz na pripojenie:\n${interview.link_meeting}\nKód miestnosti: ${interview.room_id}\n\nV prílohe nájdete kalendárový záznam (.ics).`,
+            html: reminder.html,
+            attachments: mailOptions.attachments,
+          });
+          console.log(`[Mailer] 🔔 Pripomienka odoslaná aj kolegovi: ${cEmail}`);
+        } catch (cErr) {
+          console.warn(`[Mailer] Varovanie: Pripomienku sa nepodarilo odoslať kolegovi ${cEmail}:`, cErr.message);
+        }
+      }
+    }
 
     return { ok: true, messageId: info.messageId, reminderTime: reminder.time };
   } catch (err) {
@@ -347,6 +436,26 @@ async function sendInterviewRescheduled(interviewOrId, oldDatum, reason = '') {
       `E-mail s novým termínom "${interview.datum}" pohovoru "${interview.titul_pozicia}" úspešne odoslaný uchádzačovi ${interview.meno_respondenta} (${interview.mail_respondenta}).`
     );
 
+    // Notifikácia o presune aj ďalším pozvaným kolegom
+    if (interview.dalsie_maily) {
+      const colleagues = dbModule.parseEmailList(interview.dalsie_maily);
+      for (const cEmail of colleagues) {
+        try {
+          await transporter.sendMail({
+            from: cfg.from,
+            to: cEmail,
+            subject: `Zmena termínu (Účasť tímu): ${rescheduled.subject}`,
+            text: rescheduled.text,
+            html: rescheduled.html,
+            attachments: mailOptions.attachments,
+          });
+          console.log(`[Mailer] 🗓️ Informácia o presune termínu odoslaná aj kolegovi: ${cEmail}`);
+        } catch (cErr) {
+          console.warn(`[Mailer] Varovanie: Presun termínu sa nepodarilo odoslať kolegovi ${cEmail}:`, cErr.message);
+        }
+      }
+    }
+
     return { ok: true, messageId: info.messageId, newDatum: interview.datum };
   } catch (err) {
     console.error(`[Mailer] ❌ Chyba pri odosielaní e-mailu o presune termínu na ${interview.mail_respondenta}:`, err.message);
@@ -395,6 +504,26 @@ async function sendInterviewCancelled(interviewOrId, reason = '') {
       `E-mail o zrušení pohovoru "${interview.titul_pozicia}" úspešne odoslaný uchádzačovi ${interview.meno_respondenta} (${interview.mail_respondenta}).`
     );
 
+    // Notifikácia o zrušení aj ďalším pozvaným kolegom
+    if (interview.dalsie_maily) {
+      const colleagues = dbModule.parseEmailList(interview.dalsie_maily);
+      for (const cEmail of colleagues) {
+        try {
+          await transporter.sendMail({
+            from: cfg.from,
+            to: cEmail,
+            subject: `Zrušenie pohovoru (Účasť tímu): ${cancelled.subject}`,
+            text: cancelled.text,
+            html: cancelled.html,
+            attachments: mailOptions.attachments,
+          });
+          console.log(`[Mailer] ❌ Informácia o zrušení pohovoru odoslaná aj kolegovi: ${cEmail}`);
+        } catch (cErr) {
+          console.warn(`[Mailer] Varovanie: Zrušenie pohovoru sa nepodarilo odoslať kolegovi ${cEmail}:`, cErr.message);
+        }
+      }
+    }
+
     return { ok: true, messageId: info.messageId };
   } catch (err) {
     console.error(`[Mailer] ❌ Chyba pri odosielaní e-mailu o zrušení pohovoru na ${interview.mail_respondenta}:`, err.message);
@@ -438,6 +567,7 @@ module.exports = {
   updateEmailConfig,
   verifySmtp,
   sendInterviewConfirmation,
+  sendColleagueInvitation,
   sendInterviewReminder,
   sendInterviewRescheduled,
   sendInterviewCancelled,

@@ -418,6 +418,17 @@ let currentUser = null;
             else if (currentUser && select.querySelector(`option[value="${currentUser.id}"]`)) {
                 select.value = currentUser.id;
             }
+
+            // Rozbaľovací zoznam zamestnancov / HR pre modal "Pozvať kolegu"
+            const colleagueSelect = document.getElementById('colleagueSelectUser');
+            if (colleagueSelect && users) {
+                const curColVal = colleagueSelect.value;
+                colleagueSelect.innerHTML = '<option value="">-- Vyberte zamestnanca zo zoznamu (voliteľné) --</option>' +
+                    users.filter(u => u.mail).map(u => `
+                        <option value="${escapeHtml(u.mail)}">${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)} &lt;${escapeHtml(u.mail)}&gt; (${escapeHtml(u.ures_tag)})</option>
+                    `).join('');
+                if (curColVal) colleagueSelect.value = curColVal;
+            }
         }
 
         // -------------------------------------------------------------
@@ -719,6 +730,11 @@ let currentUser = null;
                                     </select>
                                 </span>
                             </div>
+                            ${item.dalsie_maily ? `
+                            <div style="margin-top: 6px; font-size: 0.76rem; color: #c4b5fd; display: flex; align-items: center; gap: 5px;">
+                                <span>👥 <strong>Pozvaní kolegovia:</strong></span>
+                                <span>${escapeHtml(item.dalsie_maily)}</span>
+                            </div>` : ''}
                         </div>
 
                         <div class="schedule-actions">
@@ -737,6 +753,10 @@ let currentUser = null;
                                     <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
                                 </svg>
                                 Link
+                            </button>
+
+                            <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem; color: #a78bfa;" onclick="openInviteColleagueModal(${item.id})" title="Poslať pozvánku ďalším zamestnancom / teamleaderovi">
+                                👥 Pozvať kolegu
                             </button>
 
                             <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem; color: #34d399;" onclick="openInvitationModal(${item.id})" title="Zobraziť odoslanú e-mailovú pozvánku a termín">
@@ -807,11 +827,19 @@ let currentUser = null;
                                     ? `<span style="font-size: 0.72rem; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">🔔 Pripomienka odoslaná</span>` 
                                     : `<span style="font-size: 0.72rem; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.25);">⏳ Pripomienka čaká (1 deň vopred)</span>`}
                             </div>
+                            ${item.dalsie_maily ? `
+                            <div style="margin-top: 6px; font-size: 0.76rem; color: #c4b5fd; display: flex; align-items: center; gap: 5px;">
+                                <span>👥 <strong>Pozvaní kolegovia:</strong></span>
+                                <span>${escapeHtml(item.dalsie_maily)}</span>
+                            </div>` : ''}
                         </div>
 
                         <div class="schedule-actions">
                             <button type="button" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.open('${item.link_meeting}', '_blank')">
                                 Vstúpiť
+                            </button>
+                            <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; color: #a78bfa;" onclick="openInviteColleagueModal(${item.id})" title="Poslať pozvánku ďalším zamestnancom / teamleaderovi">
+                                👥 Pozvať kolegu
                             </button>
                             <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem;" onclick="openInvitationModal(${item.id})">
                                 ✉️ Pozvánka
@@ -1104,6 +1132,7 @@ let currentUser = null;
                         <td style="font-weight: 700; color: #fff;">${escapeHtml(item.titul_pozicia || 'Pohovor')}</td>
                         <td>
                             <div style="font-weight: 600;">${escapeHtml(item.meno_respondenta)}</div>
+                            ${item.dalsie_maily ? `<div style="font-size: 0.72rem; color: #a78bfa; margin-top: 3px;" title="Pozvaní kolegovia: ${escapeHtml(item.dalsie_maily)}">👥 ${escapeHtml(item.dalsie_maily)}</div>` : ''}
                         </td>
                         <td><span style="color: var(--text-muted); font-size: 0.8rem;">${escapeHtml(item.mail_respondenta)}</span></td>
                         <td>
@@ -1134,6 +1163,9 @@ let currentUser = null;
                                     <line x1="10" x2="21" y1="14" y2="3"/>
                                 </svg>
                                 Vstúpiť
+                            </button>
+                            <button class="btn-secondary" style="padding: 5px 8px; color: #a78bfa;" onclick="openInviteColleagueModal(${item.id})" title="Pozvať kolegu / teamleadera na pohovor">
+                                👥
                             </button>
                             <button class="btn-secondary" style="padding: 5px 8px; color: #34d399;" onclick="openInvitationModal(${item.id})" title="Pozvánka">
                                 ✉️
@@ -1398,6 +1430,7 @@ let currentUser = null;
 
             const vyhodnotenie = document.getElementById('intVyhodnotenie').value;
             const poznamky = document.getElementById('intPoznamky').value.trim();
+            const dalsieMaily = document.getElementById('intDalsieMaily') ? document.getElementById('intDalsieMaily').value.trim() : '';
             let customRoom = document.getElementById('intCustomRoom').value.trim();
 
             const isSuper = currentUser && currentUser.ures_tag === 'SUPERADMIN';
@@ -1427,6 +1460,7 @@ let currentUser = null;
                         datum: datum,
                         vyhodnotenie: vyhodnotenie,
                         poznamky: poznamky,
+                        dalsie_maily: dalsieMaily,
                         roomId: customRoom || undefined
                     })
                 });
@@ -1451,7 +1485,11 @@ let currentUser = null;
                 document.getElementById('copyBtnText').textContent = 'Kopírovať odkaz';
 
                 if (alertText) {
-                    alertText.innerHTML = `✉️ Automatická pozvánka s presným časom (<strong>${data.datum}</strong>) bola odoslaná na e-mail: <strong>${escapeHtml(respondentEmail)}</strong>.`;
+                    let alertHtml = `✉️ Automatická pozvánka s presným časom (<strong>${data.datum}</strong>) bola odoslaná na e-mail: <strong>${escapeHtml(respondentEmail)}</strong>.`;
+                    if (dalsieMaily) {
+                        alertHtml += `<br>👥 Pozvánka bola odoslaná aj tímu / pozorovateľom: <strong>${escapeHtml(dalsieMaily)}</strong>.`;
+                    }
+                    alertText.innerHTML = alertHtml;
                 }
 
                 // Reset formulára
@@ -1459,6 +1497,7 @@ let currentUser = null;
                 document.getElementById('intRespondentName').value = '';
                 document.getElementById('intRespondentEmail').value = '';
                 document.getElementById('intPoznamky').value = '';
+                if (document.getElementById('intDalsieMaily')) document.getElementById('intDalsieMaily').value = '';
                 document.getElementById('intCustomRoom').value = '';
 
                 // Aktualizácia dát a kalendára
@@ -1850,6 +1889,166 @@ let currentUser = null;
                 statusBox.textContent = '❌ Chyba: ' + err.message;
                 btn.disabled = false;
                 btn.textContent = 'Potvrdiť zrušenie pohovoru';
+            }
+        }
+
+        // -------------------------------------------------------------
+        // LOGIKA MODALU: Pozvať kolegu / teamleadera na pohovor
+        // -------------------------------------------------------------
+
+        let currentColleagueInterviewId = null;
+
+        function openInviteColleagueModal(interviewId) {
+            const item = findInterviewById(interviewId);
+            if (!item) {
+                alert('Pohovor nebol nájdený.');
+                return;
+            }
+            currentColleagueInterviewId = interviewId;
+
+            document.getElementById('colleagueModalJob').textContent = item.titul_pozicia || 'Pohovor';
+            document.getElementById('colleagueModalCandidate').textContent = `${item.meno_respondenta} (${item.mail_respondenta})`;
+            document.getElementById('colleagueModalDate').textContent = item.datum;
+            document.getElementById('colleagueModalCurrentList').textContent = item.dalsie_maily || 'Zatiaľ žiadni';
+
+            const emailInput = document.getElementById('colleagueEmailInput');
+            if (emailInput) emailInput.value = '';
+
+            const userSelect = document.getElementById('colleagueSelectUser');
+            if (userSelect) userSelect.value = '';
+
+            const noteInput = document.getElementById('colleagueNoteInput');
+            if (noteInput) noteInput.value = 'Pozorovateľ / Team Leader – účasť na technickom pohovore a počúvanie';
+
+            const statusBox = document.getElementById('colleagueStatusBox');
+            if (statusBox) {
+                statusBox.style.display = 'none';
+                statusBox.textContent = '';
+            }
+
+            const btnConfirm = document.getElementById('btnConfirmSendColleague');
+            if (btnConfirm) {
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                    Odoslať pozvánku e-mailom
+                `;
+            }
+
+            document.getElementById('inviteColleagueModal').classList.add('active');
+        }
+
+        function closeInviteColleagueModal() {
+            document.getElementById('inviteColleagueModal').classList.remove('active');
+            currentColleagueInterviewId = null;
+        }
+
+        function openInviteColleagueFromModal() {
+            if (currentModalInterviewId) {
+                const id = currentModalInterviewId;
+                closeInvitationModal();
+                openInviteColleagueModal(id);
+            }
+        }
+
+        function onSelectColleagueUser(email) {
+            if (!email) return;
+            const input = document.getElementById('colleagueEmailInput');
+            if (!input) return;
+            const current = input.value.trim();
+            if (!current) {
+                input.value = email;
+            } else {
+                const parts = current.split(/[,;\s]+/).map(p => p.trim());
+                if (!parts.includes(email)) {
+                    input.value = current + ', ' + email;
+                }
+            }
+        }
+
+        async function submitInviteColleague() {
+            if (!currentColleagueInterviewId) return;
+
+            const emailInput = document.getElementById('colleagueEmailInput');
+            const emails = emailInput ? emailInput.value.trim() : '';
+            if (!emails) {
+                alert('Zadajte prosím e-mailovú adresu kolegu alebo teamleadera.');
+                if (emailInput) emailInput.focus();
+                return;
+            }
+
+            const noteInput = document.getElementById('colleagueNoteInput');
+            const note = noteInput ? noteInput.value.trim() : '';
+            const saveToDb = document.getElementById('colleagueSaveToDb') ? document.getElementById('colleagueSaveToDb').checked : true;
+
+            const statusBox = document.getElementById('colleagueStatusBox');
+            const btnConfirm = document.getElementById('btnConfirmSendColleague');
+
+            if (btnConfirm) {
+                btnConfirm.disabled = true;
+                btnConfirm.innerHTML = '⏳ Odosielam pozvánku...';
+            }
+
+            if (statusBox) {
+                statusBox.style.display = 'block';
+                statusBox.style.background = 'rgba(56, 189, 248, 0.15)';
+                statusBox.style.color = '#38bdf8';
+                statusBox.style.border = '1px solid rgba(56, 189, 248, 0.3)';
+                statusBox.textContent = 'Odosielam e-mail cez SMTP server na zadané adresy...';
+            }
+
+            try {
+                const res = await fetch(`/api/interviews/${currentColleagueInterviewId}/invite-colleague`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        emails: emails,
+                        note: note,
+                        saveToInterview: saveToDb
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || 'Zlyhalo odoslanie pozvánky.');
+                }
+
+                if (statusBox) {
+                    statusBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                    statusBox.style.color = '#34d399';
+                    statusBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    statusBox.textContent = `✅ ${data.message || 'Pozvánka úspešne odoslaná!'}`;
+                }
+
+                alert(`✅ Pozvánka na online pohovor bola úspešne odoslaná zamestnancovi:\n${data.sentTo.join(', ')}`);
+                setTimeout(() => {
+                    closeInviteColleagueModal();
+                    loadLiveDb();
+                }, 1000);
+            } catch (err) {
+                if (statusBox) {
+                    statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                    statusBox.style.color = '#f87171';
+                    statusBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    statusBox.textContent = `Chyba: ${err.message}`;
+                }
+                alert(`Chyba pri odosielaní pozvánky: ${err.message}`);
+                if (btnConfirm) {
+                    btnConfirm.disabled = false;
+                    btnConfirm.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                        Odoslať pozvánku e-mailom
+                    `;
+                }
             }
         }
 

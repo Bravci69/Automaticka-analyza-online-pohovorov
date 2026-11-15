@@ -362,8 +362,61 @@ async function runTests() {
   // Upratanie testovacieho pohovoru
   dbModule.deleteInterview(reschedInt.id, 'admin');
 
-  // 15. Upratanie testovacích dát
-  console.log('\n1️⃣5️⃣ Čistenie testovacích záznamov...');
+  // 15. Test pozvania ďalších zamestnancov / teamleadera na pohovor
+  console.log('\n1️⃣5️⃣ Test pozvania ďalších zamestnancov / teamleadera na pohovor...');
+  
+  // 15.1 Test parseEmailList
+  const parsedEmails = dbModule.parseEmailList('teamleader@firma.sk, kolega@firma.sk; sef@firma.sk   teamleader@firma.sk');
+  if (parsedEmails.length !== 3 || !parsedEmails.includes('teamleader@firma.sk') || !parsedEmails.includes('kolega@firma.sk')) {
+    throw new Error('❌ parseEmailList nefunguje správne!');
+  }
+  console.log('   ✅ parseEmailList správne rozparsoval a odduplikoval adresy: ' + parsedEmails.join(', '));
+
+  // 15.2 Vytvorenie pohovoru s priamym zadaním ďalších zamestnancov
+  const adminUserForTest = dbModule.getAllUsers().find(u => u.username === 'admin') || { id: 1 };
+  const teamInterview = dbModule.createInterview({
+    datum: '2026-12-05 14:00',
+    hr_id: adminUserForTest.id,
+    meno_respondenta: 'Kandidát s tímom',
+    mail_respondenta: 'kandidat.tim@example.com',
+    link_meeting: 'https://host2.fxcomputers.net:13192/meeting/bp-tim-test',
+    room_id: 'bp-tim-test',
+    titul_pozicia: 'Tech Lead / Python Guru',
+    dalsie_maily: 'teamleader@firma.sk, techlead@firma.sk',
+  }, 'admin');
+
+  if (!teamInterview.dalsie_maily || !teamInterview.dalsie_maily.includes('teamleader@firma.sk')) {
+    throw new Error('❌ dalsie_maily neboli uložené pri vytvorení pohovoru!');
+  }
+  console.log('   ✅ Pohovor úspešne vytvorený s kolegami: ' + teamInterview.dalsie_maily);
+
+  // 15.3 Pridanie ďalšieho kolegu k existujúcemu pohovoru (addInterviewColleague)
+  const addResult = dbModule.addInterviewColleague(teamInterview.id, 'observer.novak@firma.sk', 'admin');
+  if (!addResult.dalsie_maily.includes('observer.novak@firma.sk') || !addResult.dalsie_maily.includes('teamleader@firma.sk')) {
+    throw new Error('❌ addInterviewColleague nepridal kolegu správne!');
+  }
+  console.log('   ✅ addInterviewColleague úspešne priradil nového pozorovateľa: ' + addResult.dalsie_maily);
+
+  // 15.4 Test generovania pozvánky pre kolegu (generateColleagueInvitation)
+  const colleagueMail = dbModule.generateColleagueInvitation(teamInterview, {
+    recipientEmail: 'teamleader@firma.sk',
+    role: 'Team Leader',
+    note: 'Účasť na technickej časti pohovoru a počúvanie',
+  });
+
+  if (!colleagueMail.subject.includes('Účasť tímu / Team Leader') || !colleagueMail.html.includes('teamleader@firma.sk') && !colleagueMail.html.includes('Pozvánka na online pohovor pre tím')) {
+    throw new Error('❌ generateColleagueInvitation nevygenerovala očakávanú šablónu!');
+  }
+  if (!colleagueMail.ics || !colleagueMail.ics.includes('BEGIN:VCALENDAR')) {
+    throw new Error('❌ generateColleagueInvitation neobsahuje .ics kalendár!');
+  }
+  console.log('   ✅ Šablóna pozvánky pre tím / teamleadera a .ics kalendár vygenerované na 100%.');
+
+  // Upratanie tímového testovacieho pohovoru
+  dbModule.deleteInterview(teamInterview.id, 'admin');
+
+  // 16. Upratanie testovacích dát
+  console.log('\n1️⃣6️⃣ Čistenie testovacích záznamov...');
   dbModule.deleteInterview(newInterview.id, 'admin');
   console.log('   ✅ Testovacie záznamy boli vyčistené.');
 

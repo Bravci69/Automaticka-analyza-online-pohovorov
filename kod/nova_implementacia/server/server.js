@@ -370,6 +370,7 @@ async function handleRequest(req, res) {
       const titul_pozicia = body.titul_pozicia || body.title || 'Pohovor';
       const vyhodnotenie = body.vyhodnotenie || 'neprebehlo';
       const poznamky = body.poznamky || '';
+      const dalsie_maily = body.dalsie_maily || body.colleagues || '';
 
       try {
         const interview = dbModule.createInterview(
@@ -383,6 +384,7 @@ async function handleRequest(req, res) {
             titul_pozicia,
             vyhodnotenie,
             poznamky,
+            dalsie_maily,
           },
           caller.username
         );
@@ -391,6 +393,20 @@ async function handleRequest(req, res) {
         mailer.sendInterviewConfirmation(interview).catch(mailErr => {
           console.error('[Server] Chyba pri asynchrónnom odosielaní pozvánky:', mailErr);
         });
+
+        // Ak boli zadaní ďalší zamestnanci / teamleader, automaticky odošleme pozvánku aj im
+        if (interview.dalsie_maily) {
+          const colleagueEmails = dbModule.parseEmailList(interview.dalsie_maily);
+          for (const cEmail of colleagueEmails) {
+            mailer.sendColleagueInvitation(interview, cEmail, {
+              role: 'Team Leader / Pozorovateľ',
+              author: caller.username,
+              note: 'Boli ste priradený ako člen tímu / pozorovateľ na tento online pohovor.',
+            }).catch(colleagueErr => {
+              console.error(`[Server] Chyba pri asynchrónnom odosielaní pozvánky kolegovi ${cEmail}:`, colleagueErr);
+            });
+          }
+        }
 
         return sendJson(res, 201, {
           ...interview,
@@ -478,6 +494,73 @@ async function handleRequest(req, res) {
           error: `Zlyhalo odoslanie pripomienky: ${sendResult.error}`,
         });
       }
+    }
+
+    // POST /api/interviews/:id/invite-colleague - Odoslanie pozvánky na pohovor ďalšiemu zamestnancovi / teamleaderovi
+    if (pathname.match(/^\/api\/interviews\/\d+\/invite-colleague$/) && req.method === 'POST') {
+      const caller = getAuthUser(req) || { username: 'admin', ures_tag: 'SUPERADMIN', id: 1 };
+      const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0], 10);
+      const interview = dbModule.getInterviewById(id);
+      if (!interview) {
+        return sendJson(res, 404, { error: 'Pohovor neexistuje.' });
+      }
+
+      if (!canManageInterview(caller, interview)) {
+        return sendJson(res, 403, { error: 'Nemáte oprávnenie posielať pozvánky k tomuto pohovoru. Môžete upravovať iba svoje vlastné pohovory.' });
+      }
+
+      const body = await parseJsonBody(req);
+      const rawEmails = body.emails || body.email || '';
+      const emailList = dbModule.parseEmailList(rawEmails);
+
+      if (emailList.length === 0) {
+        return sendJson(res, 400, { error: 'Zadajte aspoň jednu platnú e-mailovú adresu zamestnanca (napr. teamleader@firma.sk).' });
+      }
+
+      const note = body.note || body.poznamka || 'Účasť na online výberovom pohovore (počúvanie a sledovanie reakcií kandidáta)';
+      const role = body.role || 'Pozorovateľ / Člen tímu';
+      const saveToInterview = body.saveToInterview !== false;
+
+      const sentTo = [];
+      const errors = [];
+
+      for (const recipientEmail of emailList) {
+        try {
+          const mailRes = await mailer.sendColleagueInvitation(interview, recipientEmail, {
+            note,
+            role,
+            author: caller.username,
+          });
+          if (mailRes.ok) {
+            sentTo.push(recipientEmail);
+          } else {
+            errors.push(`${recipientEmail}: ${mailRes.error || 'Chyba odoslania'}`);
+          }
+        } catch (mErr) {
+          errors.push(`${recipientEmail}: ${mErr.message}`);
+        }
+      }
+
+      let updatedInterview = interview;
+      if (saveToInterview && sentTo.length > 0) {
+        dbModule.addInterviewColleague(id, sentTo, caller.username);
+        updatedInterview = dbModule.getInterviewById(id);
+      }
+
+      if (sentTo.length === 0 && errors.length > 0) {
+        return sendJson(res, 500, {
+          ok: false,
+          error: `Nepodarilo sa odoslať pozvánku: ${errors.join('; ')}`,
+        });
+      }
+
+      return sendJson(res, 200, {
+        ok: true,
+        sentTo,
+        errors: errors.length > 0 ? errors : undefined,
+        message: `Pozvánka na online pohovor bola úspešne odoslaná ${sentTo.length} zamestnancovi / zamestnancom: ${sentTo.join(', ')}.`,
+        interview: updatedInterview,
+      });
     }
 
     // POST /api/interviews/:id/reschedule - Presun pohovoru na iný dátum alebo čas

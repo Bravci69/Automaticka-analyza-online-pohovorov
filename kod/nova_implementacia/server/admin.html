@@ -231,14 +231,22 @@
 
                 <div class="form-grid-3" style="margin-bottom: 20px;">
                     <div class="field-group" style="grid-column: span 2;">
-                        <label class="field-label" for="intPoznamky">Poznámky k pohovoru (voliteľné)</label>
-                        <input type="text" id="intPoznamky" class="input-text" placeholder="napr. Zamerať sa na otázky k architektúre systémov a reakčnému času." />
+                        <label class="field-label" for="intDalsieMaily">
+                            Ďalší účastníci / Team Leader (e-maily oddelené čiarkou, voliteľné)
+                        </label>
+                        <input type="text" id="intDalsieMaily" class="input-text" placeholder="napr. teamleader@firma.sk, kolega@firma.sk" />
+                        <span class="input-hint">Pozvaní zamestnanci automaticky dostanú pozvánku s odkazom a kalendárom (.ics), aby sa mohli pripojiť a počúvať.</span>
                     </div>
 
                     <div class="field-group">
                         <label class="field-label" for="intCustomRoom">Kód miestnosti (voliteľné)</label>
                         <input type="text" id="intCustomRoom" class="input-text" placeholder="nechajte prázdne pre automatický" />
                         <span class="input-hint">Ponechajte prázdne pre automatický bp-xxxx-xxxx-xxxx</span>
+                    </div>
+
+                    <div class="field-group" style="grid-column: span 3;">
+                        <label class="field-label" for="intPoznamky">Poznámky k pohovoru (voliteľné)</label>
+                        <input type="text" id="intPoznamky" class="input-text" placeholder="napr. Zamerať sa na otázky k architektúre systémov a reakčnému času." />
                     </div>
                 </div>
 
@@ -785,6 +793,9 @@
                     <button type="button" class="btn-secondary" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);" onclick="sendModalReminder()" title="Odoslať pripomienku na zajtrajší pohovor">
                         🔔 Odoslať pripomienku
                     </button>
+                    <button type="button" class="btn-secondary" style="color: #a78bfa; border-color: rgba(167, 139, 250, 0.4);" onclick="openInviteColleagueFromModal()" title="Pozvať kolegu alebo teamleadera, aby sa pripojil na tento pohovor">
+                        👥 Pozvať kolegu / tím
+                    </button>
                 </div>
                 <button type="button" class="btn-secondary" onclick="closeInvitationModal()">Zavrieť</button>
             </div>
@@ -938,6 +949,78 @@
                 <button type="button" class="btn-secondary" onclick="closeCancelInterviewModal()">Ponechať pohovor</button>
                 <button type="button" class="btn-primary" style="background: #dc2626;" id="btnConfirmCancel" onclick="submitCancelInterview()">
                     Potvrdiť zrušenie pohovoru
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. MODAL: Pozvať kolegu / teamleadera na pohovor -->
+    <div class="modal-overlay" id="inviteColleagueModal">
+        <div class="modal-dialog" style="max-width: 560px;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #a78bfa;">👥</span> Pozvať kolegu / teamleadera na pohovor
+                    </h3>
+                    <p style="margin: 4px 0 0; color: var(--text-dim); font-size: 0.85rem;">
+                        Odošle e-mailovú pozvánku s odkazom na videohovor a kalendárom (.ics) ďalšiemu zamestnancovi, aby sa mohol pripojiť a počúvať.
+                    </p>
+                </div>
+                <button class="modal-close-btn" onclick="closeInviteColleagueModal()">&times;</button>
+            </div>
+
+            <!-- Prehľad pohovoru -->
+            <div style="background: var(--bg-surface); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 16px; font-size: 0.85rem;">
+                <div style="color: var(--text-dim); margin-bottom: 4px;">Pohovor: <strong style="color: #fff;" id="colleagueModalJob"></strong></div>
+                <div style="color: var(--text-dim); margin-bottom: 4px;">Kandidát: <strong style="color: #fff;" id="colleagueModalCandidate"></strong></div>
+                <div style="color: var(--text-dim); margin-bottom: 4px;">Termín: <strong style="color: #34d399;" id="colleagueModalDate"></strong></div>
+                <div style="color: var(--text-dim);">Aktuálne pozvaní kolegovia: <strong style="color: #c4b5fd;" id="colleagueModalCurrentList">Žiadni</strong></div>
+            </div>
+
+            <!-- Rýchly výber zo systému -->
+            <div style="margin-bottom: 14px;">
+                <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">
+                    Rýchly výber registrovaného zamestnanca / HR:
+                </label>
+                <select id="colleagueSelectUser" class="select-input" onchange="onSelectColleagueUser(this.value)">
+                    <option value="">-- Vyberte zamestnanca zo zoznamu (voliteľné) --</option>
+                    <!-- Dynamicky naplnené z tables.users -->
+                </select>
+            </div>
+
+            <!-- Vstupné pole pre e-maily -->
+            <div style="margin-bottom: 14px;">
+                <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">
+                    E-mailová adresa zamestnanca (alebo viaceré oddelené čiarkou): <span style="color: #f87171;">*</span>
+                </label>
+                <input type="text" id="colleagueEmailInput" class="input-text" placeholder="napr. teamleader@firma.sk, techlead@firma.sk" required />
+            </div>
+
+            <!-- Rola / Poznámka -->
+            <div style="margin-bottom: 14px;">
+                <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">
+                    Rola / Poznámka pre zamestnanca:
+                </label>
+                <input type="text" id="colleagueNoteInput" class="input-text" value="Pozorovateľ / Team Leader – účasť na technickom pohovore a počúvanie" />
+            </div>
+
+            <div style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 8px;">
+                <input type="checkbox" id="colleagueSaveToDb" checked style="margin-top: 3px;" />
+                <label for="colleagueSaveToDb" style="font-size: 0.8rem; color: var(--text-muted); cursor: pointer; line-height: 1.4;">
+                    Uložiť k pohovoru (zamestnanci budú automaticky dostávať aj pripomienku 1 deň vopred a informáciu pri prípadnom presunutí termínu)
+                </label>
+            </div>
+
+            <div id="colleagueStatusBox" style="padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 16px; display: none;"></div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn-secondary" onclick="closeInviteColleagueModal()">Zavrieť</button>
+                <button type="button" class="btn-primary" style="background: #7c3aed;" id="btnConfirmSendColleague" onclick="submitInviteColleague()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                    Odoslať pozvánku e-mailom
                 </button>
             </div>
         </div>
