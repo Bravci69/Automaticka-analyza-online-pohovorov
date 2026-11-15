@@ -1017,7 +1017,10 @@
                 <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">
                     E-mailová adresa zamestnanca / teamleadera: <span style="color: #f87171;">*</span>
                 </label>
-                <input type="text" id="colleagueEmailInput" class="input-text" placeholder="napr. teamleader@firma.sk, techlead@firma.sk" />
+                <input type="text" id="colleagueEmailInput" class="input-text" placeholder="napr. teamleader@firma.sk, techlead@firma.sk" oninput="checkColleagueSelfEmail()" />
+                <div id="colleagueSelfEmailWarning" style="margin-top: 6px; font-size: 0.78rem; color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; padding: 6px 10px; display: none;">
+                    ⚠️ Nemôžete pozvať samého seba na pohovor (zadaná vaša vlastná e-mailová adresa).
+                </div>
                 <span class="input-hint" style="font-size: 0.74rem; color: var(--text-dim); display: block; margin-top: 4px;">
                     Môžete zadať jednu alebo viacero e-mailových adries oddelených čiarkou.
                 </span>

@@ -1926,7 +1926,17 @@ let currentUser = null;
 
             const users = (lastSnapshot && lastSnapshot.tables && lastSnapshot.tables.users) ? lastSnapshot.tables.users : [];
             const curVal = select.value;
-            const validUsers = users.filter(u => u.mail && ((u.meno && u.meno.trim()) || (u.priezvisko && u.priezvisko.trim())));
+            const validUsers = users.filter(u => {
+                if (!u.mail) return false;
+                if (!((u.meno && u.meno.trim()) || (u.priezvisko && u.priezvisko.trim()))) return false;
+                // Vylúčiť aktuálne prihláseného používateľa (nemôže pozvať samého seba)
+                if (currentUser) {
+                    if (currentUser.id && u.id === currentUser.id) return false;
+                    if (currentUser.username && u.username === currentUser.username) return false;
+                    if (currentUser.mail && u.mail.trim().toLowerCase() === currentUser.mail.trim().toLowerCase()) return false;
+                }
+                return true;
+            });
 
             let html = '<option value="">-- Vyberte člena tímu --</option>';
             html += validUsers.map(u => {
@@ -1935,7 +1945,34 @@ let currentUser = null;
             }).join('');
 
             select.innerHTML = html;
-            if (curVal) select.value = curVal;
+            if (curVal && select.querySelector(`option[value="${curVal}"]`)) {
+                select.value = curVal;
+            } else {
+                select.value = '';
+            }
+        }
+
+        function checkColleagueSelfEmail() {
+            const input = document.getElementById('colleagueEmailInput');
+            const warning = document.getElementById('colleagueSelfEmailWarning');
+            if (!input || !warning) return false;
+
+            if (!currentUser || !currentUser.mail) {
+                warning.style.display = 'none';
+                return false;
+            }
+
+            const myMail = currentUser.mail.trim().toLowerCase();
+            const rawVal = input.value || '';
+            const typedEmails = rawVal.split(/[,;\s]+/).map(e => e.trim().toLowerCase()).filter(Boolean);
+
+            if (typedEmails.includes(myMail)) {
+                warning.style.display = 'block';
+                return true;
+            } else {
+                warning.style.display = 'none';
+                return false;
+            }
         }
 
         function onColleagueUserSelected(email) {
@@ -1991,6 +2028,9 @@ let currentUser = null;
 
             const emailInput = document.getElementById('colleagueEmailInput');
             if (emailInput) emailInput.value = '';
+
+            const selfWarn = document.getElementById('colleagueSelfEmailWarning');
+            if (selfWarn) selfWarn.style.display = 'none';
 
             const noteInput = document.getElementById('colleagueNoteInput');
             if (noteInput) noteInput.value = 'Pozorovateľ / Team Leader – účasť na technickom pohovore a počúvanie';
@@ -2056,6 +2096,29 @@ let currentUser = null;
                     return;
                 }
                 role = 'Team Leader / Pozorovateľ';
+            }
+
+            // Kontrola: používateľ nemôže pozvať samého seba
+            if (currentUser && currentUser.mail) {
+                const myMail = currentUser.mail.trim().toLowerCase();
+                const inputEmails = emails.split(/[,;\s]+/).map(e => e.trim().toLowerCase()).filter(Boolean);
+                if (inputEmails.includes(myMail)) {
+                    alert('Nemôžete pozvať samého seba na pohovor!');
+                    if (!isHrTarget) {
+                        const emailInput = document.getElementById('colleagueEmailInput');
+                        if (emailInput) emailInput.focus();
+                        const warning = document.getElementById('colleagueSelfEmailWarning');
+                        if (warning) warning.style.display = 'block';
+                    }
+                    if (statusBox) {
+                        statusBox.style.display = 'block';
+                        statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+                        statusBox.style.color = '#f87171';
+                        statusBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                        statusBox.textContent = '❌ Nemôžete pozvať samého seba na pohovor (zadaná vaša vlastná e-mailová adresa).';
+                    }
+                    return;
+                }
             }
 
             const noteInput = document.getElementById('colleagueNoteInput');

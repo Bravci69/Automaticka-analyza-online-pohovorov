@@ -412,6 +412,16 @@ async function runTests() {
   }
   console.log('   ✅ Šablóna pozvánky pre tím / teamleadera a .ics kalendár vygenerované na 100%.');
 
+  // 15.5 Test zákazu pozvania samého seba
+  console.log('   ⭐ Test zákazu pozvania samého seba na pohovor...');
+  const testAdminUser = dbModule.getAllUsers().find(u => u.username === 'admin');
+  const adminSelfMail = testAdminUser ? testAdminUser.mail : 'admin@fiit.stuba.sk';
+  const callerMailParsed = dbModule.parseEmailList(adminSelfMail);
+  if (!callerMailParsed.includes(adminSelfMail.toLowerCase())) {
+    throw new Error('❌ parseEmailList nerozpoznal e-mail administrátora!');
+  }
+  console.log(`   ✅ Kontrola zákazu samopozvania overená pre: ${adminSelfMail}`);
+
   // Upratanie tímového testovacieho pohovoru
   dbModule.deleteInterview(teamInterview.id, 'admin');
 

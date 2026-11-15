@@ -517,6 +517,29 @@ async function handleRequest(req, res) {
         return sendJson(res, 400, { error: 'Zadajte aspoň jednu platnú e-mailovú adresu zamestnanca (napr. teamleader@firma.sk).' });
       }
 
+      // Kontrola: Nemôžete pozvať samého seba
+      let callerMail = (caller.mail || '').trim().toLowerCase();
+      if (!callerMail && (caller.id || caller.username)) {
+        const allUsers = dbModule.getAllUsers();
+        const found = allUsers.find(u => (caller.id && u.id === caller.id) || (caller.username && u.username === caller.username));
+        if (found && found.mail) callerMail = found.mail.trim().toLowerCase();
+      }
+
+      if (callerMail && emailList.some(email => email.toLowerCase() === callerMail)) {
+        return sendJson(res, 400, {
+          ok: false,
+          error: 'Nemôžete pozvať samého seba na pohovor.'
+        });
+      }
+
+      // Kontrola: Nemôžete pozvať kandidáta ako kolegu
+      if (interview.mail_respondenta && emailList.some(email => email.toLowerCase() === interview.mail_respondenta.trim().toLowerCase())) {
+        return sendJson(res, 400, {
+          ok: false,
+          error: 'Zadaná e-mailová adresa patrí uchádzačovi. Uchádzač dostáva pozvánku automaticky.'
+        });
+      }
+
       const note = body.note || body.poznamka || 'Účasť na online výberovom pohovore (počúvanie a sledovanie reakcií kandidáta)';
       const role = body.role || 'Pozorovateľ / Člen tímu';
       const saveToInterview = body.saveToInterview !== false;
