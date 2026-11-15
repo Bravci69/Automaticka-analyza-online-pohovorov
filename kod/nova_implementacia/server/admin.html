@@ -958,15 +958,20 @@
     <div class="modal-overlay" id="inviteColleagueModal">
         <div class="modal-dialog" style="max-width: 560px;">
             <div class="modal-header">
-                <div>
-                    <h3 style="display: flex; align-items: center; gap: 8px;">
-                        <span style="color: #a78bfa;">👥</span> Pozvať kolegu / teamleadera na pohovor
-                    </h3>
-                    <p style="margin: 4px 0 0; color: var(--text-dim); font-size: 0.85rem;">
-                        Odošle e-mailovú pozvánku s odkazom na videohovor a kalendárom (.ics) ďalšiemu zamestnancovi, aby sa mohol pripojiť a počúvať.
-                    </p>
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(167, 139, 250, 0.2); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; color: #a78bfa;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
                 </div>
-                <button class="modal-close-btn" onclick="closeInviteColleagueModal()">&times;</button>
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 6px;">
+                    Pozvať kolegu / teamleadera na pohovor
+                </h3>
+                <p style="color: var(--text-dim); font-size: 0.84rem; margin: 0;">
+                    Odošle e-mailovú pozvánku s odkazom na videohovor a kalendárom (.ics) ďalšiemu zamestnancovi, aby sa mohol pripojiť a počúvať.
+                </p>
             </div>
 
             <!-- Prehľad pohovoru -->
@@ -977,23 +982,45 @@
                 <div style="color: var(--text-dim);">Aktuálne pozvaní kolegovia: <strong style="color: #c4b5fd;" id="colleagueModalCurrentList">Žiadni</strong></div>
             </div>
 
-            <!-- Rýchly výber zo systému -->
-            <div style="margin-bottom: 14px;">
-                <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">
-                    Rýchly výber registrovaného zamestnanca / HR:
+            <!-- Výber cieľového typu pozvánky -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+                <label id="optColleagueHrLabel" style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: rgba(124, 58, 237, 0.15); border: 2px solid #7c3aed; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s;">
+                    <input type="radio" name="colleagueTargetType" id="optColleagueHr" value="hr" checked onchange="toggleColleagueTargetType('hr')" style="accent-color: #7c3aed; width: 16px; height: 16px;" />
+                    <div>
+                        <div style="font-weight: 700; color: #fff; font-size: 0.85rem;">Člen tímu (HR / Admin)</div>
+                        <div style="font-size: 0.74rem; color: var(--text-dim);">Výber z HR a Superadminov</div>
+                    </div>
                 </label>
-                <select id="colleagueSelectUser" class="select-input" onchange="onSelectColleagueUser(this.value)">
-                    <option value="">-- Vyberte zamestnanca zo zoznamu (voliteľné) --</option>
-                    <!-- Dynamicky naplnené z tables.users -->
-                </select>
+                <label id="optColleagueCustomLabel" style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s;">
+                    <input type="radio" name="colleagueTargetType" id="optColleagueCustom" value="custom" onchange="toggleColleagueTargetType('custom')" style="accent-color: #7c3aed; width: 16px; height: 16px;" />
+                    <div>
+                        <div style="font-weight: 700; color: #fff; font-size: 0.85rem;">Iný zamestnanec (e-mail)</div>
+                        <div style="font-size: 0.74rem; color: var(--text-dim);">Team Leader, vedúci, kolega</div>
+                    </div>
+                </label>
             </div>
 
-            <!-- Vstupné pole pre e-maily -->
-            <div style="margin-bottom: 14px;">
+            <!-- 1. Sekcia: Výber zo zoznamu HR a Superadminov -->
+            <div id="sectionColleagueHr" style="margin-bottom: 16px;">
                 <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">
-                    E-mailová adresa zamestnanca (alebo viaceré oddelené čiarkou): <span style="color: #f87171;">*</span>
+                    Vyberte člena z HR adminov alebo Superadminov: <span style="color: #f87171;">*</span>
                 </label>
-                <input type="text" id="colleagueEmailInput" class="input-text" placeholder="napr. teamleader@firma.sk, techlead@firma.sk" required />
+                <select id="colleagueSelectUser" class="select-input" onchange="onColleagueUserSelected(this.value)">
+                    <option value="">-- Vyberte osobu z HR / Superadmin tímu --</option>
+                    <!-- Dynamicky naplnené z tables.users (Superadmini + HR) -->
+                </select>
+                <div id="colleagueUserPreviewBox" style="margin-top: 8px; font-size: 0.8rem; background: var(--bg-surface); border: 1px dashed var(--border-subtle); border-radius: 6px; padding: 8px 12px; color: var(--text-muted); display: none;"></div>
+            </div>
+
+            <!-- 2. Sekcia: Manuálne zadanie e-mailu -->
+            <div id="sectionColleagueCustom" style="margin-bottom: 16px; display: none;">
+                <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">
+                    E-mailová adresa zamestnanca / teamleadera: <span style="color: #f87171;">*</span>
+                </label>
+                <input type="text" id="colleagueEmailInput" class="input-text" placeholder="napr. teamleader@firma.sk, techlead@firma.sk" />
+                <span class="input-hint" style="font-size: 0.74rem; color: var(--text-dim); display: block; margin-top: 4px;">
+                    Môžete zadať jednu alebo viacero e-mailových adries oddelených čiarkou.
+                </span>
             </div>
 
             <!-- Rola / Poznámka -->

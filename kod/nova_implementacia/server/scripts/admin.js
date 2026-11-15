@@ -1898,6 +1898,97 @@ let currentUser = null;
 
         let currentColleagueInterviewId = null;
 
+        function toggleColleagueTargetType(type) {
+            const isHr = type === 'hr';
+            const optHr = document.getElementById('optColleagueHr');
+            const optCustom = document.getElementById('optColleagueCustom');
+            if (optHr) optHr.checked = isHr;
+            if (optCustom) optCustom.checked = !isHr;
+
+            const secHr = document.getElementById('sectionColleagueHr');
+            const secCustom = document.getElementById('sectionColleagueCustom');
+            if (secHr) secHr.style.display = isHr ? 'block' : 'none';
+            if (secCustom) secCustom.style.display = isHr ? 'none' : 'block';
+
+            const hrLabel = document.getElementById('optColleagueHrLabel');
+            const customLabel = document.getElementById('optColleagueCustomLabel');
+
+            if (hrLabel && customLabel) {
+                if (isHr) {
+                    hrLabel.style.background = 'rgba(124, 58, 237, 0.15)';
+                    hrLabel.style.border = '2px solid #7c3aed';
+                    customLabel.style.background = 'var(--bg-surface)';
+                    customLabel.style.border = '1px solid var(--border-subtle)';
+                } else {
+                    customLabel.style.background = 'rgba(124, 58, 237, 0.15)';
+                    customLabel.style.border = '2px solid #7c3aed';
+                    hrLabel.style.background = 'var(--bg-surface)';
+                    hrLabel.style.border = '1px solid var(--border-subtle)';
+                }
+            }
+        }
+
+        function populateColleagueSelect() {
+            const select = document.getElementById('colleagueSelectUser');
+            if (!select) return;
+
+            const users = (lastSnapshot && lastSnapshot.tables && lastSnapshot.tables.users) ? lastSnapshot.tables.users : [];
+            const superadmins = users.filter(u => u.ures_tag === 'SUPERADMIN');
+            const hrAdmins = users.filter(u => u.ures_tag !== 'SUPERADMIN');
+
+            let html = '<option value="">-- Vyberte osobu z HR / Superadmin tímu --</option>';
+
+            if (superadmins.length > 0) {
+                html += '<optgroup label="👑 Superadmini">';
+                html += superadmins.map(u => {
+                    const mailText = u.mail ? ` · ${escapeHtml(u.mail)}` : '';
+                    return `<option value="${escapeHtml(u.mail || '')}" data-name="${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)}" data-role="SUPERADMIN" data-username="${escapeHtml(u.username)}">
+                        ${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)} (Superadmin)${mailText}
+                    </option>`;
+                }).join('');
+                html += '</optgroup>';
+            }
+
+            if (hrAdmins.length > 0) {
+                html += '<optgroup label="👔 HR Personalisti / Admini">';
+                html += hrAdmins.map(u => {
+                    const mailText = u.mail ? ` · ${escapeHtml(u.mail)}` : '';
+                    return `<option value="${escapeHtml(u.mail || '')}" data-name="${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)}" data-role="${escapeHtml(u.ures_tag)}" data-username="${escapeHtml(u.username)}">
+                        ${escapeHtml(u.meno)} ${escapeHtml(u.priezvisko)} (${escapeHtml(u.ures_tag)})${mailText}
+                    </option>`;
+                }).join('');
+                html += '</optgroup>';
+            }
+
+            select.innerHTML = html;
+        }
+
+        function onColleagueUserSelected(email) {
+            const box = document.getElementById('colleagueUserPreviewBox');
+            if (!box) return;
+            const select = document.getElementById('colleagueSelectUser');
+            const selectedOpt = select.options[select.selectedIndex];
+            if (!email || !selectedOpt || !selectedOpt.value) {
+                box.style.display = 'none';
+                return;
+            }
+            const name = selectedOpt.getAttribute('data-name') || '';
+            const role = selectedOpt.getAttribute('data-role') || '';
+            const username = selectedOpt.getAttribute('data-username') || '';
+
+            box.style.display = 'block';
+            box.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <div>
+                        <strong style="color: #fff;">${name}</strong> 
+                        <span style="color: var(--text-dim); font-size: 0.75rem;">(@${username})</span>
+                    </div>
+                    <span class="badge-role-tag" style="background: rgba(124, 58, 237, 0.2); color: #c4b5fd;">${role}</span>
+                </div>
+                <div style="margin-top: 4px; color: #38bdf8; font-size: 0.76rem;">✉️ ${escapeHtml(email)}</div>
+            `;
+        }
+
         function openInviteColleagueModal(interviewId) {
             const item = findInterviewById(interviewId);
             if (!item) {
@@ -1911,11 +2002,20 @@ let currentUser = null;
             document.getElementById('colleagueModalDate').textContent = item.datum;
             document.getElementById('colleagueModalCurrentList').textContent = item.dalsie_maily || 'Zatiaľ žiadni';
 
-            const emailInput = document.getElementById('colleagueEmailInput');
-            if (emailInput) emailInput.value = '';
+            populateColleagueSelect();
+            toggleColleagueTargetType('hr');
 
             const userSelect = document.getElementById('colleagueSelectUser');
             if (userSelect) userSelect.value = '';
+
+            const previewBox = document.getElementById('colleagueUserPreviewBox');
+            if (previewBox) {
+                previewBox.style.display = 'none';
+                previewBox.innerHTML = '';
+            }
+
+            const emailInput = document.getElementById('colleagueEmailInput');
+            if (emailInput) emailInput.value = '';
 
             const noteInput = document.getElementById('colleagueNoteInput');
             if (noteInput) noteInput.value = 'Pozorovateľ / Team Leader – účasť na technickom pohovore a počúvanie';
@@ -1954,30 +2054,33 @@ let currentUser = null;
             }
         }
 
-        function onSelectColleagueUser(email) {
-            if (!email) return;
-            const input = document.getElementById('colleagueEmailInput');
-            if (!input) return;
-            const current = input.value.trim();
-            if (!current) {
-                input.value = email;
-            } else {
-                const parts = current.split(/[,;\s]+/).map(p => p.trim());
-                if (!parts.includes(email)) {
-                    input.value = current + ', ' + email;
-                }
-            }
-        }
-
         async function submitInviteColleague() {
             if (!currentColleagueInterviewId) return;
 
-            const emailInput = document.getElementById('colleagueEmailInput');
-            const emails = emailInput ? emailInput.value.trim() : '';
-            if (!emails) {
-                alert('Zadajte prosím e-mailovú adresu kolegu alebo teamleadera.');
-                if (emailInput) emailInput.focus();
-                return;
+            const isHrTarget = document.getElementById('optColleagueHr')?.checked;
+            let emails = '';
+            let role = 'Pozorovateľ / Člen tímu';
+
+            if (isHrTarget) {
+                const userSelect = document.getElementById('colleagueSelectUser');
+                const selectedOpt = userSelect?.options[userSelect.selectedIndex];
+                emails = userSelect ? userSelect.value.trim() : '';
+                if (!emails) {
+                    alert('Vyberte prosím člena z HR adminov alebo Superadminov zo zoznamu.');
+                    if (userSelect) userSelect.focus();
+                    return;
+                }
+                const chosenRole = selectedOpt?.getAttribute('data-role');
+                if (chosenRole) role = chosenRole === 'SUPERADMIN' ? 'Superadmin / Pozorovateľ' : 'HR Konzultant / Pozorovateľ';
+            } else {
+                const emailInput = document.getElementById('colleagueEmailInput');
+                emails = emailInput ? emailInput.value.trim() : '';
+                if (!emails) {
+                    alert('Zadajte prosím e-mailovú adresu zamestnanca alebo teamleadera.');
+                    if (emailInput) emailInput.focus();
+                    return;
+                }
+                role = 'Team Leader / Pozorovateľ';
             }
 
             const noteInput = document.getElementById('colleagueNoteInput');
@@ -2010,6 +2113,7 @@ let currentUser = null;
                     body: JSON.stringify({
                         emails: emails,
                         note: note,
+                        role: role,
                         saveToInterview: saveToDb
                     })
                 });
