@@ -252,8 +252,13 @@ async function runTests() {
 
   // 14. Test presunutia (reschedule) a zrušenia (cancel) pohovoru
   console.log('\n1️⃣4️⃣ Test presunutia a zrušenia pohovoru (HR aj Superadmin)...');
+  const fmtTestDate = (daysAhead, hm) => {
+    const d = new Date(Date.now() + daysAhead * 24 * 3600 * 1000);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${hm}`;
+  };
+  const origDate = fmtTestDate(10, '10:00');
   const reschedInt = dbModule.createInterview({
-    datum: '2026-11-25 10:00',
+    datum: origDate,
     hr_id: adminAuth.id,
     meno_respondenta: 'Milan Presunutý',
     mail_respondenta: 'milan.presunuty@example.com',
@@ -268,12 +273,13 @@ async function runTests() {
   dbModule.markReminderSent(reschedInt.id, 'admin');
 
   // 14.1 Presun pohovoru na iný dátum a čas
-  const newDate = '2026-11-28 15:30';
+  const newDate = fmtTestDate(12, '15:30');
+  const expectedDay = `${new Date(Date.now() + 12 * 24 * 3600 * 1000).getDate()}.`;
   const rescheduledResult = dbModule.rescheduleInterview(reschedInt.id, newDate, 'admin');
   if (rescheduledResult.datum !== newDate) {
     throw new Error(`❌ Presunutie termínu zlyhalo: očakávaný ${newDate}, získaný ${rescheduledResult.datum}`);
   }
-  if (rescheduledResult.oldDatum !== '2026-11-25 10:00') {
+  if (rescheduledResult.oldDatum !== origDate) {
     throw new Error(`❌ Starý termín nezodpovedá: ${rescheduledResult.oldDatum}`);
   }
   if (rescheduledResult.reminder_sent !== 0 || rescheduledResult.reminder_sent_at !== null) {
@@ -287,7 +293,7 @@ async function runTests() {
   if (!reschedMail.subject.includes('Zmena termínu online pohovoru')) {
     throw new Error(`❌ Predmet e-mailu o presune termínu je nesprávny: ${reschedMail.subject}`);
   }
-  if (!reschedMail.html.includes(newDate) && !reschedMail.html.includes('28.')) {
+  if (!reschedMail.html.includes(newDate) && !reschedMail.html.includes(expectedDay)) {
     throw new Error('❌ E-mail o presune neobsahuje nový termín!');
   }
   if (!reschedMail.ics.includes('SEQUENCE:2')) {
@@ -324,7 +330,7 @@ async function runTests() {
   console.log('   ✅ Zrušený pohovor bol správne vynechaný zo zoznamu čakajúcich pripomienok.');
 
   // 14.3 Obnovenie / presunutie zrušeného pohovoru späť do aktívneho stavu
-  const restoredDate = '2026-12-01 11:00';
+  const restoredDate = fmtTestDate(15, '11:00');
   const restoredInt = dbModule.rescheduleInterview(reschedInt.id, restoredDate, 'admin');
   if (restoredInt.vyhodnotenie !== 'neprebehlo') {
     throw new Error(`❌ Po presune zrušeného pohovoru mal byť status obnovený na 'neprebehlo', je: ${restoredInt.vyhodnotenie}`);
@@ -375,7 +381,7 @@ async function runTests() {
   // 15.2 Vytvorenie pohovoru s priamym zadaním ďalších zamestnancov
   const adminUserForTest = dbModule.getAllUsers().find(u => u.username === 'admin') || { id: 1 };
   const teamInterview = dbModule.createInterview({
-    datum: '2026-12-05 14:00',
+    datum: fmtTestDate(20, '14:00'),
     hr_id: adminUserForTest.id,
     meno_respondenta: 'Kandidát s tímom',
     mail_respondenta: 'kandidat.tim@example.com',
