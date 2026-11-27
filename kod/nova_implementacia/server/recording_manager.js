@@ -98,7 +98,7 @@ function createRecordingManager({
     return rooms.get(cleanRoom);
   }
 
-  function classifyParticipant(interview, { authUser = null, name = '', email = '', inviteeEmail = '' } = {}) {
+  function classifyParticipant(interview, { authUser = null, name = '', email = '', inviteeEmail = '', autoJoin = false } = {}) {
     const cleanInvitee = normalizeEmail(inviteeEmail);
     const cleanEmail = normalizeEmail(email);
     const effectiveEmail = cleanInvitee || cleanEmail;
@@ -116,6 +116,22 @@ function createRecordingManager({
       ? dbModule.parseEmailList(interview.dalsie_maily).filter(e => e && e !== candEmail)
       : [];
 
+    // 1. HR alebo Superadmin vstúpil tlačidlom "Vstúpiť" (?autojoin=1) alebo ako prihlásený zamestnanec bez ?invitee=
+    //    Vždy má práva vykonávateľa a ovládanie nahrávania (aj keby testoval pohovor s rovnakým vlastným e-mailom).
+    if (staffAuth && (autoJoin || !cleanInvitee)) {
+      const fullName = `${authUser.meno || ''} ${authUser.priezvisko || ''}`.trim() || authUser.username || name || 'HR';
+      return {
+        roleTag: 'hr',
+        isInterviewer: true,
+        isCandidate: false,
+        isColleague: !!(authMail && colleagueEmails.includes(authMail)),
+        matchedEmail: authMail || effectiveEmail,
+        canControlRecording: true,
+        displayName: String(name || fullName).trim(),
+      };
+    }
+
+    // 2. Uchádzač (otvorený cez odkaz pre kandidáta alebo s e-mailom kandidáta bez prihláseného HR ?autojoin)
     if (!isPlaceholder && candEmail && effectiveEmail === candEmail) {
       return {
         roleTag: 'kandidat',
@@ -128,6 +144,7 @@ function createRecordingManager({
       };
     }
 
+    // 3. Pozvaný kolega / tímlíder
     if (
       effectiveEmail
       && colleagueEmails.includes(effectiveEmail)
@@ -144,6 +161,7 @@ function createRecordingManager({
       };
     }
 
+    // 4. Záložný prípad pre prihláseného HR / Superadmina
     if (staffAuth) {
       const fullName = `${authUser.meno || ''} ${authUser.priezvisko || ''}`.trim() || authUser.username || name || 'HR';
       return {
@@ -457,14 +475,14 @@ function createRecordingManager({
     }
   }
 
-  function registerPresence(roomId, { clientId, authUser = null, name = '', email = '', inviteeEmail = '' } = {}) {
+  function registerPresence(roomId, { clientId, authUser = null, name = '', email = '', inviteeEmail = '', autoJoin = false } = {}) {
     if (!clientId) {
       throw Object.assign(new Error('Chýba clientId účastníka.'), { statusCode: 400 });
     }
     const nowMs = nowFn();
     const roomState = getOrCreateRoom(roomId);
     const interview = dbModule.getInterviewByRoomId(roomState.roomId);
-    const info = classifyParticipant(interview, { authUser, name, email, inviteeEmail });
+    const info = classifyParticipant(interview, { authUser, name, email, inviteeEmail, autoJoin });
 
     const existing = roomState.participants.get(clientId);
     roomState.participants.set(clientId, {

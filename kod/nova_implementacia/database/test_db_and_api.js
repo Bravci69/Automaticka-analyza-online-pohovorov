@@ -635,6 +635,41 @@ async function runTests() {
   recMgr.controlRecording(recInterview.room_id, { authUser: testAdminUser, action: 'stop' });
   console.log('   ✅ Ovládanie HR/Superadmina (spustiť, pozastaviť, pokračovať, vypnúť) a blokovanie cudzích overené na 100%.');
 
+  // 16.10 Regresný test: HR sa pripojí cez Vstúpiť (autoJoin=true) aj keď má pohovor zadaný rovnaký e-mail ako HR
+  const selfMailInterview = dbModule.createInterview({
+    datum: schedStr,
+    hr_id: testAdminUser.id,
+    meno_respondenta: 'Test Rovnaký Mail',
+    mail_respondenta: testAdminUser.mail,
+    link_meeting: 'https://host2.fxcomputers.net:13192/meeting/bp-rec-self',
+    room_id: 'bp-rec-self',
+    titul_pozicia: 'Self-mail Test',
+  }, 'admin');
+  const selfPresenceHr = recMgr.registerPresence(selfMailInterview.room_id, {
+    clientId: 'cli-self-hr',
+    authUser: testAdminUser,
+    name: expectedAdminName,
+    email: testAdminUser.mail,
+    inviteeEmail: '',
+    autoJoin: true,
+  });
+  if (!selfPresenceHr.participant.canControlRecording || selfPresenceHr.participant.roleTag !== 'hr') {
+    throw new Error(`❌ HR s rovnakým testovacím e-mailom ako kandidát stratil tlačidlá nahrávania cez Vstúpiť: ${JSON.stringify(selfPresenceHr.participant)}`);
+  }
+  const selfPresenceCand = recMgr.registerPresence(selfMailInterview.room_id, {
+    clientId: 'cli-self-cand',
+    authUser: null,
+    name: 'Test Rovnaký Mail',
+    email: testAdminUser.mail,
+    inviteeEmail: testAdminUser.mail,
+    autoJoin: false,
+  });
+  if (selfPresenceCand.participant.canControlRecording || selfPresenceCand.participant.roleTag !== 'kandidat') {
+    throw new Error('❌ Neprihlásený kandidát cez ?invitee= nemá mať tlačidlá nahrávania!');
+  }
+  dbModule.deleteInterview(selfMailInterview.id, 'admin');
+  console.log('   ✅ Regresný test: HR cez Vstúpiť si zachová tlačidlá nahrávania aj keď má rovnaký e-mail ako kandidát.');
+
   fs.rmSync(tmpRecDir, { recursive: true, force: true });
   dbModule.deleteInterview(recInterview.id, 'admin');
 

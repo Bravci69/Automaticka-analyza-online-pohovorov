@@ -1154,6 +1154,7 @@ window.addEventListener('DOMContentLoaded', initLobby);
             if (!recordingClientId || !activeRoom || isLeavingSession) return;
             const token = localStorage.getItem('bp_token');
             const inviteeEmail = (urlParams.get('invitee') || '').trim();
+            const autoJoin = urlParams.get('autojoin') === '1';
             const headers = { 'Content-Type': 'application/json' };
             if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -1165,7 +1166,8 @@ window.addEventListener('DOMContentLoaded', initLobby);
                         clientId: recordingClientId,
                         name: userName,
                         email: userEmail,
-                        inviteeEmail
+                        inviteeEmail,
+                        autoJoin
                     })
                 });
                 if (!res.ok) return;

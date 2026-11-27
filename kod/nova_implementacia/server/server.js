@@ -388,6 +388,7 @@ async function handleRequest(req, res) {
         name: body.name,
         email: body.email,
         inviteeEmail: body.inviteeEmail,
+        autoJoin: !!body.autoJoin,
       });
       return sendJson(res, 200, result);
     }
