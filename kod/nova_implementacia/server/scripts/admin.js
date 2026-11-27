@@ -714,7 +714,6 @@ let currentUser = null;
                             </div>
                             <div class="schedule-meta-row">
                                 <span>👔 HR: <strong>${escapeHtml(item.meno_hr)}</strong></span>
-                                <span>🔑 Miestnosť: <code class="code-pill">${escapeHtml(item.room_id)}</code></span>
                                 <span style="display: flex; align-items: center; gap: 4px;">
                                     <span>Hodnotenie:</span>
                                     <select class="select-enum-inline ${badgeClass}" onchange="changeEvaluation(${item.id}, this.value)">
