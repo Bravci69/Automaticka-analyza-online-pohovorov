@@ -1,0 +1,777 @@
+/* =============================================================================
+   3. ŠTÝLY PRE VIDEOKONFERENCIU & EYE-TRACKING (MEETING.HTML)
+============================================================================= */
+:root {
+            --bg-base: #08060c;
+            --bg-surface: #110d1a;
+            --bg-elevated: #191426;
+            --border-subtle: #251e36;
+            --border-active: #8b5cf6;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --primary-glow: rgba(139, 92, 246, 0.25);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #6b7280;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body.page-meeting {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden; /* Iba pre pohovorové okno videokonferencie */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ================================================================= */
+        /* 1. LOBBY / PRE-CALL PRÍPRAVA                                      */
+        /* ================================================================= */
+        .lobby-view {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+            background: var(--bg-base);
+        }
+
+        .lobby-view.hidden {
+            display: none;
+        }
+
+        .lobby-card {
+            width: 100%;
+            max-width: 860px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            overflow: hidden;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+        }
+
+        @media (max-width: 768px) {
+            .lobby-card {
+                grid-template-columns: 1fr;
+                max-width: 440px;
+            }
+        }
+
+        /* Ľavá strana: Video preview */
+        .preview-pane {
+            background: #000000;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid var(--border-subtle);
+            min-height: 350px;
+        }
+
+        .preview-video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: scaleX(-1);
+        }
+
+        .preview-placeholder {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        .preview-controls {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(15, 19, 28, 0.85);
+            backdrop-filter: blur(12px);
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .ctrl-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .ctrl-btn:hover {
+            background: #232c3d;
+        }
+
+        .ctrl-btn.off {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: var(--accent-red);
+        }
+
+        /* Pravá strana: Formulár */
+        .form-pane {
+            padding: 36px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .room-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: #c4b5fd;
+            margin-bottom: 16px;
+        }
+
+        .form-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .form-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .input-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .name-input {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        .name-input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-join-call {
+            background: var(--primary);
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 13px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-join-call:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 4px 16px var(--primary-glow);
+        }
+
+        .privacy-hint {
+            margin-top: 16px;
+            font-size: 0.74rem;
+            color: var(--text-dim);
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        /* ================================================================= */
+        /* 2. CALL INTERFACE & HEADER HUD                                    */
+        /* ================================================================= */
+        .call-view {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+        }
+
+        .call-view.active {
+            display: flex;
+        }
+
+        /* Top HUD Bar */
+        .call-header {
+            min-height: 52px;
+            background: rgba(9, 11, 16, 0.95);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            z-index: 40;
+            backdrop-filter: blur(12px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .call-brand {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .session-id-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 4px 8px;
+            border-radius: 6px;
+            color: var(--text-muted);
+        }
+
+        .header-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        /* Real-time Eye-tracking HUD Pill */
+        .gaze-hud-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.25s ease;
+        }
+
+        .gaze-hud-pill.active {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.06);
+            color: #6ee7b7;
+        }
+
+        .gaze-hud-pill.warning {
+            border-color: rgba(239, 68, 68, 0.45);
+            background: rgba(239, 68, 68, 0.12);
+            color: #fca5a5;
+        }
+
+        .hud-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 6px var(--accent-green);
+        }
+
+        .gaze-hud-pill.warning .hud-dot {
+            background: var(--accent-red);
+            box-shadow: 0 0 8px var(--accent-red);
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.2); }
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-header-tool {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-header-tool:hover, .btn-header-tool.active {
+            color: var(--text-main);
+            border-color: var(--border-active);
+            background: var(--bg-elevated);
+        }
+
+        .btn-leave-call {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-leave-call:hover {
+            background: var(--accent-red);
+            color: #ffffff;
+        }
+
+        /* Recording Status & HR Controls */
+        .rec-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: all 0.2s ease;
+        }
+
+        .rec-pill-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+
+        .rec-status-pill.recording {
+            border-color: rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.14);
+            color: #fecaca;
+        }
+
+        .rec-status-pill.recording .rec-pill-dot {
+            background: var(--accent-red);
+            box-shadow: 0 0 8px var(--accent-red);
+            animation: pulse-red 1s infinite;
+        }
+
+        .rec-status-pill.paused {
+            border-color: rgba(245, 158, 11, 0.45);
+            background: rgba(245, 158, 11, 0.12);
+            color: #fde68a;
+        }
+
+        .rec-status-pill.paused .rec-pill-dot {
+            background: var(--accent-amber);
+        }
+
+        .rec-status-pill.stopped {
+            border-color: rgba(16, 185, 129, 0.35);
+            background: rgba(16, 185, 129, 0.08);
+            color: #a7f3d0;
+        }
+
+        .rec-status-pill.stopped .rec-pill-dot {
+            background: var(--accent-green);
+        }
+
+        .rec-controls-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-rec-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 0.79rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-surface);
+            color: var(--text-main);
+        }
+
+        .btn-rec-action.start {
+            border-color: rgba(239, 68, 68, 0.45);
+            background: rgba(239, 68, 68, 0.14);
+            color: #fecaca;
+        }
+
+        .btn-rec-action.start:hover {
+            background: var(--accent-red);
+            color: #ffffff;
+        }
+
+        .btn-rec-action.pause {
+            border-color: rgba(245, 158, 11, 0.45);
+            background: rgba(245, 158, 11, 0.14);
+            color: #fde68a;
+        }
+
+        .btn-rec-action.pause:hover {
+            background: var(--accent-amber);
+            color: #111827;
+        }
+
+        .btn-rec-action.stop {
+            border-color: rgba(148, 163, 184, 0.35);
+            background: rgba(148, 163, 184, 0.12);
+            color: #e2e8f0;
+        }
+
+        .btn-rec-action.stop:hover {
+            background: #475569;
+            color: #ffffff;
+        }
+
+        .rec-btn-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+
+        /* Jitsi Frame Wrapper */
+        .video-stage {
+            flex: 1;
+            position: relative;
+            background: #000000;
+            overflow: hidden;
+        }
+
+        #jitsi-mount {
+            width: 100%;
+            height: 100%;
+        }
+
+        #jitsi-mount iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* ================================================================= */
+        /* 3. REÁLNY EYE-TRACKING OVERLAY & ALERT HUD                        */
+        /* ================================================================= */
+        .hud-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 24px;
+            transition: box-shadow 0.35s ease;
+        }
+
+        .hud-overlay.warning {
+            box-shadow: inset 0 0 90px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Elegantné plávajúce varovné okno */
+        .alert-toast {
+            background: rgba(15, 19, 28, 0.94);
+            border: 1px solid rgba(239, 68, 68, 0.55);
+            border-radius: 999px;
+            padding: 10px 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3), 0 0 0 1px rgba(239, 68, 68, 0.2);
+            backdrop-filter: blur(16px);
+            transform: translateY(-80px);
+            opacity: 0;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+        }
+
+        .alert-toast.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .alert-icon-ring {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-red);
+            flex-shrink: 0;
+        }
+
+        .alert-message {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.25;
+        }
+
+        .alert-message-main {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .alert-message-sub {
+            font-size: 0.74rem;
+            color: #fca5a5;
+        }
+
+        .away-timer-badge {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #fca5a5;
+            margin-left: 6px;
+        }
+
+        /* ================================================================= */
+        /* 4. DIAGNOSTICKÝ PIP PANEL (Obhajoba / Kalibrácia)                 */
+        /* ================================================================= */
+        .diagnostic-pip {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 260px;
+            background: rgba(15, 19, 28, 0.95);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(14px);
+            z-index: 120;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            pointer-events: auto;
+        }
+
+        .diagnostic-pip.active {
+            display: flex;
+        }
+
+        .pip-header {
+            padding: 8px 12px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .pip-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .pip-close-btn:hover {
+            color: var(--text-main);
+        }
+
+        .pip-canvas-wrap {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #diagnosticCanvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .pip-metrics {
+            padding: 8px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-top: 1px solid var(--border-subtle);
+            background: var(--bg-surface);
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .metric-val {
+            color: #c4b5fd;
+            font-weight: 500;
+        }
+
+        .metric-val.ok {
+            color: var(--accent-green);
+        }
+
+        .metric-val.warn {
+            color: var(--accent-red);
+        }
+
+        /* Demo informácia */
+        .demo-bar {
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            background: rgba(9, 11, 16, 0.75);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            backdrop-filter: blur(8px);
+            pointer-events: auto;
+            user-select: none;
+        }
+
+        .demo-bar kbd {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+            padding: 1px 5px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+        }
+
+        /* Loading spinner */
+        .stage-loader {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-base);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            gap: 16px;
+        }
+
+        .stage-loader.hidden {
+            display: none;
+        }
+
+        .spin-ring {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255, 255, 255, 0.08);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+

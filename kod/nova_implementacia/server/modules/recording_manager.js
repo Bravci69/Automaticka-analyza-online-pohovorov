@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const DEFAULT_RECORDING_DIR = path.join(__dirname, 'recording');
+const DEFAULT_RECORDING_DIR = path.join(__dirname, '..', 'recording');
 const PRESENCE_TTL_MS = 12000;
 
 function normalizeEmail(value) {

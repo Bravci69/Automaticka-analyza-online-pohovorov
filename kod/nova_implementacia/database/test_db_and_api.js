@@ -486,7 +486,7 @@ async function runTests() {
   const fs = require('node:fs');
   const os = require('node:os');
   const path = require('node:path');
-  const { createRecordingManager, parseInterviewDatumMs } = require('../server/recording_manager');
+  const { createRecordingManager, parseInterviewDatumMs } = require('../server/modules/recording_manager');
 
   const tmpRecDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bp-rec-test-'));
   const schedDate = new Date(Date.now() + 2 * 60 * 60 * 1000); // o 2 hodiny

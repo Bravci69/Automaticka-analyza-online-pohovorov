@@ -14,7 +14,7 @@ try {
   console.warn('[Mailer] Knižnica nodemailer nie je nainštalovaná. Pre inštaláciu: npm install nodemailer');
 }
 
-const dbModule = require('../database/db');
+const dbModule = require('../../database/db');
 
 // Načítanie .env súboru ak existuje
 function loadEnv() {
@@ -101,7 +101,7 @@ function getEmailConfig() {
 }
 
 function updateEmailConfig({ user, pass }) {
-  const configPath = path.join(__dirname, 'config.json');
+  const configPath = path.join(__dirname, '..', 'config.json');
   let current = {};
   try {
     if (fs.existsSync(configPath)) {
@@ -127,7 +127,7 @@ function updateEmailConfig({ user, pass }) {
   fs.writeFileSync(configPath, JSON.stringify(current, null, 2), 'utf8');
 
   // Aktualizácia .env súboru ak existuje
-  const envPath = path.join(__dirname, '.env');
+  const envPath = path.join(__dirname, '..', '.env');
   try {
     let envContent = '';
     if (fs.existsSync(envPath)) {

@@ -1,0 +1,1335 @@
+/* =============================================================================
+   2. ŠTÝLY PRE HR ADMIN KONZOLU & KALENDÁR (ADMIN.HTML)
+============================================================================= */
+:root {
+            --bg-base: #08060c;
+            --bg-surface: #110d1a;
+            --bg-elevated: #191426;
+            --bg-input: #0d0a14;
+            --border-subtle: #251e36;
+            --border-active: #8b5cf6;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --primary-glow: rgba(139, 92, 246, 0.25);
+            --accent-green: #10b981;
+            --accent-green-bg: rgba(16, 185, 129, 0.12);
+            --accent-red: #ef4444;
+            --accent-red-bg: rgba(239, 68, 68, 0.12);
+            --accent-sky: #38bdf8;
+            --accent-sky-bg: rgba(56, 189, 248, 0.12);
+            --accent-amber: #f59e0b;
+            --accent-amber-bg: rgba(245, 158, 11, 0.12);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #6b7280;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body.page-admin {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Navigácia */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            width: 100%;
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(8, 6, 12, 0.92);
+            backdrop-filter: blur(16px);
+        }
+
+        .nav-inner {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-sm);
+            background: #7c3aed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: #ffffff;
+        }
+
+        .brand-meta {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse-dot 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            padding: 5px 12px 5px 6px;
+            border-radius: 24px;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #7c3aed;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .user-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .user-role-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #a78bfa;
+            letter-spacing: 0.04em;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            transition: color 0.15s;
+        }
+
+        .btn-logout:hover {
+            color: var(--accent-red);
+        }
+
+        /* Layout - HR Admin konzola */
+        body.page-admin main,
+        main.admin-main,
+        main {
+            flex: 1;
+            max-width: 1320px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 32px 24px 60px;
+            display: block !important; /* DÔLEŽITÉ: block namiesto flex, aby deti neboli zmrštené */
+        }
+
+        .page-admin .stats-grid,
+        .admin-main .stats-grid {
+            width: 100%;
+        }
+
+        .page-admin .card,
+        .admin-main .card,
+        .page-admin .calendar-card,
+        .admin-main .calendar-card,
+        .page-admin .db-card,
+        .admin-main .db-card {
+            width: 100%;
+        }
+
+        .page-header {
+            margin-bottom: 28px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+
+        /* Štatistické karty */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.15s, border-color 0.15s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-label {
+            font-size: 0.76rem;
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Karty a Formuláre */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 24px 28px;
+            margin-bottom: 32px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .card-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-title-group h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .badge-role-tag {
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: rgba(139, 92, 246, 0.15);
+            color: #c4b5fd;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 3px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.04em;
+        }
+
+        .form-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .input-text, .select-input {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            width: 100%;
+        }
+
+        .input-text:focus, .select-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .input-hint {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 11px 22px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-main);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 8px 14px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-secondary:hover {
+            background: #251d38;
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+
+        /* Výsledkový panel pre link */
+        .result-panel {
+            display: none;
+            margin-top: 20px;
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.35);
+            border-radius: var(--radius-sm);
+            padding: 18px;
+        }
+
+        .result-panel.active {
+            display: block;
+            animation: fadeIn 0.2s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .link-bar {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .link-input {
+            flex: 1;
+            min-width: 280px;
+            background: var(--bg-base);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.86rem;
+            color: #c4b5fd;
+            outline: none;
+        }
+
+        /* Tabulátorové rozhranie pre ŽIVÝ PREHĽAD DATABÁZY */
+        .db-explorer-tabs {
+            display: flex;
+            gap: 6px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.84rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            background: var(--bg-elevated);
+            border-color: var(--border-active);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab-counter {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1px 6px;
+            border-radius: 10px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* Tabuľky */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-base);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.86rem;
+            text-align: left;
+        }
+
+        th {
+            background: var(--bg-elevated);
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-subtle);
+            font-weight: 700;
+            color: var(--text-dim);
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px;
+            border-bottom: 1px solid var(--border-subtle);
+            vertical-align: middle;
+            color: var(--text-main);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .code-pill {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            color: #c4b5fd;
+            display: inline-block;
+        }
+
+        .hash-pill {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.74rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .hash-pill:hover {
+            background: rgba(16, 185, 129, 0.18);
+        }
+
+        .status-badge-enum {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .status-rozpracovane {
+            background: var(--accent-sky-bg);
+            color: var(--accent-sky);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .status-neprebehlo {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--text-muted);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .status-postupil {
+            background: var(--accent-green-bg);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-nepostupil {
+            background: var(--accent-red-bg);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-zruseny {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
+        .select-enum-inline {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .select-enum-inline:focus {
+            border-color: var(--primary);
+        }
+
+        .empty-view {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-dim);
+        }
+
+        /* Prihlasovací Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-dialog {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-active);
+            border-radius: var(--radius-md);
+            max-width: 440px;
+            width: 100%;
+            padding: 32px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .modal-header p {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+        }
+
+        .banner-hint {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            font-size: 0.78rem;
+            color: #c4b5fd;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .banner-hint code {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fff;
+        }
+
+        /* Detail hashu modal */
+        .hash-detail-box {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            word-break: break-all;
+            color: #38bdf8;
+            margin-bottom: 12px;
+        }
+
+        /* HR Uzamknuté pole pre HR_ADMIN */
+        .hr-locked-box {
+            background: var(--bg-input);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+        }
+
+        /* --------------------------------------------------------------------- */
+        /* INTERAKTÍVNY KALENDÁR POHOVOROV ŠTÝLY                                   */
+        /* --------------------------------------------------------------------- */
+        .calendar-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 24px 28px;
+            margin-bottom: 32px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+        }
+
+        .calendar-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .calendar-nav-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calendar-month-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #ffffff;
+            min-width: 200px;
+            text-align: center;
+            letter-spacing: -0.01em;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .calendar-weekday {
+            text-align: center;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 8px 4px;
+        }
+
+        .calendar-day-cell {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            min-height: 90px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+        }
+
+        .calendar-day-cell:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            background: #1a2030;
+            transform: translateY(-1px);
+        }
+
+        .calendar-day-cell.other-month {
+            opacity: 0.35;
+            background: rgba(15, 19, 28, 0.5);
+        }
+
+        .calendar-day-cell.today {
+            border-color: var(--accent-green);
+            box-shadow: inset 0 0 0 1px var(--accent-green);
+        }
+
+        .calendar-day-cell.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.12);
+            box-shadow: 0 0 0 2px var(--primary-glow);
+        }
+
+        .day-header-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+        .day-number {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .day-badge-today {
+            font-size: 0.62rem;
+            background: var(--accent-green-bg);
+            color: var(--accent-green);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .day-events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .event-chip {
+            font-size: 0.7rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background: rgba(139, 92, 246, 0.2);
+            color: #ddd6fe;
+            border-left: 3px solid #8b5cf6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .event-chip.chip-postupil {
+            background: var(--accent-green-bg);
+            color: #6ee7b7;
+            border-left-color: var(--accent-green);
+        }
+
+        .event-chip.chip-nepostupil {
+            background: var(--accent-red-bg);
+            color: #fca5a5;
+            border-left-color: var(--accent-red);
+        }
+
+        .event-chip.chip-rozpracovane {
+            background: var(--accent-sky-bg);
+            color: #7dd3fc;
+            border-left-color: var(--accent-sky);
+        }
+
+        .event-chip.chip-zruseny {
+            background: rgba(100, 116, 139, 0.15);
+            color: #94a3b8;
+            border-left-color: #ef4444;
+            text-decoration: line-through;
+        }
+
+        /* Denný rozvrh (Day Agenda) */
+        .day-agenda-box {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .agenda-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .agenda-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .interview-schedule-item {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            transition: all 0.15s ease;
+        }
+
+        .interview-schedule-item:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateX(2px);
+        }
+
+        .schedule-time-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elevated);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            min-width: 90px;
+        }
+
+        .schedule-time-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #c4b5fd;
+        }
+
+        .schedule-date-val {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .schedule-details {
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .schedule-job-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .schedule-candidate-name {
+            font-size: 0.88rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .schedule-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .schedule-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Pozvánka e-mail modal */
+        .invitation-preview-container {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 480px;
+            overflow-y: auto;
+            border: 1px solid #cbd5e1;
+            margin: 16px 0;
+        }
+
+        /* Pätička */
+        footer {
+            border-top: 1px solid var(--border-subtle);
+            background: var(--bg-surface);
+            padding: 20px 24px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1320px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* --------------------------------------------------------------------- */
+        /* Responzívne prispôsobenie HR Admin rozhrania pre tablety a mobily     */
+        /* --------------------------------------------------------------------- */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+                gap: 14px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body.page-admin .nav-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+            body.page-admin .nav-actions {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            body.page-admin main,
+            main.admin-main {
+                padding: 20px 14px 40px !important;
+            }
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 14px 16px;
+            }
+            .stat-number {
+                font-size: 1.5rem;
+            }
+            .form-grid-3 {
+                grid-template-columns: 1fr !important;
+                gap: 12px;
+            }
+            .card {
+                padding: 20px 16px;
+            }
+            #calMonthContainer {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .calendar-grid {
+                min-width: 600px;
+            }
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .filter-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            .btn-action,
+            .btn-create {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* ===================================================================== */
+        /* INTERAKTÍVNE 24-HODINOVÉ HODINY (Time Clock Picker)                   */
+        /* ===================================================================== */
+        .time-clock-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 0 14px;
+            min-width: 108px;
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.94rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .time-clock-trigger:hover {
+            border-color: var(--primary);
+            background: var(--bg-elevated);
+        }
+
+        .time-clock-trigger:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .clock-picker-dialog {
+            max-width: 340px !important;
+            padding: 24px !important;
+        }
+
+        .clock-digital-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 12px 0 14px;
+        }
+
+        .clock-digit-btn {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            cursor: pointer;
+            line-height: 1.1;
+            transition: all 0.15s ease;
+        }
+
+        .clock-digit-btn.active {
+            background: rgba(139, 92, 246, 0.22);
+            border-color: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 0 18px var(--primary-glow);
+        }
+
+        .clock-colon {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-dim);
+        }
+
+        .clock-mode-label {
+            text-align: center;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: #c4b5fd;
+            margin-bottom: 14px;
+        }
+
+        .clock-face {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.65);
+            user-select: none;
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        .clock-center-dot {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            transform: translate(-50%, -50%);
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        .clock-hand {
+            position: absolute;
+            left: 50%;
+            bottom: 50%;
+            width: 2px;
+            height: 102px;
+            background: var(--primary);
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(0deg);
+            z-index: 2;
+            pointer-events: none;
+            transition: transform 0.12s ease-out, height 0.12s ease-out;
+        }
+
+        .clock-hand.dragging {
+            transition: none;
+        }
+
+        .clock-hand-tip {
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 12px var(--primary-glow);
+            transform: translateX(-50%);
+        }
+
+        .clock-hand-tip::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #ffffff;
+            transform: translate(-50%, -50%);
+        }
+
+        .clock-number {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            margin-left: -16px;
+            margin-top: -16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--text-main);
+            z-index: 3;
+            pointer-events: none;
+            transition: color 0.12s ease;
+        }
+
+        .clock-number.inner {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+        }
+
+        .clock-number.selected {
+            color: #ffffff;
+            font-weight: 800;
+        }
+
+        .clock-quick-presets {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .clock-preset-chip {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .clock-preset-chip:hover {
+            border-color: var(--primary);
+            color: #ffffff;
+            background: rgba(139, 92, 246, 0.18);
+        }
+

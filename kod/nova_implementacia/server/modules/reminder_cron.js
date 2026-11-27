@@ -4,7 +4,7 @@
 // Jakub Chmura
 // =============================================================================
 
-const dbModule = require('../database/db');
+const dbModule = require('../../database/db');
 const mailer = require('./mailer');
 
 let intervalTimer = null;
