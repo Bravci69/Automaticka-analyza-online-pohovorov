@@ -582,7 +582,8 @@ async function runTests() {
   }
   console.log(`   ✅ Automatické nahrávanie sa spustilo presne po pripojení všetkých a dosiahnutí termínu (${recSnap.sessionId}).`);
 
-  // 16.7 Uloženie reálneho média chunku do priečinka recording/<roomId> a DB
+  // 16.7 Uloženie reálneho média chunku do priečinka recording/<meno>_<dátum>_<čas>_<hr> a DB
+  const expectedFolder = `Nahravany_Kandidat_${schedStr.split(' ')[0]}_${schedStr.split(' ')[1].replace(':', '-')}_Admin_Systemu`;
   const chunkRes = recMgr.appendChunk(recInterview.room_id, {
     sessionId: recSnap.sessionId,
     clientId: 'cli-cand',
@@ -592,12 +593,13 @@ async function runTests() {
     mimeType: 'video/webm',
     isFinal: false,
   }, Buffer.from('WEBM_TEST_PAYLOAD_123456'));
-  const savedFull = path.join(tmpRecDir, 'bp-rec-test', chunkRes.fileName);
+  const savedFull = path.join(tmpRecDir, expectedFolder, chunkRes.fileName);
   const analyzaRow = dbModule.db.prepare('SELECT zaznam_cesta FROM interview_analyza WHERE interview_id = ?').get(recInterview.id);
-  if (!fs.existsSync(savedFull) || !analyzaRow || analyzaRow.zaznam_cesta !== 'recording/bp-rec-test') {
-    throw new Error('❌ Súbor nahrávky alebo záznam cesty v DB nebol uložený správne!');
+  const listedFiles = recMgr.listRoomRecordings(recInterview.room_id);
+  if (!fs.existsSync(savedFull) || !analyzaRow || analyzaRow.zaznam_cesta !== `recording/${expectedFolder}` || listedFiles.length === 0) {
+    throw new Error(`❌ Súbor nahrávky alebo názov priečinka nebol uložený správne! Očakávané: ${expectedFolder}, DB: ${analyzaRow && analyzaRow.zaznam_cesta}`);
   }
-  console.log(`   ✅ Dáta záznamu zapísané na disk (${chunkRes.fileName}) a DB prepojená (${analyzaRow.zaznam_cesta}).`);
+  console.log(`   ✅ Dáta záznamu zapísané do priečinka "${expectedFolder}" (${chunkRes.fileName}) a DB prepojená (${analyzaRow.zaznam_cesta}).`);
 
   // 16.8 Bezpečnosť: ne-HR používateľ nemôže pauzovať/vypínať/spúšťať nahrávanie
   let forbiddenThrown = false;

@@ -14,14 +14,29 @@ function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
 }
 
-function sanitizeSegment(value, fallback = 'item') {
+function sanitizeSegment(value, fallback = 'item', maxLen = 48) {
   const ascii = String(value || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9_-]+/g, '_')
     .replace(/^_+|_+$/g, '')
-    .slice(0, 48);
+    .slice(0, maxLen);
   return ascii || fallback;
+}
+
+function formatFolderDateAndTime(datumStr, fallbackMs = Date.now()) {
+  const raw = String(datumStr || '').trim();
+  const match = raw.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/);
+  if (match) {
+    return { datePart: match[1], timePart: `${match[2]}-${match[3]}` };
+  }
+  const parsed = parseInterviewDatumMs(raw);
+  const d = new Date(!isNaN(parsed) ? parsed : fallbackMs);
+  const pad = n => String(n).padStart(2, '0');
+  return {
+    datePart: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+    timePart: `${pad(d.getHours())}-${pad(d.getMinutes())}`,
+  };
 }
 
 function parseInterviewDatumMs(datumStr) {
@@ -218,10 +233,42 @@ function createRecordingManager({
     }
   }
 
+  function resolveRoomFolderName(roomId, interview = null, roomState = null) {
+    if (
+      roomState
+      && roomState.folderName
+      && (roomState.recordingState === 'recording' || roomState.recordingState === 'paused' || roomState.files.size > 0)
+    ) {
+      return roomState.folderName;
+    }
+
+    const rec = interview || dbModule.getInterviewByRoomId(roomId);
+    if (!rec) {
+      return sanitizeSegment(roomId, 'room');
+    }
+
+    const candRaw = String(rec.meno_respondenta || '').trim() || 'Kandidat';
+    const hrFromFields = `${rec.hr_meno || ''} ${rec.hr_priezvisko || ''}`.trim();
+    const activeInterviewer = roomState
+      ? Array.from(roomState.participants.values()).find(p => p.isInterviewer)?.name
+      : '';
+    const hrRaw = String(rec.meno_hr || hrFromFields || activeInterviewer || (roomState && roomState.startedBy) || 'HR').trim();
+
+    const candPart = sanitizeSegment(candRaw, 'Kandidat', 40);
+    const { datePart, timePart } = formatFolderDateAndTime(rec.datum, nowFn());
+    const hrPart = sanitizeSegment(hrRaw, 'HR', 40);
+
+    const folderName = `${candPart}_${datePart}_${timePart}_${hrPart}`;
+    if (roomState) {
+      roomState.folderName = folderName;
+    }
+    return folderName;
+  }
+
   function writeSessionMeta(roomState, interview) {
     if (!roomState.sessionId) return;
-    const safeRoom = sanitizeSegment(roomState.roomId, 'room');
-    const roomDir = path.join(recordingDir, safeRoom);
+    const folderName = resolveRoomFolderName(roomState.roomId, interview, roomState);
+    const roomDir = path.join(recordingDir, folderName);
     fs.mkdirSync(roomDir, { recursive: true });
 
     const metaPath = path.join(roomDir, `${roomState.sessionId}_meta.json`);
@@ -261,7 +308,8 @@ function createRecordingManager({
     fs.writeFileSync(metaPath, JSON.stringify(payload, null, 2), 'utf8');
 
     if (interview && interview.id) {
-      dbModule.setInterviewRecordingPath(interview.id, `recording/${safeRoom}`);
+      const folderName = resolveRoomFolderName(roomState.roomId, interview, roomState);
+      dbModule.setInterviewRecordingPath(interview.id, `recording/${folderName}`);
     }
   }
 
@@ -333,7 +381,7 @@ function createRecordingManager({
   }
 
   function buildPublicSnapshot(roomState, interview, evalResult, nowMs) {
-    const safeRoom = sanitizeSegment(roomState.roomId, 'room');
+    const folderName = resolveRoomFolderName(roomState.roomId, interview, roomState);
     const filesList = Array.from(roomState.files.values()).map(f => ({
       fileName: f.fileName,
       roleTag: f.roleTag,
@@ -344,7 +392,7 @@ function createRecordingManager({
 
     return {
       roomId: roomState.roomId,
-      recordingDir: `recording/${safeRoom}`,
+      recordingDir: `recording/${folderName}`,
       state: roomState.recordingState,
       manualMode: roomState.manualMode,
       sessionId: roomState.sessionId,
@@ -604,7 +652,7 @@ function createRecordingManager({
     const roomState = getOrCreateRoom(roomId);
     const interview = dbModule.getInterviewByRoomId(roomState.roomId);
 
-    const safeRoom = sanitizeSegment(roomId, 'room');
+    const folderName = resolveRoomFolderName(roomId, interview, roomState);
     const safeSession = sanitizeSegment(sessionId, 'rec');
     const safeRole = sanitizeSegment(roleTag, 'ucastnik');
     const safeName = sanitizeSegment(name, 'ucastnik');
@@ -631,7 +679,7 @@ function createRecordingManager({
       roomState.files.set(fileKey, fileEntry);
     }
 
-    const roomDir = path.join(recordingDir, safeRoom);
+    const roomDir = path.join(recordingDir, folderName);
     fs.mkdirSync(roomDir, { recursive: true });
     const fullPath = path.join(roomDir, fileEntry.fileName);
 
@@ -657,7 +705,7 @@ function createRecordingManager({
       bytes: fileEntry.bytes,
       chunks: fileEntry.chunks,
       completed: fileEntry.completed,
-      relativePath: `recording/${safeRoom}/${fileEntry.fileName}`,
+      relativePath: `recording/${folderName}/${fileEntry.fileName}`,
     };
   }
 
@@ -685,8 +733,9 @@ function createRecordingManager({
   }
 
   function listRoomRecordings(roomId) {
-    const safeRoom = sanitizeSegment(roomId, 'room');
-    const roomDir = path.join(recordingDir, safeRoom);
+    const roomState = rooms.get(String(roomId || '').trim()) || null;
+    const folderName = resolveRoomFolderName(roomId, null, roomState);
+    const roomDir = path.join(recordingDir, folderName);
     if (!fs.existsSync(roomDir)) return [];
     return fs.readdirSync(roomDir)
       .filter(f => f !== '.gitkeep')
