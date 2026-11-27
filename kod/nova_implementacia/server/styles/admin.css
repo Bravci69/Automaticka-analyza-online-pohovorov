@@ -1333,3 +1333,14 @@
             background: rgba(139, 92, 246, 0.18);
         }
 
+        .clickable-interview-area {
+            cursor: pointer;
+            transition: color 0.15s ease, opacity 0.15s ease;
+        }
+
+        .clickable-interview-area:hover,
+        .clickable-interview-area:hover .schedule-job-title,
+        .clickable-interview-area:hover .schedule-time-val {
+            color: #c4b5fd !important;
+        }
+

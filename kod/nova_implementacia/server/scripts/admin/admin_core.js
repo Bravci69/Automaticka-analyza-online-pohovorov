@@ -414,8 +414,8 @@ function renderInterviewTable(list, enumList) {
         return `
             <tr>
                 <td><span class="code-pill">#${item.id}</span></td>
-                <td style="font-weight: 700; color: #fff;">${escapeHtml(item.titul_pozicia || 'Pohovor')}</td>
-                <td>
+                <td class="clickable-interview-area" style="font-weight: 700; color: #fff;" onclick="openInterviewDetail(${item.id})" title="Kliknutím zobrazíte detail pohovoru a nahrávku">${escapeHtml(item.titul_pozicia || 'Pohovor')}</td>
+                <td class="clickable-interview-area" onclick="openInterviewDetail(${item.id})" title="Kliknutím zobrazíte detail pohovoru a nahrávku">
                     <div style="font-weight: 600;">${escapeHtml(item.meno_respondenta)}</div>
                     ${item.dalsie_maily ? `<div style="font-size: 0.72rem; color: #a78bfa; margin-top: 3px;" title="Pozvaní kolegovia: ${escapeHtml(item.dalsie_maily)}">👥 ${escapeHtml(item.dalsie_maily)}</div>` : ''}
                 </td>
@@ -434,6 +434,9 @@ function renderInterviewTable(list, enumList) {
                     </select>
                 </td>
                 <td style="text-align: right; white-space: nowrap;">
+                    <button class="btn-secondary" style="padding: 5px 8px; color: #c4b5fd;" onclick="openInterviewDetail(${item.id})" title="Zobraziť detail pohovoru a nahrávku">
+                        📄 Detail
+                    </button>
                     <button class="btn-secondary" style="padding: 5px 8px;" onclick="copyAnyLink('${getMeetingUrl(item)}')" title="Kopírovať odkaz pre uchádzača">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
@@ -947,6 +950,11 @@ function getMeetingUrl(item, { autoJoin = false } = {}) {
     if (!baseUrl || !autoJoin) return baseUrl;
     const sep = baseUrl.includes('?') ? '&' : '?';
     return `${baseUrl}${sep}autojoin=1`;
+}
+
+function openInterviewDetail(interviewId) {
+    if (!interviewId) return;
+    window.location.href = `/interview/${encodeURIComponent(interviewId)}`;
 }
 
 function openDirectMeeting() {

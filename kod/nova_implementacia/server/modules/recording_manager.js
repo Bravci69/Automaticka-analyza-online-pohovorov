@@ -750,6 +750,155 @@ function createRecordingManager({
       });
   }
 
+  function resolveRecordingDirectoryForInterview(interview, analysisRow = null) {
+    const baseDir = path.resolve(recordingDir);
+    if (analysisRow && analysisRow.zaznam_cesta) {
+      const rel = String(analysisRow.zaznam_cesta).replace(/^\/+/, '');
+      if (rel.startsWith('recording/')) {
+        const sub = rel.slice('recording/'.length);
+        const candidate = path.resolve(baseDir, sub);
+        if (candidate.startsWith(baseDir + path.sep) && fs.existsSync(candidate)) {
+          return { dirPath: candidate, relativeDir: `recording/${sub}` };
+        }
+      }
+    }
+    const roomState = interview?.room_id ? (rooms.get(String(interview.room_id).trim()) || null) : null;
+    const folderName = resolveRoomFolderName(interview?.room_id || '', interview, roomState);
+    const dirPath = path.resolve(baseDir, folderName);
+    return { dirPath, relativeDir: `recording/${folderName}` };
+  }
+
+  function inferMediaTypeFromFilename(fileName) {
+    const ext = path.extname(fileName).toLowerCase();
+    if (ext === '.mp4') return 'video/mp4';
+    if (ext === '.ogg') return 'audio/ogg';
+    return 'video/webm';
+  }
+
+  function getInterviewRecordingDetails(interview, analysisRow = null) {
+    if (!interview) {
+      return {
+        status: 'missing',
+        isBeforeScheduled: false,
+        hasRecordings: false,
+        folderPath: null,
+        sessions: [],
+        files: [],
+      };
+    }
+
+    const nowMs = nowFn();
+    const scheduledMs = parseInterviewDatumMs(interview.datum);
+    const isBeforeScheduled = !isNaN(scheduledMs) && nowMs < scheduledMs;
+    const { dirPath, relativeDir } = resolveRecordingDirectoryForInterview(interview, analysisRow);
+
+    const sessions = [];
+    const fileMetaMap = new Map();
+    const mediaFiles = [];
+
+    if (fs.existsSync(dirPath)) {
+      const entries = fs.readdirSync(dirPath).filter(f => f !== '.gitkeep');
+      for (const name of entries) {
+        if (name.endsWith('_meta.json')) {
+          try {
+            const parsed = JSON.parse(fs.readFileSync(path.join(dirPath, name), 'utf8'));
+            sessions.push({
+              sessionId: parsed.sessionId,
+              trigger: parsed.trigger,
+              state: parsed.state,
+              startedAt: parsed.startedAt,
+              pausedAt: parsed.pausedAt,
+              stoppedAt: parsed.stoppedAt,
+              startedBy: parsed.startedBy,
+              stoppedBy: parsed.stoppedBy,
+            });
+            for (const f of (parsed.files || [])) {
+              fileMetaMap.set(f.fileName, { meta: f, session: parsed });
+            }
+          } catch (_) {}
+        }
+      }
+
+      const rolePriority = { kandidat: 0, hr: 1, kolega: 2, ucastnik: 3 };
+      for (const name of entries) {
+        if (!/\.(webm|mp4|ogg)$/i.test(name)) continue;
+        const full = path.join(dirPath, name);
+        const stat = fs.statSync(full);
+        if (!stat.isFile() || stat.size === 0) continue;
+
+        const linked = fileMetaMap.get(name);
+        const fMeta = linked?.meta || {};
+        const sMeta = linked?.session || {};
+        const mimeType = fMeta.mimeType || inferMediaTypeFromFilename(name);
+
+        let durationSeconds = null;
+        if (sMeta.startedAt && sMeta.stoppedAt) {
+          const diff = Math.round((new Date(sMeta.stoppedAt).getTime() - new Date(sMeta.startedAt).getTime()) / 1000);
+          if (!isNaN(diff) && diff >= 0) durationSeconds = diff;
+        }
+
+        mediaFiles.push({
+          fileName: name,
+          size: stat.size,
+          mimeType,
+          isAudioOnly: mimeType.startsWith('audio/'),
+          roleTag: fMeta.roleTag || (name.includes('_kandidat_') ? 'kandidat' : name.includes('_hr_') ? 'hr' : name.includes('_kolega_') ? 'kolega' : 'ucastnik'),
+          participantName: fMeta.participantName || '',
+          participantEmail: fMeta.participantEmail || '',
+          sessionId: sMeta.sessionId || '',
+          startedAt: sMeta.startedAt || null,
+          stoppedAt: sMeta.stoppedAt || null,
+          trigger: sMeta.trigger || null,
+          durationSeconds,
+          completed: fMeta.completed !== undefined ? fMeta.completed : true,
+          updatedAt: stat.mtime.toISOString(),
+        });
+      }
+
+      mediaFiles.sort((a, b) => {
+        const ra = rolePriority[a.roleTag] ?? 9;
+        const rb = rolePriority[b.roleTag] ?? 9;
+        if (ra !== rb) return ra - rb;
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+      });
+    }
+
+    const hasRecordings = mediaFiles.length > 0;
+    const status = hasRecordings ? 'available' : (isBeforeScheduled ? 'not_started' : 'missing');
+
+    return {
+      status,
+      isBeforeScheduled,
+      scheduledAt: interview.datum,
+      hasRecordings,
+      folderPath: relativeDir,
+      sessions,
+      files: mediaFiles,
+    };
+  }
+
+  function resolveRecordingFilePath(interview, analysisRow, requestedFileName) {
+    if (!interview || !requestedFileName) return null;
+    const cleanName = path.basename(String(requestedFileName));
+    if (cleanName !== String(requestedFileName) || !/\.(webm|mp4|ogg)$/i.test(cleanName)) {
+      return null;
+    }
+    const { dirPath } = resolveRecordingDirectoryForInterview(interview, analysisRow);
+    const resolvedDir = path.resolve(dirPath);
+    const fullPath = path.resolve(resolvedDir, cleanName);
+    if (!fullPath.startsWith(resolvedDir + path.sep) || !fs.existsSync(fullPath)) {
+      return null;
+    }
+    const stat = fs.statSync(fullPath);
+    if (!stat.isFile()) return null;
+    return {
+      fullPath,
+      fileName: cleanName,
+      size: stat.size,
+      mimeType: inferMediaTypeFromFilename(cleanName),
+    };
+  }
+
   return {
     recordingDir,
     parseInterviewDatumMs,
@@ -762,6 +911,8 @@ function createRecordingManager({
     removeSseClient,
     tickAllRooms,
     listRoomRecordings,
+    getInterviewRecordingDetails,
+    resolveRecordingFilePath,
   };
 }
 

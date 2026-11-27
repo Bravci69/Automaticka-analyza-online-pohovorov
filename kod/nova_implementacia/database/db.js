@@ -1105,6 +1105,43 @@ function setInterviewRecordingPath(interviewId, recordingPath) {
   return true;
 }
 
+function getInterviewAnalysis(interviewId) {
+  if (!interviewId) return null;
+  return db.prepare('SELECT * FROM interview_analyza WHERE interview_id = ?').get(interviewId) || null;
+}
+
+function getInterviewAuditLogs(interview, limit = 30) {
+  if (!interview) return [];
+  const idToken = `#${interview.id}`;
+  const roomToken = interview.room_id || '';
+  const nameToken = interview.meno_respondenta || '';
+  return db.prepare(`
+    SELECT * FROM audit_logs
+    WHERE detaily LIKE ?
+       OR (? != '' AND detaily LIKE ?)
+       OR (? != '' AND detaily LIKE ?)
+    ORDER BY id DESC
+    LIMIT ?
+  `).all(
+    `%${idToken}%`,
+    roomToken,
+    `%${roomToken}%`,
+    nameToken,
+    `%${nameToken}%`,
+    limit
+  );
+}
+
+function updateInterviewNotes(id, poznamky, author = 'admin') {
+  const existing = getInterviewById(id);
+  if (!existing) throw new Error('Pohovor s daným ID neexistuje!');
+  const cleanNotes = String(poznamky || '').trim();
+  db.prepare('UPDATE interview SET poznamky = ? WHERE id = ?').run(cleanNotes, id);
+  logAudit('UPRAVA_POZNAMOK', author, `Upravené poznámky k pohovoru #${id} (${existing.meno_respondenta}).`);
+  notifyDbChange('INTERVIEW_NOTES_UPDATED', { interviewId: id });
+  return getInterviewById(id);
+}
+
 module.exports = {
   db,
   dbEvents,
@@ -1133,6 +1170,9 @@ module.exports = {
   getInterviewsNeedingReminder,
   markReminderSent,
   setInterviewRecordingPath,
+  getInterviewAnalysis,
+  getInterviewAuditLogs,
+  updateInterviewNotes,
   generateIcsContent,
   createInterview,
   addInterviewColleague,

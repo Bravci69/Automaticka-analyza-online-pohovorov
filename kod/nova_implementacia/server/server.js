@@ -363,6 +363,7 @@ async function handleRequest(req, res) {
       parseJsonBody,
       parseRawBody,
       recordingManager,
+      dbModule,
     });
     if (recordingHandled) return;
 
@@ -813,6 +814,25 @@ async function handleRequest(req, res) {
       }
     }
 
+    // PATCH /api/interviews/:id/notes - Úprava poznámok k pohovoru
+    if (pathname.match(/^\/api\/interviews\/\d+\/notes$/) && req.method === 'PATCH') {
+      const caller = getAuthUser(req);
+      if (!caller || (caller.ures_tag !== 'SUPERADMIN' && caller.ures_tag !== 'HR_ADMIN')) {
+        return sendJson(res, 401, { error: 'Pre úpravu poznámok sa musíte prihlásiť ako HR alebo Superadmin.' });
+      }
+      const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0], 10);
+      const interview = dbModule.getInterviewById(id);
+      if (!interview) {
+        return sendJson(res, 404, { error: 'Pohovor neexistuje.' });
+      }
+      if (!canManageInterview(caller, interview)) {
+        return sendJson(res, 403, { error: 'Nemáte oprávnenie upravovať poznámky tohto pohovoru.' });
+      }
+      const { poznamky } = await parseJsonBody(req);
+      const updated = dbModule.updateInterviewNotes(id, poznamky, caller.username);
+      return sendJson(res, 200, { ok: true, interview: updated });
+    }
+
     // DELETE /api/interviews/:id alebo /api/meetings/:id
     if (
       (pathname.startsWith('/api/interviews/') || pathname.startsWith('/api/meetings/')) &&
@@ -867,6 +887,11 @@ async function handleRequest(req, res) {
       return serveFile(res, path.join(__dirname, 'meeting.html'));
     }
 
+    // Detail pohovoru & nahrávka: /interview/:id
+    if (pathname.match(/^\/interview\/\d+\/?$/)) {
+      return serveFile(res, path.join(__dirname, 'interview_detail.html'));
+    }
+
     // Admin panel: /admin
     if (pathname === '/admin' || pathname === '/admin/') {
       return serveFile(res, path.join(__dirname, 'admin.html'));
@@ -877,8 +902,21 @@ async function handleRequest(req, res) {
       return serveFile(res, path.join(__dirname, 'index.html'));
     }
 
-    // Statické súbory
+    // Statické súbory (s blokovaním súkromných priečinkov nahrávok a backend modulov)
     const safePath = path.normalize(pathname).replace(/^(\.\.[/\\])+/, '');
+    const normalizedRel = safePath.replace(/^[\\/]+/, '').replace(/\\/g, '/').toLowerCase();
+    if (
+      normalizedRel.startsWith('recording/')
+      || normalizedRel === 'recording'
+      || normalizedRel.startsWith('modules/')
+      || normalizedRel.startsWith('ssl/')
+      || normalizedRel === '.env'
+      || normalizedRel === 'config.json'
+    ) {
+      res.writeHead(403);
+      return res.end('Forbidden');
+    }
+
     const filePath = path.join(__dirname, safePath);
 
     if (!filePath.startsWith(__dirname)) {

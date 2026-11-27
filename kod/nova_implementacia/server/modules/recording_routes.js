@@ -12,6 +12,64 @@ function isStaffUser(user) {
   return !!(user && (user.ures_tag === 'SUPERADMIN' || user.ures_tag === 'HR_ADMIN'));
 }
 
+function canViewInterviewDetail(caller, interview, dbModule) {
+  if (!caller || !interview) return false;
+  if (caller.ures_tag === 'SUPERADMIN') return true;
+  if (caller.id === interview.hr_id || caller.username === interview.hr_username) return true;
+  const callerMail = String(caller.mail || '').trim().toLowerCase();
+  if (callerMail && interview.dalsie_maily && dbModule.parseEmailList) {
+    return dbModule.parseEmailList(interview.dalsie_maily).includes(callerMail);
+  }
+  return false;
+}
+
+function streamMediaFileWithRange(req, res, fileInfo, forceDownload = false) {
+  const fs = require('node:fs');
+  const { fullPath, fileName, size, mimeType } = fileInfo;
+  const baseHeaders = {
+    'Content-Type': mimeType,
+    'Accept-Ranges': 'bytes',
+    'Cache-Control': 'no-store',
+    'Access-Control-Allow-Origin': '*',
+  };
+  if (forceDownload) {
+    baseHeaders['Content-Disposition'] = `attachment; filename="${fileName.replace(/"/g, '')}"`;
+  }
+
+  const rangeHeader = req.headers['range'];
+  if (!rangeHeader || forceDownload) {
+    res.writeHead(200, {
+      ...baseHeaders,
+      'Content-Length': size,
+    });
+    fs.createReadStream(fullPath).pipe(res);
+    return;
+  }
+
+  const match = String(rangeHeader).match(/^bytes=(\d*)-(\d*)$/);
+  if (!match) {
+    res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+    res.end();
+    return;
+  }
+
+  let start = match[1] ? parseInt(match[1], 10) : 0;
+  let end = match[2] ? parseInt(match[2], 10) : size - 1;
+  if (isNaN(start) || isNaN(end) || start > end || start >= size) {
+    res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+    res.end();
+    return;
+  }
+  end = Math.min(end, size - 1);
+
+  res.writeHead(206, {
+    ...baseHeaders,
+    'Content-Range': `bytes ${start}-${end}/${size}`,
+    'Content-Length': (end - start) + 1,
+  });
+  fs.createReadStream(fullPath, { start, end }).pipe(res);
+}
+
 async function handleRecordingRoutes({
   req,
   res,
@@ -22,6 +80,7 @@ async function handleRecordingRoutes({
   parseJsonBody,
   parseRawBody,
   recordingManager,
+  dbModule,
 }) {
   // GET /api/meetings/:roomId/recording/events - SSE stream stavu nahrávania
   if (pathname.match(/^\/api\/meetings\/[^/]+\/recording\/events$/) && req.method === 'GET') {
@@ -116,6 +175,79 @@ async function handleRecordingRoutes({
       roomId,
       files: recordingManager.listRoomRecordings(roomId),
     });
+    return true;
+  }
+
+  // GET /api/interviews/:id/detail - Kompletný detail pohovoru, analýzy a zoznam nahrávok (len prihlásený HR/Superadmin)
+  if (pathname.match(/^\/api\/interviews\/\d+\/detail$/) && req.method === 'GET') {
+    const caller = getAuthUser(req);
+    if (!caller || !isStaffUser(caller)) {
+      sendJson(res, 401, { error: 'Pre zobrazenie detailu pohovoru sa musíte prihlásiť ako HR alebo Superadmin.' });
+      return true;
+    }
+    const id = parseInt(pathname.split('/api/interviews/')[1].split('/')[0], 10);
+    const interview = dbModule.getInterviewById(id);
+    if (!interview) {
+      sendJson(res, 404, { error: 'Pohovor s daným ID neexistuje.' });
+      return true;
+    }
+    if (!canViewInterviewDetail(caller, interview, dbModule)) {
+      sendJson(res, 403, { error: 'Nemáte oprávnenie zobraziť tento pohovor.' });
+      return true;
+    }
+
+    const analysis = dbModule.getInterviewAnalysis(id);
+    const recordings = recordingManager.getInterviewRecordingDetails(interview, analysis);
+    const auditLogs = dbModule.getInterviewAuditLogs(interview, 30);
+    const vyhodnotenia = dbModule.getAllVyhodnotenia();
+
+    sendJson(res, 200, {
+      ok: true,
+      interview: {
+        ...interview,
+        title: interview.titul_pozicia,
+        hrName: interview.meno_hr,
+        meetingUrl: interview.link_meeting,
+      },
+      analysis,
+      recordings,
+      auditLogs,
+      vyhodnotenia,
+    });
+    return true;
+  }
+
+  // GET /api/interviews/:id/recordings/:fileName - Chránený stream / stiahnutie nahrávky (podpora Range + ?token=)
+  if (pathname.match(/^\/api\/interviews\/\d+\/recordings\/[^/]+$/) && req.method === 'GET') {
+    const queryToken = (url.searchParams.get('token') || '').trim();
+    const caller = getAuthUser(req) || (queryToken ? dbModule.getSessionUser(queryToken) : null);
+    if (!caller || !isStaffUser(caller)) {
+      sendJson(res, 401, { error: 'Prístup k nahrávke vyžaduje prihlásenie HR alebo Superadmina.' });
+      return true;
+    }
+
+    const parts = pathname.split('/api/interviews/')[1].split('/recordings/');
+    const id = parseInt(parts[0], 10);
+    const fileName = decodeURIComponent(parts[1] || '');
+    const interview = dbModule.getInterviewById(id);
+    if (!interview) {
+      sendJson(res, 404, { error: 'Pohovor s daným ID neexistuje.' });
+      return true;
+    }
+    if (!canViewInterviewDetail(caller, interview, dbModule)) {
+      sendJson(res, 403, { error: 'Nemáte oprávnenie prehrať nahrávku tohto pohovoru.' });
+      return true;
+    }
+
+    const analysis = dbModule.getInterviewAnalysis(id);
+    const fileInfo = recordingManager.resolveRecordingFilePath(interview, analysis, fileName);
+    if (!fileInfo) {
+      sendJson(res, 404, { error: 'Požadovaný súbor nahrávky nebol nájdený.' });
+      return true;
+    }
+
+    const forceDownload = url.searchParams.get('download') === '1';
+    streamMediaFileWithRange(req, res, fileInfo, forceDownload);
     return true;
   }
 

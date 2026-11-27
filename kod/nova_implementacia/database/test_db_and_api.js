@@ -672,6 +672,63 @@ async function runTests() {
   dbModule.deleteInterview(selfMailInterview.id, 'admin');
   console.log('   ✅ Regresný test: HR cez Vstúpiť si zachová tlačidlá nahrávania aj keď má rovnaký e-mail ako kandidát.');
 
+  // 16.11 Test detailu pohovoru a stavov nahrávky (pred termínom / bez nahrávky / dostupná nahrávka + ochrana pred path traversal)
+  const detailFutureInterview = dbModule.createInterview({
+    datum: schedStr,
+    hr_id: testAdminUser.id,
+    meno_respondenta: 'Detail Test Kandidát',
+    mail_respondenta: 'detail.test@example.com',
+    link_meeting: 'https://host2.fxcomputers.net:13192/meeting/bp-detail-test',
+    room_id: 'bp-detail-test',
+    titul_pozicia: 'Fullstack Test',
+  }, 'admin');
+  let detailNowMs = scheduledMs - 60000;
+  const detailMgr = createRecordingManager({
+    dbModule,
+    recordingDir: tmpRecDir,
+    nowFn: () => detailNowMs,
+  });
+
+  const beforeState = detailMgr.getInterviewRecordingDetails(detailFutureInterview, dbModule.getInterviewAnalysis(detailFutureInterview.id));
+  if (beforeState.status !== 'not_started' || !beforeState.isBeforeScheduled || beforeState.hasRecordings) {
+    throw new Error(`❌ Pred termínom musí byť stav "not_started" (Pohovor ešte neprebehol), získané: ${JSON.stringify(beforeState)}`);
+  }
+
+  detailNowMs = scheduledMs + 60000;
+  const missingState = detailMgr.getInterviewRecordingDetails(detailFutureInterview, dbModule.getInterviewAnalysis(detailFutureInterview.id));
+  if (missingState.status !== 'missing' || missingState.isBeforeScheduled || missingState.hasRecordings) {
+    throw new Error(`❌ Po termíne bez záznamu musí byť stav "missing" (Nahrávka nebola spravená), získané: ${JSON.stringify(missingState)}`);
+  }
+
+  const savedRec = detailMgr.appendChunk(detailFutureInterview.room_id, {
+    sessionId: 'rec_detail_test_01',
+    clientId: 'cli-detail-1',
+    roleTag: 'kandidat',
+    name: 'Detail Test Kandidát',
+    email: 'detail.test@example.com',
+    mimeType: 'video/webm',
+    isFinal: true,
+  }, Buffer.from('WEBM_DETAIL_CONTENT_XYZ'));
+
+  const detailAnalysis = dbModule.getInterviewAnalysis(detailFutureInterview.id);
+  const availableState = detailMgr.getInterviewRecordingDetails(detailFutureInterview, detailAnalysis);
+  if (availableState.status !== 'available' || !availableState.hasRecordings || availableState.files.length !== 1) {
+    throw new Error(`❌ Po uložení nahrávky musí byť stav "available": ${JSON.stringify(availableState)}`);
+  }
+  const safeResolve = detailMgr.resolveRecordingFilePath(detailFutureInterview, detailAnalysis, savedRec.fileName);
+  const unsafeResolve = detailMgr.resolveRecordingFilePath(detailFutureInterview, detailAnalysis, '../../db.js');
+  if (!safeResolve || !fs.existsSync(safeResolve.fullPath) || unsafeResolve !== null) {
+    throw new Error('❌ resolveRecordingFilePath zlyhal pri overení súboru alebo ochrany cesty!');
+  }
+  dbModule.updateInterviewNotes(detailFutureInterview.id, 'Upravená testovacia poznámka', 'admin');
+  const updatedDetail = dbModule.getInterviewById(detailFutureInterview.id);
+  const auditForDetail = dbModule.getInterviewAuditLogs(updatedDetail, 10);
+  if (updatedDetail.poznamky !== 'Upravená testovacia poznámka' || auditForDetail.length === 0) {
+    throw new Error('❌ updateInterviewNotes alebo getInterviewAuditLogs nefungujú správne!');
+  }
+  dbModule.deleteInterview(detailFutureInterview.id, 'admin');
+  console.log('   ✅ Podstránka detailu pohovoru (stavy pred termínom, chýbajúca nahrávka, dostupné médium, poznámky a audit log) prešla na 100%.');
+
   fs.rmSync(tmpRecDir, { recursive: true, force: true });
   dbModule.deleteInterview(recInterview.id, 'admin');
 

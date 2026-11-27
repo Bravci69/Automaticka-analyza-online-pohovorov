@@ -276,12 +276,12 @@ function renderDayAgenda(dateStr, allInterviews) {
 
         return `
             <div class="interview-schedule-item">
-                <div class="schedule-time-box">
+                <div class="schedule-time-box clickable-interview-area" onclick="openInterviewDetail(${item.id})" title="Zobraziť detail pohovoru a nahrávku">
                     <span class="schedule-time-val">${time}</span>
                     <span class="schedule-date-val">45 min</span>
                 </div>
 
-                <div class="schedule-details">
+                <div class="schedule-details clickable-interview-area" onclick="openInterviewDetail(${item.id})" title="Kliknutím zobrazíte detail pohovoru a nahrávku">
                     <div class="schedule-job-title">${escapeHtml(item.titul_pozicia || 'Pohovor')}</div>
                     <div class="schedule-candidate-name">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #38bdf8;">
@@ -293,7 +293,7 @@ function renderDayAgenda(dateStr, allInterviews) {
                     </div>
                     <div class="schedule-meta-row">
                         <span>👔 HR: <strong>${escapeHtml(item.meno_hr)}</strong></span>
-                        <span style="display: flex; align-items: center; gap: 4px;">
+                        <span style="display: flex; align-items: center; gap: 4px;" onclick="event.stopPropagation()">
                             <span>Hodnotenie:</span>
                             <select class="select-enum-inline ${badgeClass}" onchange="changeEvaluation(${item.id}, this.value)">
                                 ${enumOptions}
@@ -308,6 +308,10 @@ function renderDayAgenda(dateStr, allInterviews) {
                 </div>
 
                 <div class="schedule-actions">
+                    <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem; color: #c4b5fd;" onclick="openInterviewDetail(${item.id})" title="Zobraziť detail pohovoru a nahrávku">
+                        📄 Detail
+                    </button>
+
                     <button type="button" class="btn-primary" style="padding: 7px 14px; font-size: 0.82rem;" onclick="window.open('${getMeetingUrl(item, { autoJoin: true })}', '_blank')" title="Otvoriť videohovor">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -380,12 +384,12 @@ function renderUpcomingInterviews(allInterviews) {
 
         return `
             <div class="interview-schedule-item">
-                <div class="schedule-time-box" style="min-width: 110px;">
+                <div class="schedule-time-box clickable-interview-area" style="min-width: 110px;" onclick="openInterviewDetail(${item.id})" title="Zobraziť detail pohovoru a nahrávku">
                     <span class="schedule-time-val" style="font-size: 1.05rem;">${dateVal}</span>
                     <span class="schedule-date-val" style="color: #c4b5fd; font-weight: 700; font-size: 0.82rem;">⏰ ${timeVal}</span>
                 </div>
 
-                <div class="schedule-details">
+                <div class="schedule-details clickable-interview-area" onclick="openInterviewDetail(${item.id})" title="Kliknutím zobrazíte detail pohovoru a nahrávku">
                     <div class="schedule-job-title">${escapeHtml(item.titul_pozicia || 'Pohovor')}</div>
                     <div class="schedule-candidate-name">
                         <strong>${escapeHtml(item.meno_respondenta)}</strong> · ${escapeHtml(item.mail_respondenta)}
@@ -405,6 +409,9 @@ function renderUpcomingInterviews(allInterviews) {
                 </div>
 
                 <div class="schedule-actions">
+                    <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; color: #c4b5fd;" onclick="openInterviewDetail(${item.id})" title="Zobraziť detail pohovoru a nahrávku">
+                        📄 Detail
+                    </button>
                     <button type="button" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.open('${getMeetingUrl(item, { autoJoin: true })}', '_blank')">
                         Vstúpiť
                     </button>

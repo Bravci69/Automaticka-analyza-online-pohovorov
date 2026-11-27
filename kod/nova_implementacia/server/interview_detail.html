@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail pohovoru · Analýza Pohovorov | FIIT STU</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/base.css">
+    <link rel="stylesheet" href="/styles/admin.css">
+    <link rel="stylesheet" href="/styles/interview_detail.css">
+</head>
+
+<body class="page-admin page-detail">
+    <header>
+        <div class="nav-inner">
+            <a href="/admin" class="brand-group">
+                <div class="brand-logo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">Analýza Pohovorov</span>
+                    <span class="brand-meta">FIIT STU · Detail pohovoru a nahrávka</span>
+                </div>
+            </a>
+
+            <div class="nav-actions">
+                <a href="/admin" class="btn-secondary" style="text-decoration: none; padding: 7px 14px; font-size: 0.82rem;">
+                    &larr; Späť do HR konzoly
+                </a>
+                <div id="detailUserBadge"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="admin-main detail-container">
+        <!-- Loading / Auth Guard -->
+        <div class="detail-state-card" id="detailGuardCard">
+            <div class="spin-ring" id="detailSpinner"></div>
+            <h2 id="detailGuardTitle" style="margin-top: 12px; color: #fff;">Načítavam detail pohovoru...</h2>
+            <p id="detailGuardDesc" style="color: var(--text-muted); font-size: 0.88rem; margin-top: 6px;"></p>
+            <a href="/admin" id="detailGuardBtn" class="btn-primary" style="display: none; text-decoration: none; margin-top: 16px;">
+                Prejsť na prihlásenie v HR konzole
+            </a>
+        </div>
+
+        <!-- Hlavný obsah detailu -->
+        <div id="detailContent" style="display: none;">
+            <!-- 1. HLAVIČKA POHOVORU & RÝCHLE AKCIE -->
+            <section class="card detail-hero-card">
+                <div class="detail-hero-top">
+                    <div>
+                        <div class="detail-badges-row">
+                            <span class="code-pill" id="detailIdBadge">#--</span>
+                            <span class="code-pill" id="detailRoomBadge">--</span>
+                            <span class="status-badge-enum" id="detailStatusBadge">--</span>
+                        </div>
+                        <h1 class="detail-job-title" id="detailJobTitle">--</h1>
+                        <div class="detail-candidate-sub">
+                            <strong id="detailCandidateName" style="color: #fff;">--</strong>
+                            <span style="color: var(--text-dim);">·</span>
+                            <a id="detailCandidateEmail" href="#" style="color: #38bdf8; text-decoration: none;">--</a>
+                            <span style="color: var(--text-dim);">·</span>
+                            <span id="detailDatumBadge" style="color: #c4b5fd; font-family: 'JetBrains Mono', monospace;">--</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-actions-bar">
+                        <div class="detail-eval-wrap">
+                            <span style="font-size: 0.76rem; color: var(--text-dim); font-weight: 600;">Vyhodnotenie:</span>
+                            <select id="detailEvalSelect" class="select-enum-inline" onchange="onDetailEvaluationChange(this.value)"></select>
+                        </div>
+
+                        <button type="button" class="btn-primary" onclick="joinInterviewAsStaff()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                <polyline points="15 3 21 3 21 9"/>
+                                <line x1="10" x2="21" y1="14" y2="3"/>
+                            </svg>
+                            Vstúpiť do pohovoru
+                        </button>
+
+                        <button type="button" class="btn-secondary" onclick="copyDetailMeetingLink()">Kopírovať link</button>
+                        <button type="button" class="btn-secondary" onclick="downloadDetailIcs()">📅 .ics</button>
+                        <button type="button" class="btn-secondary" style="color: #34d399;" onclick="resendDetailInvitation()">✉️ Odoslať pozvánku</button>
+                        <button type="button" class="btn-secondary" style="color: #38bdf8;" onclick="sendDetailReminder()">🔔 Pripomienka</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. NAHRÁVKA POHOVORU / STAV PRED TERMÍNOM ALEBO BEZ NAHRÁVKY -->
+            <section class="card detail-recording-card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>🎥 Záznam online pohovoru</h2>
+                        <p class="card-subtitle" id="recordingSectionSubtitle">Nahrávky uložené v priečinku server/recording</p>
+                    </div>
+                    <span class="code-pill" id="recordingFolderBadge" style="display: none;">--</span>
+                </div>
+
+                <div id="recordingContainer"></div>
+            </section>
+
+            <!-- 3. DVOJSTĹPCOVÉ DETAILY: INFORMÁCIE O KANDIDÁTOVI A ANALÝZA / AUDIT -->
+            <div class="detail-two-col">
+                <!-- Ľavý panel: Údaje o pohovore, pozvaných a poznámkach -->
+                <section class="card">
+                    <h2 style="margin-bottom: 14px;">👤 Informácie o uchádzačovi a pohovore</h2>
+                    <div class="detail-info-grid" id="detailInfoGrid"></div>
+
+                    <div class="detail-notes-box">
+                        <label for="detailNotesInput" class="detail-notes-label">Poznámky personalistu k pohovoru</label>
+                        <textarea id="detailNotesInput" rows="4" class="detail-notes-textarea" placeholder="Dopíšte vlastné poznámky alebo hodnotiace postrehy z pohovoru..."></textarea>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                            <span id="detailNotesSavedHint" style="font-size: 0.78rem; color: #34d399;"></span>
+                            <button type="button" class="btn-primary" style="padding: 8px 14px; font-size: 0.82rem;" onclick="saveDetailNotes()">
+                                Uložiť poznámky
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Pravý panel: Multimodálna analýza & Audit história -->
+                <section class="card">
+                    <h2 style="margin-bottom: 14px;">📊 Analýza pohovoru & História udalostí</h2>
+
+                    <div class="detail-metrics-grid" id="detailAnalysisMetrics"></div>
+
+                    <div style="margin-top: 22px;">
+                        <h3 style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em;">
+                            História udalostí (Audit log)
+                        </h3>
+                        <div class="detail-audit-list" id="detailAuditList"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-inner">
+            <span>Bakalársky projekt · Automatická analýza online pohovorov · FIIT STU v Bratislave</span>
+            <span>Detail pohovoru & Videozáznamy</span>
+        </div>
+    </footer>
+
+    <script src="/scripts/interview/interview_detail.js"></script>
+</body>
+
+</html>
