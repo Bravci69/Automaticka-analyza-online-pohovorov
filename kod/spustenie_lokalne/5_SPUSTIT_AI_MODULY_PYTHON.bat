@@ -17,7 +17,7 @@ where python >nul 2>nul
 if %ERRORLEVEL% neq 0 (
     color 0C
     echo [UPOZORNENIE] Prikaz 'python' sa nenasiel v systemovej ceste PATH.
-    echo Pre spustenie Python skriptov je potrebny nainstalovany Python (3.10+):
+    echo Pre spustenie Python skriptov je potrebny nainstalovany Python verzia 3.10+:
     echo https://www.python.org/downloads/
     echo.
     pause

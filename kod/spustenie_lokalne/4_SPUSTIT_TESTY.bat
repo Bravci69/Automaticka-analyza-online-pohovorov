@@ -2,7 +2,7 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-title [AutWorldBP] Automatizovan? Integra?n? Testy
+title [AutWorldBP] Automatizovane Integracne Testy
 color 0B
 
 echo ======================================================================

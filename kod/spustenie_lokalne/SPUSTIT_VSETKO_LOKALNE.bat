@@ -16,7 +16,7 @@ where node >nul 2>nul
 if %ERRORLEVEL% neq 0 (
     color 0C
     echo [CHYBA] Node.js nie je nainstalovany alebo nie je v systemovej ceste PATH!
-    echo Pre chod aplikacie si prosim stiahnite a nainstalujte Node.js (verzia 22+):
+    echo Pre chod aplikacie si prosim stiahnite a nainstalujte Node.js verzia 22+:
     echo https://nodejs.org/
     echo.
     pause
@@ -46,18 +46,15 @@ if not exist "%~dp0..\nova_implementacia\klient\dist\main.js" (
 )
 
 :: 4. Zistenie portu z config.json
-set PORT=13191
-if exist "%~dp0..\nova_implementacia\server\config.json" (
-    for /f "tokens=2 delims=:, " %%p in ('findstr /i "\"port\"" "%~dp0..\nova_implementacia\server\config.json"') do (
-        set PORT=%%p
-    )
-)
+set "PORT=13191"
+set "CFG_PATH=%~dp0..\nova_implementacia\server\config.json"
+for /f "usebackq tokens=*" %%p in (`node -e "try{const f=require('fs').readFileSync(process.env.CFG_PATH,'utf8').replace(/^\uFEFF/,'');console.log(JSON.parse(f).port||13191)}catch{console.log(13191)}"`) do set "PORT=%%p"
 
 echo.
 echo ----------------------------------------------------------------------
 echo [KROK 1] Spustam lokalny HTTPS server s SQLite databazou v novom okne...
 echo ----------------------------------------------------------------------
-start "[AutWorldBP - Server]" cmd /k "chcp 65001 >nul && title [AutWorldBP - Server ^& DB] && cd /d \"%~dp0..\nova_implementacia\server\" && node --experimental-sqlite server.js"
+start "[AutWorldBP - Server]" /D "%~dp0..\nova_implementacia\server" cmd /k "chcp 65001 >nul && title [AutWorldBP - Server] && node --experimental-sqlite server.js"
 
 echo [KROK 2] Cakam 2 sekundy na inicializaciu servera...
 timeout /t 2 /nobreak >nul
@@ -96,7 +93,7 @@ set /p CMD="Vasa volba (0-4): "
 
 if "%CMD%"=="1" (
     echo [INFO] Spustam Electron klienta...
-    start "[AutWorldBP - Klient]" cmd /c "chcp 65001 >nul && cd /d \"%~dp0..\nova_implementacia\klient\" && npm start"
+    start "[AutWorldBP - Klient]" /D "%~dp0..\nova_implementacia\klient" cmd /c "chcp 65001 >nul && npm start"
     goto PANEL
 )
 
@@ -107,7 +104,7 @@ if "%CMD%"=="2" (
 
 if "%CMD%"=="3" (
     echo [INFO] Spustam testovaci suite...
-    start "[AutWorldBP - Testy]" cmd /k "chcp 65001 >nul && cd /d \"%~dp0..\nova_implementacia\database\" && node --experimental-sqlite test_db_and_api.js"
+    start "[AutWorldBP - Testy]" /D "%~dp0..\nova_implementacia\database" cmd /k "chcp 65001 >nul && node --experimental-sqlite test_db_and_api.js"
     goto PANEL
 )
 

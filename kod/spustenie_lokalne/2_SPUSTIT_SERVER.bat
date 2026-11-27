@@ -2,7 +2,7 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-title [AutWorldBP] Lok?lny Server & Datab?za
+title [AutWorldBP] Lokalny Server a Databaza
 color 0B
 
 echo ======================================================================
@@ -16,7 +16,7 @@ where node >nul 2>nul
 if %ERRORLEVEL% neq 0 (
     color 0C
     echo [CHYBA] Node.js nie je nainstalovany alebo nie je v premennej PATH!
-    echo Prosim, nainstalujte Node.js (verzia 22+): https://nodejs.org/
+    echo Prosim, nainstalujte Node.js verzia 22+: https://nodejs.org/
     echo.
     pause
     exit /b 1
@@ -41,11 +41,7 @@ if not exist "node_modules\nodemailer" (
 
 :: 4. Zistenie portu z config.json alebo default 13191
 set PORT=13191
-if exist "config.json" (
-    for /f "tokens=2 delims=:, " %%p in ('findstr /i "\"port\"" config.json') do (
-        set PORT=%%p
-    )
-)
+for /f "usebackq delims=" %%p in (`node -e "try{const f=require('fs').readFileSync('config.json','utf8').replace(/^\uFEFF/,'');console.log(JSON.parse(f).port||13191)}catch{console.log(13191)}"`) do set PORT=%%p
 
 echo [INFO] Spustam zabezpeceny HTTPS server na: https://localhost:!PORT!
 echo.

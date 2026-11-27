@@ -16,7 +16,7 @@ where node >nul 2>nul
 if %ERRORLEVEL% neq 0 (
     color 0C
     echo [CHYBA] Node.js nie je nainstalovany alebo nie je v systemovej premennej PATH!
-    echo Prosim, stiahnite a nainstalujte Node.js (verzia 22+):
+    echo Prosim, stiahnite a nainstalujte Node.js verzia 22+:
     echo https://nodejs.org/
     echo.
     pause
