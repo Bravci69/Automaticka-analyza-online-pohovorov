@@ -1616,6 +1616,213 @@
             }
         }
 
+        /* ===================================================================== */
+        /* INTERAKTÍVNE 24-HODINOVÉ HODINY (Time Clock Picker)                   */
+        /* ===================================================================== */
+        .time-clock-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 0 14px;
+            min-width: 108px;
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.94rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .time-clock-trigger:hover {
+            border-color: var(--primary);
+            background: var(--bg-elevated);
+        }
+
+        .time-clock-trigger:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .clock-picker-dialog {
+            max-width: 340px !important;
+            padding: 24px !important;
+        }
+
+        .clock-digital-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 12px 0 14px;
+        }
+
+        .clock-digit-btn {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            cursor: pointer;
+            line-height: 1.1;
+            transition: all 0.15s ease;
+        }
+
+        .clock-digit-btn.active {
+            background: rgba(139, 92, 246, 0.22);
+            border-color: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 0 18px var(--primary-glow);
+        }
+
+        .clock-colon {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-dim);
+        }
+
+        .clock-mode-label {
+            text-align: center;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: #c4b5fd;
+            margin-bottom: 14px;
+        }
+
+        .clock-face {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.65);
+            user-select: none;
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        .clock-center-dot {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            transform: translate(-50%, -50%);
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        .clock-hand {
+            position: absolute;
+            left: 50%;
+            bottom: 50%;
+            width: 2px;
+            height: 102px;
+            background: var(--primary);
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(0deg);
+            z-index: 2;
+            pointer-events: none;
+            transition: transform 0.12s ease-out, height 0.12s ease-out;
+        }
+
+        .clock-hand.dragging {
+            transition: none;
+        }
+
+        .clock-hand-tip {
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 12px var(--primary-glow);
+            transform: translateX(-50%);
+        }
+
+        .clock-hand-tip::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #ffffff;
+            transform: translate(-50%, -50%);
+        }
+
+        .clock-number {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            margin-left: -16px;
+            margin-top: -16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--text-main);
+            z-index: 3;
+            pointer-events: none;
+            transition: color 0.12s ease;
+        }
+
+        .clock-number.inner {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+        }
+
+        .clock-number.selected {
+            color: #ffffff;
+            font-weight: 800;
+        }
+
+        .clock-quick-presets {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .clock-preset-chip {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .clock-preset-chip:hover {
+            border-color: var(--primary);
+            color: #ffffff;
+            background: rgba(139, 92, 246, 0.18);
+        }
+
 /* =============================================================================
    3. ŠTÝLY PRE VIDEOKONFERENCIU & EYE-TRACKING (MEETING.HTML)
 ============================================================================= */

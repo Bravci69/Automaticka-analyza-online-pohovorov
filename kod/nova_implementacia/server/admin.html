@@ -200,22 +200,20 @@
 
                     <div class="field-group">
                         <label class="field-label" for="intDate">Dátum a presný čas konania (24-hodinový formát)</label>
-                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                            <input type="date" id="intDate" class="input-text" style="flex: 2; min-width: 140px;" required />
-                            <div style="display: flex; align-items: center; gap: 6px; flex: 2; min-width: 170px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 2px 10px;">
-                                <span style="font-size: 0.85rem; color: #a78bfa; font-weight: 700;">⏰</span>
-                                <select id="intTimeHour" class="select-input" style="border: none; background: transparent; padding: 8px 2px; font-weight: 700; color: #fff; width: 55px;" title="Hodina (00-23)">
-                                    <!-- 00 až 23 -->
-                                </select>
-                                <span style="font-weight: 800; color: #a78bfa; font-size: 1rem;">:</span>
-                                <select id="intTimeMinute" class="select-input" style="border: none; background: transparent; padding: 8px 2px; font-weight: 700; color: #fff; width: 55px;" title="Minúta (00-55)">
-                                    <!-- 00, 05, 10, ... 55 -->
-                                </select>
-                                <span style="font-size: 0.72rem; color: var(--text-dim); margin-left: auto; font-weight: 600;">(24h)</span>
-                            </div>
+                        <div style="display: flex; gap: 8px; align-items: stretch;">
+                            <input type="date" id="intDate" class="input-text" style="flex: 1; min-width: 132px;" required />
+                            <button type="button" class="time-clock-trigger" id="intTimeTrigger" onclick="openClockTimePicker('create')" title="Vybrať čas pomocou hodín (24h)">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #a78bfa; flex-shrink: 0;">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                                <span id="intTimeDisplay">10:00</span>
+                            </button>
                         </div>
+                        <input type="hidden" id="intTimeHour" value="10" />
+                        <input type="hidden" id="intTimeMinute" value="00" />
                         <input type="hidden" id="intDatum" />
-                        <span class="input-hint">Čas je v 24-hodinovom formáte (00:00 – 23:55). Termín nemôže byť v minulosti.</span>
+                        <span class="input-hint">Kliknite na hodiny pre výber času (00:00 – 23:59). Termín nemôže byť v minulosti.</span>
                     </div>
 
                     <div class="field-group">
@@ -867,22 +865,20 @@
 
             <div style="margin-bottom: 16px;">
                 <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 6px;">Nový dátum a čas pohovoru (24-hodinový formát):</label>
-                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <input type="date" id="rescheduleDate" class="form-input" style="flex: 2; min-width: 140px;" required />
-                    <div style="display: flex; align-items: center; gap: 6px; flex: 2; min-width: 170px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 2px 10px;">
-                        <span style="font-size: 0.85rem; color: #38bdf8; font-weight: 700;">⏰</span>
-                        <select id="rescheduleHour" class="select-input" style="border: none; background: transparent; padding: 8px 2px; font-weight: 700; color: #fff; width: 55px;" title="Hodina (00-23)">
-                            <!-- 00 až 23 -->
-                        </select>
-                        <span style="font-weight: 800; color: #38bdf8; font-size: 1rem;">:</span>
-                        <select id="rescheduleMinute" class="select-input" style="border: none; background: transparent; padding: 8px 2px; font-weight: 700; color: #fff; width: 55px;" title="Minúta (00-55)">
-                            <!-- 00, 05, 10, ... 55 -->
-                        </select>
-                        <span style="font-size: 0.72rem; color: var(--text-dim); margin-left: auto; font-weight: 600;">(24h)</span>
-                    </div>
+                <div style="display: flex; gap: 8px; align-items: stretch;">
+                    <input type="date" id="rescheduleDate" class="input-text" style="flex: 1; min-width: 140px;" required />
+                    <button type="button" class="time-clock-trigger" id="rescheduleTimeTrigger" onclick="openClockTimePicker('reschedule')" title="Vybrať čas pomocou hodín (24h)">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #38bdf8; flex-shrink: 0;">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span id="rescheduleTimeDisplay">10:00</span>
+                    </button>
                 </div>
+                <input type="hidden" id="rescheduleHour" value="10" />
+                <input type="hidden" id="rescheduleMinute" value="00" />
                 <input type="hidden" id="rescheduleNewDateTime" />
-                <span style="font-size: 0.74rem; color: var(--text-dim); display: block; margin-top: 4px;">Termín musí byť v budúcnosti. Formát času je 24-hodinový.</span>
+                <span style="font-size: 0.74rem; color: var(--text-dim); display: block; margin-top: 4px;">Termín musí byť v budúcnosti. Kliknite na hodiny pre výber času.</span>
             </div>
 
             <div style="margin-bottom: 16px;">
@@ -1052,6 +1048,46 @@
                     </svg>
                     Odoslať pozvánku e-mailom
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. MODAL: Interaktívne 24-hodinové hodiny na výber času -->
+    <div class="modal-overlay" id="clockPickerModal" style="z-index: 200;" onclick="if(event.target === this) closeClockTimePicker()">
+        <div class="modal-dialog clock-picker-dialog">
+            <div style="text-align: center;">
+                <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em;">
+                    Vyberte čas pohovoru (24h)
+                </div>
+
+                <div class="clock-digital-header">
+                    <button type="button" class="clock-digit-btn active" id="clockDigitHour" onclick="setClockMode('hour')" title="Vybrať hodinu">10</button>
+                    <span class="clock-colon">:</span>
+                    <button type="button" class="clock-digit-btn" id="clockDigitMinute" onclick="setClockMode('minute')" title="Vybrať minúty">00</button>
+                </div>
+
+                <div class="clock-mode-label" id="clockModeLabel">Vyberte hodinu (vonkajší okruh 01–12 · vnútorný 13–00)</div>
+            </div>
+
+            <div class="clock-face" id="clockFace">
+                <div class="clock-center-dot"></div>
+                <div class="clock-hand" id="clockHand">
+                    <div class="clock-hand-tip"></div>
+                </div>
+                <div id="clockNumbersLayer"></div>
+            </div>
+
+            <div class="clock-quick-presets">
+                <button type="button" class="clock-preset-chip" onclick="applyClockPreset(9, 0)">09:00</button>
+                <button type="button" class="clock-preset-chip" onclick="applyClockPreset(10, 0)">10:00</button>
+                <button type="button" class="clock-preset-chip" onclick="applyClockPreset(11, 30)">11:30</button>
+                <button type="button" class="clock-preset-chip" onclick="applyClockPreset(13, 0)">13:00</button>
+                <button type="button" class="clock-preset-chip" onclick="applyClockPreset(15, 0)">15:00</button>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn-secondary" onclick="closeClockTimePicker()">Zrušiť</button>
+                <button type="button" class="btn-primary" onclick="confirmClockTimePicker()">Potvrdiť čas</button>
             </div>
         </div>
     </div>
