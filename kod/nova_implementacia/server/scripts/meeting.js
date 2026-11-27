@@ -100,6 +100,21 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
         ];
         const EYE_KEY_INDICES = [33, 133, 159, 145, 362, 263, 386, 374];
 
+        // Stav nahrávania pohovoru (automatické spustenie + ovládanie len pre HR/Superadmina)
+        let canControlRecording = false;
+        let participantRoleTag = 'ucastnik';
+        let participantJoinedName = '';
+        let participantJoinedEmail = '';
+        let recordingClientId = '';
+        let latestRecordingSnapshot = null;
+        let recEventSource = null;
+        let presenceIntervalId = null;
+        let recTimerIntervalId = null;
+        let activeRecorder = null;
+        let activeRecorderSessionId = null;
+        let recStopResolver = null;
+        let recUploadQueue = Promise.resolve();
+
         // =================================================================
         // 1. INICIALIZÁCIA LOBBY
         // =================================================================
@@ -169,6 +184,7 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
 
             const resolved = await identityPromise;
             if (resolved) {
+                canControlRecording = !!resolved.canControlRecording;
                 if (resolved.name && !nameInput.value.trim()) {
                     nameInput.value = resolved.name;
                 }
@@ -267,6 +283,12 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
                 document.getElementById('previewPlaceholder').style.display = 'none';
             } catch (err) {
                 console.warn('Kamera v lobby nedostupná:', err);
+                try {
+                    localStream = await getMedia({ video: false, audio: true });
+                    console.info('Použitý aspoň mikrofónový stream pre záznam zvuku.');
+                } catch (audioErr) {
+                    console.warn('Ani mikrofón nie je dostupný:', audioErr);
+                }
                 renderCamError(false, err.message);
             }
         }
@@ -306,6 +328,18 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
                 return;
             }
 
+            participantJoinedName = name;
+            participantJoinedEmail = email;
+
+            const recControlsEl = document.getElementById('hrRecordingControls');
+            if (recControlsEl) {
+                if (canControlRecording) {
+                    recControlsEl.style.display = 'flex';
+                } else {
+                    recControlsEl.remove();
+                }
+            }
+
             document.getElementById('lobbyView').classList.add('hidden');
             document.getElementById('callView').classList.add('active');
 
@@ -325,6 +359,9 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
 
             // Štart MediaPipe Eye-Trackingu
             initRealEyeTracking();
+
+            // Štart prezenčnej synchronizácie a nahrávania pohovoru
+            initRecordingSync(name, email);
         }
 
         function startJitsi(userName, userEmail = '') {
@@ -422,10 +459,18 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
             }
         }
 
-        function leaveSession() {
+        async function leaveSession() {
             if (isLeavingSession) return;
             isLeavingSession = true;
             stopEyeTracking();
+
+            try {
+                await Promise.race([
+                    shutdownRecordingOnLeave(),
+                    new Promise(res => setTimeout(res, 1500))
+                ]);
+            } catch (e) {}
+
             if (jitsiClient) {
                 try { jitsiClient.dispose(); } catch (e) {}
                 jitsiClient = null;
@@ -1023,3 +1068,369 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
         }
 
         window.addEventListener('DOMContentLoaded', initLobby);
+
+        // =================================================================
+        // 7. NAHRÁVANIE POHOVORU & SYNCHRONIZÁCIA ÚČASTNÍKOV
+        // =================================================================
+        function formatRecDuration(totalSec) {
+            const s = Math.max(0, Math.floor(totalSec || 0));
+            const mins = String(Math.floor(s / 60)).padStart(2, '0');
+            const secs = String(s % 60).padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+
+        function pickSupportedRecordingMimeType(hasVideo, hasAudio) {
+            if (typeof MediaRecorder === 'undefined') return '';
+            const candidates = hasVideo
+                ? [
+                    'video/webm;codecs=vp9,opus',
+                    'video/webm;codecs=vp8,opus',
+                    'video/webm;codecs=vp8',
+                    'video/webm'
+                ]
+                : (hasAudio ? ['audio/webm;codecs=opus', 'audio/webm'] : []);
+
+            for (const m of candidates) {
+                try {
+                    if (MediaRecorder.isTypeSupported(m)) return m;
+                } catch (_) {}
+            }
+            return '';
+        }
+
+        async function initRecordingSync(userName, userEmail) {
+            recordingClientId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : `cli_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+            await sendPresenceHeartbeat(userName, userEmail);
+
+            if (recEventSource) {
+                try { recEventSource.close(); } catch (_) {}
+            }
+            recEventSource = new EventSource(`/api/meetings/${encodeURIComponent(activeRoom)}/recording/events`);
+            recEventSource.onmessage = (ev) => {
+                try {
+                    const snapshot = JSON.parse(ev.data);
+                    applyRecordingSnapshot(snapshot);
+                } catch (_) {}
+            };
+
+            if (presenceIntervalId) clearInterval(presenceIntervalId);
+            presenceIntervalId = setInterval(() => {
+                sendPresenceHeartbeat(participantJoinedName, participantJoinedEmail);
+            }, 3000);
+
+            if (recTimerIntervalId) clearInterval(recTimerIntervalId);
+            recTimerIntervalId = setInterval(() => {
+                if (latestRecordingSnapshot && latestRecordingSnapshot.state === 'recording') {
+                    latestRecordingSnapshot.elapsedSeconds = (latestRecordingSnapshot.elapsedSeconds || 0) + 1;
+                    renderRecordingUI(latestRecordingSnapshot);
+                }
+            }, 1000);
+
+            window.addEventListener('pagehide', sendLeaveBeacon);
+            window.addEventListener('beforeunload', sendLeaveBeacon);
+        }
+
+        function sendLeaveBeacon() {
+            if (!recordingClientId || !activeRoom) return;
+            try {
+                const payload = new Blob([JSON.stringify({ clientId: recordingClientId })], { type: 'application/json' });
+                navigator.sendBeacon(`/api/meetings/${encodeURIComponent(activeRoom)}/presence/leave`, payload);
+            } catch (_) {}
+        }
+
+        async function sendPresenceHeartbeat(userName, userEmail) {
+            if (!recordingClientId || !activeRoom || isLeavingSession) return;
+            const token = localStorage.getItem('bp_token');
+            const inviteeEmail = (urlParams.get('invitee') || '').trim();
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            try {
+                const res = await fetch(`/api/meetings/${encodeURIComponent(activeRoom)}/presence`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        clientId: recordingClientId,
+                        name: userName,
+                        email: userEmail,
+                        inviteeEmail
+                    })
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.participant) {
+                    participantRoleTag = data.participant.roleTag || participantRoleTag;
+                    const serverCanControl = !!data.participant.canControlRecording;
+                    if (serverCanControl !== canControlRecording) {
+                        canControlRecording = serverCanControl;
+                        const el = document.getElementById('hrRecordingControls');
+                        if (el) {
+                            if (canControlRecording) el.style.display = 'flex';
+                            else el.remove();
+                        }
+                    }
+                }
+                applyRecordingSnapshot(data);
+            } catch (err) {
+                console.warn('Chyba prezenčného heartbeatu:', err);
+            }
+        }
+
+        function applyRecordingSnapshot(snapshot) {
+            if (!snapshot) return;
+            latestRecordingSnapshot = snapshot;
+            renderRecordingUI(snapshot);
+
+            if (snapshot.state === 'recording') {
+                if (!activeRecorder || activeRecorderSessionId !== snapshot.sessionId) {
+                    if (activeRecorder && activeRecorder.state !== 'inactive') {
+                        stopLocalMediaRecorder().then(() => {
+                            if (latestRecordingSnapshot && latestRecordingSnapshot.state === 'recording') {
+                                startLocalMediaRecorder(snapshot.sessionId);
+                            }
+                        });
+                    } else {
+                        startLocalMediaRecorder(snapshot.sessionId);
+                    }
+                } else if (activeRecorder.state === 'paused') {
+                    try {
+                        activeRecorder.resume();
+                    } catch (e) {
+                        console.warn('Nepodarilo sa pokračovať v MediaRecorder:', e);
+                    }
+                }
+            } else if (snapshot.state === 'paused') {
+                if (activeRecorder && activeRecorder.state === 'recording') {
+                    try {
+                        activeRecorder.pause();
+                    } catch (e) {
+                        console.warn('Nepodarilo sa pozastaviť MediaRecorder:', e);
+                    }
+                }
+            } else {
+                if (activeRecorder && activeRecorder.state !== 'inactive') {
+                    stopLocalMediaRecorder();
+                }
+            }
+        }
+
+        function renderRecordingUI(snapshot) {
+            const pill = document.getElementById('recordingStatusPill');
+            const pillText = document.getElementById('recPillText');
+            const state = snapshot.state || 'waiting';
+            const dur = formatRecDuration(snapshot.elapsedSeconds || 0);
+            const waitingFor = snapshot.attendance?.waitingFor || [];
+
+            if (pill && pillText) {
+                pill.className = `rec-status-pill ${state}`;
+                if (state === 'recording') {
+                    pillText.textContent = `REC · ${dur}`;
+                    pill.title = 'Pohovor sa práve nahráva do server/recording';
+                } else if (state === 'paused') {
+                    pillText.textContent = `PAUSED · ${dur}`;
+                    pill.title = 'Nahrávanie pohovoru je pozastavené';
+                } else if (state === 'stopped') {
+                    pillText.textContent = `Záznam uložený (${dur})`;
+                    pill.title = 'Nahrávanie bolo ukončené a uložené';
+                } else {
+                    if (canControlRecording && waitingFor.length > 0) {
+                        pillText.textContent = `Čaká sa: ${waitingFor[0]}`;
+                        pill.title = `Automatické nahrávanie čaká na: ${waitingFor.join(' + ')}`;
+                    } else {
+                        pillText.textContent = 'Nahrávanie: čaká sa';
+                        pill.title = 'Nahrávanie sa spustí automaticky po pripojení pozvaných v termíne pohovoru';
+                    }
+                }
+            }
+
+            if (!canControlRecording) {
+                const controlsEl = document.getElementById('hrRecordingControls');
+                if (controlsEl) controlsEl.remove();
+                return;
+            }
+
+            const btnStart = document.getElementById('btnRecStart');
+            const btnStartLbl = document.getElementById('btnRecStartLabel');
+            const btnPause = document.getElementById('btnRecPause');
+            const btnPauseLbl = document.getElementById('btnRecPauseLabel');
+            const btnStop = document.getElementById('btnRecStop');
+            if (!btnStart || !btnPause || !btnStop) return;
+
+            if (state === 'recording') {
+                btnStart.style.display = 'none';
+                btnPause.style.display = 'inline-flex';
+                btnStop.style.display = 'inline-flex';
+                if (btnPauseLbl) btnPauseLbl.textContent = 'Pozastaviť';
+            } else if (state === 'paused') {
+                btnStart.style.display = 'none';
+                btnPause.style.display = 'inline-flex';
+                btnStop.style.display = 'inline-flex';
+                if (btnPauseLbl) btnPauseLbl.textContent = 'Pokračovať';
+            } else {
+                btnStart.style.display = 'inline-flex';
+                btnPause.style.display = 'none';
+                btnStop.style.display = 'none';
+                if (btnStartLbl) {
+                    btnStartLbl.textContent = state === 'stopped' ? 'Nahrávať znova' : 'Nahrávať';
+                }
+            }
+        }
+
+        function startLocalMediaRecorder(sessionId) {
+            if (!localStream || typeof MediaRecorder === 'undefined') {
+                console.warn('Lokálny stream alebo MediaRecorder nie je dostupný na nahrávanie.');
+                return;
+            }
+            const liveTracks = localStream.getTracks().filter(t => t.readyState === 'live');
+            if (liveTracks.length === 0) return;
+
+            const recStream = new MediaStream(liveTracks);
+            const hasVideo = recStream.getVideoTracks().length > 0;
+            const hasAudio = recStream.getAudioTracks().length > 0;
+            const mimeType = pickSupportedRecordingMimeType(hasVideo, hasAudio);
+
+            try {
+                const recorderOptions = mimeType ? { mimeType } : {};
+                if (hasVideo) recorderOptions.videoBitsPerSecond = 1200000;
+                const recorder = new MediaRecorder(recStream, recorderOptions);
+                const resolvedMime = mimeType || recorder.mimeType || 'video/webm';
+
+                activeRecorder = recorder;
+                activeRecorderSessionId = sessionId;
+
+                recorder.ondataavailable = (ev) => {
+                    if (ev.data && ev.data.size > 0) {
+                        enqueueChunkUpload(sessionId, resolvedMime, ev.data, false);
+                    }
+                };
+
+                recorder.onstop = () => {
+                    enqueueChunkUpload(sessionId, resolvedMime, new Blob([]), true).finally(() => {
+                        if (activeRecorder === recorder) {
+                            activeRecorder = null;
+                            activeRecorderSessionId = null;
+                        }
+                        if (recStopResolver) {
+                            const done = recStopResolver;
+                            recStopResolver = null;
+                            done();
+                        }
+                    });
+                };
+
+                recorder.start(2000);
+                console.log(`🎥 Nahrávanie spustené (${resolvedMime}, relácia: ${sessionId})`);
+            } catch (err) {
+                console.error('Nepodarilo sa spustiť MediaRecorder:', err);
+            }
+        }
+
+        function stopLocalMediaRecorder() {
+            return new Promise((resolve) => {
+                if (!activeRecorder || activeRecorder.state === 'inactive') {
+                    resolve();
+                    return;
+                }
+                recStopResolver = resolve;
+                try {
+                    activeRecorder.stop();
+                } catch (_) {
+                    recStopResolver = null;
+                    activeRecorder = null;
+                    activeRecorderSessionId = null;
+                    resolve();
+                }
+            });
+        }
+
+        function enqueueChunkUpload(sessionId, mimeType, blob, isFinal) {
+            recUploadQueue = recUploadQueue.then(async () => {
+                if (!activeRoom || !sessionId || !recordingClientId) return;
+                const params = new URLSearchParams({
+                    sessionId,
+                    clientId: recordingClientId,
+                    role: participantRoleTag || 'ucastnik',
+                    name: participantJoinedName || 'ucastnik',
+                    email: participantJoinedEmail || '',
+                    mimeType: mimeType || 'video/webm',
+                    final: isFinal ? '1' : '0'
+                });
+                try {
+                    await fetch(`/api/meetings/${encodeURIComponent(activeRoom)}/recording/chunk?${params.toString()}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/octet-stream' },
+                        body: blob,
+                        keepalive: !!isFinal
+                    });
+                } catch (err) {
+                    console.warn('Chyba odosielania bloku nahrávky:', err);
+                }
+            });
+            return recUploadQueue;
+        }
+
+        async function controlRecording(action) {
+            if (!canControlRecording) return;
+            const token = localStorage.getItem('bp_token');
+            if (!token) {
+                alert('Pre ovládanie nahrávania musíte byť prihlásený ako HR alebo Superadmin.');
+                return;
+            }
+            try {
+                const res = await fetch(`/api/meetings/${encodeURIComponent(activeRoom)}/recording/control`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ action })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.error || 'Akcia nahrávania zlyhala.');
+                    return;
+                }
+                applyRecordingSnapshot(data);
+            } catch (err) {
+                console.error('Chyba ovládania nahrávania:', err);
+            }
+        }
+
+        function togglePauseRecording() {
+            if (!latestRecordingSnapshot) return;
+            if (latestRecordingSnapshot.state === 'paused') {
+                controlRecording('resume');
+            } else if (latestRecordingSnapshot.state === 'recording') {
+                controlRecording('pause');
+            }
+        }
+
+        async function shutdownRecordingOnLeave() {
+            if (presenceIntervalId) {
+                clearInterval(presenceIntervalId);
+                presenceIntervalId = null;
+            }
+            if (recTimerIntervalId) {
+                clearInterval(recTimerIntervalId);
+                recTimerIntervalId = null;
+            }
+            if (recEventSource) {
+                try { recEventSource.close(); } catch (_) {}
+                recEventSource = null;
+            }
+            await stopLocalMediaRecorder();
+            await recUploadQueue;
+            if (recordingClientId && activeRoom) {
+                try {
+                    await fetch(`/api/meetings/${encodeURIComponent(activeRoom)}/presence/leave`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ clientId: recordingClientId }),
+                        keepalive: true
+                    });
+                } catch (_) {}
+            }
+        }

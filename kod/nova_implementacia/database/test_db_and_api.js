@@ -476,16 +476,173 @@ async function runTests() {
     authUser: null,
     autoJoin: true,
   });
-  if (anonAuto.autoJoin) {
-    throw new Error('❌ resolveMeetingParticipant povolil autoJoin neprihlásenému používateľovi!');
+  if (anonAuto.autoJoin || anonAuto.canControlRecording || candResolved.canControlRecording || !staffAuto.canControlRecording) {
+    throw new Error('❌ resolveMeetingParticipant nesprávne vyhodnotil autoJoin alebo oprávnenie ovládania nahrávania!');
   }
   console.log('   ✅ Personalizácia linkov a automatické načítanie mena/e-mailu (HR/Superadmin, kandidát, kolega s účtom aj hosť) prešli na 100%.');
+
+  // 16. Test nahrávania pohovoru (automatický štart podľa účasti a termínu + manuálne ovládanie len pre HR/Superadmina)
+  console.log('\n1️⃣6️⃣ Test automatického a manuálneho nahrávania pohovorov...');
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { createRecordingManager, parseInterviewDatumMs } = require('../server/recording_manager');
+
+  const tmpRecDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bp-rec-test-'));
+  const schedDate = new Date(Date.now() + 2 * 60 * 60 * 1000); // o 2 hodiny
+  const pad2 = n => String(n).padStart(2, '0');
+  const schedStr = `${schedDate.getFullYear()}-${pad2(schedDate.getMonth() + 1)}-${pad2(schedDate.getDate())} ${pad2(schedDate.getHours())}:${pad2(schedDate.getMinutes())}`;
+  const scheduledMs = parseInterviewDatumMs(schedStr);
+  let mockNowMs = scheduledMs - 10 * 60 * 1000; // 10 minút pred termínom
+
+  const recInterview = dbModule.createInterview({
+    datum: schedStr,
+    hr_id: testAdminUser.id,
+    meno_respondenta: 'Nahrávaný Kandidát',
+    mail_respondenta: 'kandidat.rec@example.com',
+    link_meeting: 'https://host2.fxcomputers.net:13192/meeting/bp-rec-test',
+    room_id: 'bp-rec-test',
+    titul_pozicia: 'QA / Recording Engineer',
+    dalsie_maily: 'kolega1@firma.sk, kolega2@firma.sk',
+  }, 'admin');
+
+  const recMgr = createRecordingManager({
+    dbModule,
+    recordingDir: tmpRecDir,
+    nowFn: () => mockNowMs,
+  });
+
+  // 16.1 Pripojí sa HR pred termínom -> čaká (chýba termín, kandidát, kolegovia)
+  let recSnap = recMgr.registerPresence(recInterview.room_id, {
+    clientId: 'cli-hr',
+    authUser: testAdminUser,
+    name: expectedAdminName,
+    email: testAdminUser.mail,
+  });
+  if (recSnap.state !== 'waiting' || !recSnap.participant.canControlRecording) {
+    throw new Error('❌ Nahrávanie nemalo začať iba s pripojeným HR a HR má mať práva ovládania!');
+  }
+
+  // 16.2 Pripojí sa kandidát (nesmie mať práva ovládať nahrávanie)
+  recSnap = recMgr.registerPresence(recInterview.room_id, {
+    clientId: 'cli-cand',
+    authUser: null,
+    name: 'Nahrávaný Kandidát',
+    email: 'kandidat.rec@example.com',
+    inviteeEmail: 'kandidat.rec@example.com',
+  });
+  if (recSnap.state !== 'waiting' || recSnap.participant.canControlRecording) {
+    throw new Error('❌ Nahrávanie sa nemá spustiť pred pripojením kolegov a kandidát nesmie mať práva na tlačidlá!');
+  }
+
+  // 16.3 Pripojí sa iba kolega1 (kolega2 ešte chýba)
+  recSnap = recMgr.registerPresence(recInterview.room_id, {
+    clientId: 'cli-kol1',
+    name: 'Prvý Kolega',
+    email: 'kolega1@firma.sk',
+    inviteeEmail: 'kolega1@firma.sk',
+  });
+  if (recSnap.state !== 'waiting' || recSnap.attendance.missingColleagues.length !== 1) {
+    throw new Error('❌ Systém musí čakať aj na kolega2@firma.sk!');
+  }
+
+  // 16.4 Pripojí sa aj kolega2, ale stále sme 10 minút PRED termínom -> musí ešte čakať na čas!
+  recSnap = recMgr.registerPresence(recInterview.room_id, {
+    clientId: 'cli-kol2',
+    name: 'Druhý Kolega',
+    email: 'kolega2@firma.sk',
+    inviteeEmail: 'kolega2@firma.sk',
+  });
+  if (recSnap.state !== 'waiting' || recSnap.attendance.missingColleagues.length !== 0 || recSnap.attendance.timeReached) {
+    throw new Error(`❌ Nahrávanie sa nesmie spustiť pred termínom pohovoru (${schedStr})!`);
+  }
+  console.log('   ✅ Pred termínom aj pri neúplnej účasti zostáva stav správne "waiting".');
+
+  // 16.5 Ak chýba kolega2 aj v čase pohovoru -> stále čaká (overenie na odpojení kolega2 a posune času s aktívnym heartbeatom ostatných)
+  recMgr.unregisterPresence(recInterview.room_id, 'cli-kol2');
+  mockNowMs = scheduledMs + 5000; // 5 sekúnd po termíne
+  recMgr.registerPresence(recInterview.room_id, { clientId: 'cli-hr', authUser: testAdminUser, name: expectedAdminName, email: testAdminUser.mail });
+  recMgr.registerPresence(recInterview.room_id, { clientId: 'cli-cand', authUser: null, name: 'Nahrávaný Kandidát', email: 'kandidat.rec@example.com', inviteeEmail: 'kandidat.rec@example.com' });
+  recMgr.registerPresence(recInterview.room_id, { clientId: 'cli-kol1', name: 'Prvý Kolega', email: 'kolega1@firma.sk', inviteeEmail: 'kolega1@firma.sk' });
+  recMgr.tickAllRooms();
+  recSnap = recMgr.getStatus(recInterview.room_id);
+  if (recSnap.state !== 'waiting' || !recSnap.attendance.timeReached || recSnap.attendance.missingColleagues.length !== 1 || recSnap.attendance.missingColleagues[0] !== 'kolega2@firma.sk') {
+    throw new Error(`❌ V čase pohovoru bez všetkých pozvaných (chýba kolega2) sa nahrávanie nesmie spustiť! ${JSON.stringify(recSnap.attendance)}`);
+  }
+
+  // 16.6 Dopojí sa posledný pozvaný kolega2 v termíne pohovoru -> AUTOMATICKÉ spustenie!
+  recSnap = recMgr.registerPresence(recInterview.room_id, {
+    clientId: 'cli-kol2',
+    name: 'Druhý Kolega',
+    email: 'kolega2@firma.sk',
+    inviteeEmail: 'kolega2@firma.sk',
+  });
+  if (recSnap.state !== 'recording' || recSnap.trigger !== 'auto' || !recSnap.sessionId) {
+    throw new Error(`❌ Po pripojení všetkých pozvaných v termíne sa nahrávanie malo automaticky spustiť! Stav: ${JSON.stringify(recSnap)}`);
+  }
+  console.log(`   ✅ Automatické nahrávanie sa spustilo presne po pripojení všetkých a dosiahnutí termínu (${recSnap.sessionId}).`);
+
+  // 16.7 Uloženie reálneho média chunku do priečinka recording/<roomId> a DB
+  const chunkRes = recMgr.appendChunk(recInterview.room_id, {
+    sessionId: recSnap.sessionId,
+    clientId: 'cli-cand',
+    roleTag: 'kandidat',
+    name: 'Nahrávaný Kandidát',
+    email: 'kandidat.rec@example.com',
+    mimeType: 'video/webm',
+    isFinal: false,
+  }, Buffer.from('WEBM_TEST_PAYLOAD_123456'));
+  const savedFull = path.join(tmpRecDir, 'bp-rec-test', chunkRes.fileName);
+  const analyzaRow = dbModule.db.prepare('SELECT zaznam_cesta FROM interview_analyza WHERE interview_id = ?').get(recInterview.id);
+  if (!fs.existsSync(savedFull) || !analyzaRow || analyzaRow.zaznam_cesta !== 'recording/bp-rec-test') {
+    throw new Error('❌ Súbor nahrávky alebo záznam cesty v DB nebol uložený správne!');
+  }
+  console.log(`   ✅ Dáta záznamu zapísané na disk (${chunkRes.fileName}) a DB prepojená (${analyzaRow.zaznam_cesta}).`);
+
+  // 16.8 Bezpečnosť: ne-HR používateľ nemôže pauzovať/vypínať/spúšťať nahrávanie
+  let forbiddenThrown = false;
+  try {
+    recMgr.controlRecording(recInterview.room_id, { authUser: null, action: 'stop' });
+  } catch (authErr) {
+    if (authErr.statusCode === 403) forbiddenThrown = true;
+  }
+  if (!forbiddenThrown) {
+    throw new Error('❌ Neprihlásený používateľ / kandidát nesmie mať možnosť ovládať nahrávanie!');
+  }
+
+  // 16.9 Manuálne ovládanie pre HR / Superadmina: pozastaviť -> pokračovať -> vypnúť + manuálne spustiť
+  mockNowMs += 3000;
+  recSnap = recMgr.controlRecording(recInterview.room_id, { authUser: testAdminUser, action: 'pause' });
+  if (recSnap.state !== 'paused') throw new Error('❌ HR nedokázal pozastaviť nahrávanie!');
+
+  mockNowMs += 2000;
+  recSnap = recMgr.controlRecording(recInterview.room_id, { authUser: testAdminUser, action: 'resume' });
+  if (recSnap.state !== 'recording') throw new Error('❌ HR nedokázal pokračovať v nahrávaní!');
+
+  mockNowMs += 4000;
+  recSnap = recMgr.controlRecording(recInterview.room_id, { authUser: testAdminUser, action: 'stop' });
+  recMgr.tickAllRooms(); // Overenie, že po ručnom vypnutí HR sa nahrávanie znova samovoľne nespustí
+  const afterStopTick = recMgr.getStatus(recInterview.room_id);
+  if (recSnap.state !== 'stopped' || afterStopTick.state !== 'stopped') {
+    throw new Error('❌ Po ručnom zastavení HR musí nahrávanie zostať vypnuté!');
+  }
+
+  // HR môže kedykoľvek manuálne nahrávanie opäť zapnúť
+  recSnap = recMgr.controlRecording(recInterview.room_id, { authUser: testAdminUser, action: 'start' });
+  if (recSnap.state !== 'recording' || recSnap.trigger !== 'manual') {
+    throw new Error('❌ HR nedokázal ručne zapnúť nové nahrávanie!');
+  }
+  recMgr.controlRecording(recInterview.room_id, { authUser: testAdminUser, action: 'stop' });
+  console.log('   ✅ Ovládanie HR/Superadmina (spustiť, pozastaviť, pokračovať, vypnúť) a blokovanie cudzích overené na 100%.');
+
+  fs.rmSync(tmpRecDir, { recursive: true, force: true });
+  dbModule.deleteInterview(recInterview.id, 'admin');
 
   // Upratanie tímového testovacieho pohovoru
   dbModule.deleteInterview(teamInterview.id, 'admin');
 
-  // 16. Upratanie testovacích dát
-  console.log('\n1️⃣6️⃣ Čistenie testovacích záznamov...');
+  // 17. Upratanie testovacích dát
+  console.log('\n1️⃣7️⃣ Čistenie testovacích záznamov...');
   dbModule.deleteInterview(newInterview.id, 'admin');
   console.log('   ✅ Testovacie záznamy boli vyčistené.');
 

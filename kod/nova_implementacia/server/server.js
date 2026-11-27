@@ -17,9 +17,13 @@ const dbModule = require('../database/db');
 // Načítanie emailového a plánovacieho modulu
 const mailer = require('./mailer');
 const reminderCron = require('./reminder_cron');
+const { createRecordingManager } = require('./recording_manager');
 
 // Inicializácia DB schémy a seed admin účtu
 dbModule.initDatabase();
+
+// Manažér nahrávania pohovorov do priečinka ./recording
+const recordingManager = createRecordingManager({ dbModule });
 
 // Načítanie konfigurácie z config.json
 let loadedConfigPath = null;
@@ -120,6 +124,24 @@ function parseJsonBody(req) {
         reject(new Error('Neplatný JSON formát'));
       }
     });
+    req.on('error', reject);
+  });
+}
+
+function parseRawBody(req, maxBytes = 25 * 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let total = 0;
+    req.on('data', chunk => {
+      total += chunk.length;
+      if (total > maxBytes) {
+        reject(Object.assign(new Error('Dátový blok nahrávky je príliš veľký.'), { statusCode: 413 }));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
     req.on('error', reject);
   });
 }
@@ -327,6 +349,104 @@ async function handleRequest(req, res) {
         autoJoin,
       });
       return sendJson(res, 200, resolved);
+    }
+
+    // ---- NAHRÁVANIE POHOVOROV & PREZENCIA ÚČASTNÍKOV ----
+    // GET /api/meetings/:roomId/recording/events - SSE stream stavu nahrávania miestnosti
+    if (pathname.match(/^\/api\/meetings\/[^/]+\/recording\/events$/) && req.method === 'GET') {
+      const rawRoom = pathname.split('/api/meetings/')[1].replace(/\/recording\/events$/, '');
+      const roomId = decodeURIComponent(rawRoom).trim();
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      });
+      recordingManager.addSseClient(roomId, res);
+      const snapshot = recordingManager.getStatus(roomId);
+      res.write(`data: ${JSON.stringify(snapshot)}\n\n`);
+      req.on('close', () => recordingManager.removeSseClient(roomId, res));
+      return;
+    }
+
+    // GET /api/meetings/:roomId/recording/status
+    if (pathname.match(/^\/api\/meetings\/[^/]+\/recording\/status$/) && req.method === 'GET') {
+      const rawRoom = pathname.split('/api/meetings/')[1].replace(/\/recording\/status$/, '');
+      const roomId = decodeURIComponent(rawRoom).trim();
+      return sendJson(res, 200, recordingManager.getStatus(roomId));
+    }
+
+    // POST /api/meetings/:roomId/presence - Heartbeat pripojenia účastníka v hovore
+    if (pathname.match(/^\/api\/meetings\/[^/]+\/presence$/) && req.method === 'POST') {
+      const rawRoom = pathname.split('/api/meetings/')[1].replace(/\/presence$/, '');
+      const roomId = decodeURIComponent(rawRoom).trim();
+      const authUser = getAuthUser(req);
+      const body = await parseJsonBody(req);
+      const result = recordingManager.registerPresence(roomId, {
+        clientId: body.clientId,
+        authUser,
+        name: body.name,
+        email: body.email,
+        inviteeEmail: body.inviteeEmail,
+      });
+      return sendJson(res, 200, result);
+    }
+
+    // POST /api/meetings/:roomId/presence/leave - Odchod účastníka z hovoru
+    if (pathname.match(/^\/api\/meetings\/[^/]+\/presence\/leave$/) && req.method === 'POST') {
+      const rawRoom = pathname.split('/api/meetings/')[1].replace(/\/presence\/leave$/, '');
+      const roomId = decodeURIComponent(rawRoom).trim();
+      const body = await parseJsonBody(req);
+      const result = recordingManager.unregisterPresence(roomId, body.clientId);
+      return sendJson(res, 200, result);
+    }
+
+    // POST /api/meetings/:roomId/recording/control - Manuálne zapnutie/pozastavenie/vypnutie (len HR/Superadmin)
+    if (pathname.match(/^\/api\/meetings\/[^/]+\/recording\/control$/) && req.method === 'POST') {
+      const rawRoom = pathname.split('/api/meetings/')[1].replace(/\/recording\/control$/, '');
+      const roomId = decodeURIComponent(rawRoom).trim();
+      const authUser = getAuthUser(req);
+      const body = await parseJsonBody(req);
+      try {
+        const result = recordingManager.controlRecording(roomId, {
+          authUser,
+          action: body.action,
+        });
+        return sendJson(res, 200, result);
+      } catch (ctrlErr) {
+        return sendJson(res, ctrlErr.statusCode || 400, { error: ctrlErr.message });
+      }
+    }
+
+    // POST /api/meetings/:roomId/recording/chunk - Uloženie binárneho bloku videa/zvuku do server/recording/
+    if (pathname.match(/^\/api\/meetings\/[^/]+\/recording\/chunk$/) && req.method === 'POST') {
+      const rawRoom = pathname.split('/api/meetings/')[1].replace(/\/recording\/chunk$/, '');
+      const roomId = decodeURIComponent(rawRoom).trim();
+      const buffer = await parseRawBody(req);
+      const result = recordingManager.appendChunk(roomId, {
+        sessionId: url.searchParams.get('sessionId') || '',
+        clientId: url.searchParams.get('clientId') || '',
+        roleTag: url.searchParams.get('role') || 'ucastnik',
+        name: url.searchParams.get('name') || 'ucastnik',
+        email: url.searchParams.get('email') || '',
+        mimeType: url.searchParams.get('mimeType') || req.headers['content-type'] || 'video/webm',
+        isFinal: url.searchParams.get('final') === '1',
+      }, buffer);
+      return sendJson(res, 200, result);
+    }
+
+    // GET /api/meetings/:roomId/recordings - Zoznam uložených nahrávok (len HR/Superadmin)
+    if (pathname.match(/^\/api\/meetings\/[^/]+\/recordings$/) && req.method === 'GET') {
+      const authUser = getAuthUser(req);
+      if (!authUser || (authUser.ures_tag !== 'SUPERADMIN' && authUser.ures_tag !== 'HR_ADMIN')) {
+        return sendJson(res, 403, { error: 'Prístup k nahrávkam je povolený len pre HR alebo Superadmina.' });
+      }
+      const rawRoom = pathname.split('/api/meetings/')[1].replace(/\/recordings$/, '');
+      const roomId = decodeURIComponent(rawRoom).trim();
+      return sendJson(res, 200, {
+        roomId,
+        files: recordingManager.listRoomRecordings(roomId),
+      });
     }
 
     // GET /api/interviews alebo /api/meetings
@@ -951,4 +1071,7 @@ server.listen(PORT, '0.0.0.0', () => {
 
   // Spustenie automatického plánovača pripomienok (deň pred pohovorom)
   reminderCron.startReminderScheduler(60000);
+
+  // Pravidelná kontrola termínov a prezenčných stavov pre automatické nahrávanie
+  setInterval(() => recordingManager.tickAllRooms(), 1000);
 });

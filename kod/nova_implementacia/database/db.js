@@ -705,6 +705,7 @@ function buildPersonalizedMeetingLink(baseUrl, email) {
 function resolveMeetingParticipant(roomId, { authUser = null, inviteeEmail = '', autoJoin = false } = {}) {
   const cleanInvitee = String(inviteeEmail || '').trim().toLowerCase();
   const interview = roomId ? getInterviewByRoomId(roomId) : null;
+  const isStaffAuth = !!(authUser && (authUser.ures_tag === 'SUPERADMIN' || authUser.ures_tag === 'HR_ADMIN'));
 
   const formatUserName = (u) => {
     if (!u) return '';
@@ -720,6 +721,7 @@ function resolveMeetingParticipant(roomId, { authUser = null, inviteeEmail = '',
       matched: !!fullName,
       source: 'staff_autojoin',
       autoJoin: true,
+      canControlRecording: isStaffAuth,
       name: fullName,
       email,
       role: authUser.ures_tag || 'HR_ADMIN',
@@ -738,6 +740,7 @@ function resolveMeetingParticipant(roomId, { authUser = null, inviteeEmail = '',
         matched: true,
         source: 'candidate_invite',
         autoJoin: false,
+        canControlRecording: false,
         name: candName,
         email: cleanInvitee,
         role: 'candidate',
@@ -747,10 +750,12 @@ function resolveMeetingParticipant(roomId, { authUser = null, inviteeEmail = '',
     // 2b) Pozvaný kolega / HR s registrovaným účtom na stránke
     const accountUser = getUserByEmail(cleanInvitee);
     if (accountUser) {
+      const accountIsStaff = accountUser.ures_tag === 'SUPERADMIN' || accountUser.ures_tag === 'HR_ADMIN';
       return {
         matched: true,
         source: 'colleague_account',
         autoJoin: false,
+        canControlRecording: isStaffAuth && accountIsStaff,
         name: formatUserName(accountUser),
         email: String(accountUser.mail || cleanInvitee).trim(),
         role: accountUser.ures_tag || 'colleague',
@@ -762,6 +767,7 @@ function resolveMeetingParticipant(roomId, { authUser = null, inviteeEmail = '',
       matched: true,
       source: 'external_invitee',
       autoJoin: false,
+      canControlRecording: false,
       name: '',
       email: cleanInvitee,
       role: 'guest',
@@ -774,6 +780,7 @@ function resolveMeetingParticipant(roomId, { authUser = null, inviteeEmail = '',
       matched: true,
       source: 'staff_logged_in',
       autoJoin: false,
+      canControlRecording: isStaffAuth,
       name: formatUserName(authUser),
       email: String(authUser.mail || '').trim(),
       role: authUser.ures_tag || 'HR_ADMIN',
@@ -790,6 +797,7 @@ function resolveMeetingParticipant(roomId, { authUser = null, inviteeEmail = '',
         matched: true,
         source: 'interview_candidate',
         autoJoin: false,
+        canControlRecording: false,
         name: candName,
         email: candEmail,
         role: 'candidate',
@@ -801,6 +809,7 @@ function resolveMeetingParticipant(roomId, { authUser = null, inviteeEmail = '',
     matched: false,
     source: 'anonymous',
     autoJoin: false,
+    canControlRecording: false,
     name: '',
     email: '',
     role: 'guest',
@@ -1786,6 +1795,22 @@ function markReminderSent(id, author = 'system') {
   return true;
 }
 
+function setInterviewRecordingPath(interviewId, recordingPath) {
+  if (!interviewId || !recordingPath) return false;
+  const existing = db.prepare('SELECT id, zaznam_cesta FROM interview_analyza WHERE interview_id = ?').get(interviewId);
+  if (existing) {
+    if (existing.zaznam_cesta === recordingPath) return true;
+    db.prepare('UPDATE interview_analyza SET zaznam_cesta = ? WHERE interview_id = ?').run(recordingPath, interviewId);
+  } else {
+    db.prepare(`
+      INSERT INTO interview_analyza (interview_id, skore_pozornosti, dominantna_emocia, pocet_vyplnovych_slov, stav_analyzy, zaznam_cesta)
+      VALUES (?, 0.0, 'čaká na vyhodnotenie', 0, 'cakajuce', ?)
+    `).run(interviewId, recordingPath);
+  }
+  notifyDbChange('INTERVIEW_RECORDING_PATH', { interviewId, zaznam_cesta: recordingPath });
+  return true;
+}
+
 module.exports = {
   db,
   dbEvents,
@@ -1813,6 +1838,7 @@ module.exports = {
   generateInterviewCancellation,
   getInterviewsNeedingReminder,
   markReminderSent,
+  setInterviewRecordingPath,
   generateIcsContent,
   createInterview,
   addInterviewColleague,

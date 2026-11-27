@@ -2222,6 +2222,123 @@
             color: #ffffff;
         }
 
+        /* Recording Status & HR Controls */
+        .rec-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .rec-pill-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+
+        .rec-status-pill.recording {
+            border-color: rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.14);
+            color: #fecaca;
+        }
+
+        .rec-status-pill.recording .rec-pill-dot {
+            background: var(--accent-red);
+            box-shadow: 0 0 8px var(--accent-red);
+            animation: pulse-red 1s infinite;
+        }
+
+        .rec-status-pill.paused {
+            border-color: rgba(245, 158, 11, 0.45);
+            background: rgba(245, 158, 11, 0.12);
+            color: #fde68a;
+        }
+
+        .rec-status-pill.paused .rec-pill-dot {
+            background: var(--accent-amber);
+        }
+
+        .rec-status-pill.stopped {
+            border-color: rgba(16, 185, 129, 0.35);
+            background: rgba(16, 185, 129, 0.08);
+            color: #a7f3d0;
+        }
+
+        .rec-status-pill.stopped .rec-pill-dot {
+            background: var(--accent-green);
+        }
+
+        .rec-controls-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-rec-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 0.79rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-surface);
+            color: var(--text-main);
+        }
+
+        .btn-rec-action.start {
+            border-color: rgba(239, 68, 68, 0.45);
+            background: rgba(239, 68, 68, 0.14);
+            color: #fecaca;
+        }
+
+        .btn-rec-action.start:hover {
+            background: var(--accent-red);
+            color: #ffffff;
+        }
+
+        .btn-rec-action.pause {
+            border-color: rgba(245, 158, 11, 0.45);
+            background: rgba(245, 158, 11, 0.14);
+            color: #fde68a;
+        }
+
+        .btn-rec-action.pause:hover {
+            background: var(--accent-amber);
+            color: #111827;
+        }
+
+        .btn-rec-action.stop {
+            border-color: rgba(148, 163, 184, 0.35);
+            background: rgba(148, 163, 184, 0.12);
+            color: #e2e8f0;
+        }
+
+        .btn-rec-action.stop:hover {
+            background: #475569;
+            color: #ffffff;
+        }
+
+        .rec-btn-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+
         /* Jitsi Frame Wrapper */
         .video-stage {
             flex: 1;

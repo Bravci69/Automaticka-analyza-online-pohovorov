@@ -26,6 +26,10 @@ dist/
 output.log
 scratch/
 
+# Server recordings (runtime interview media)
+kod/nova_implementacia/server/recording/*
+!kod/nova_implementacia/server/recording/.gitkeep
+
 # Database (runtime SQLite files)
 *.db
 *.db-wal

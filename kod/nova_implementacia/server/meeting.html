@@ -129,9 +129,29 @@
                     <div class="hud-dot" id="hudDot"></div>
                     <span id="hudStatusText">Kamera a očný kontakt: v poriadku</span>
                 </div>
+
+                <!-- Status nahrávania pohovoru -->
+                <div class="rec-status-pill waiting" id="recordingStatusPill" title="Stav nahrávania pohovoru">
+                    <span class="rec-pill-dot" id="recPillDot"></span>
+                    <span id="recPillText">Nahrávanie: čaká sa</span>
+                </div>
             </div>
 
             <div class="header-right">
+                <!-- Ovládanie nahrávania (len pre HR / Superadmina) -->
+                <div class="rec-controls-group" id="hrRecordingControls" style="display: none;">
+                    <button type="button" class="btn-rec-action start" id="btnRecStart" onclick="controlRecording('start')" title="Spustiť nahrávanie pohovoru">
+                        <span class="rec-btn-dot"></span>
+                        <span id="btnRecStartLabel">Nahrávať</span>
+                    </button>
+                    <button type="button" class="btn-rec-action pause" id="btnRecPause" onclick="togglePauseRecording()" style="display: none;" title="Pozastaviť / pokračovať v nahrávaní">
+                        <span id="btnRecPauseLabel">Pozastaviť</span>
+                    </button>
+                    <button type="button" class="btn-rec-action stop" id="btnRecStop" onclick="controlRecording('stop')" style="display: none;" title="Zastaviť a uložiť nahrávanie">
+                        <span>Vypnúť</span>
+                    </button>
+                </div>
+
                 <!-- Tlačidlo na otvorenie diagnostického PiP okna -->
                 <button class="btn-header-tool" id="btnTogglePip" onclick="toggleDiagnosticPip()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
