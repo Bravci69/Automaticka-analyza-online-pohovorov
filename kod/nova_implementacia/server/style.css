@@ -2001,14 +2001,14 @@
             font-size: 0.85rem;
             color: var(--text-muted);
             line-height: 1.5;
-            margin-bottom: 24px;
+            margin-bottom: 18px;
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
             gap: 6px;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
         }
 
         .input-label {

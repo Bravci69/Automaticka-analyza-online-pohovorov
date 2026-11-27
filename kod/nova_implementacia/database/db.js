@@ -633,11 +633,12 @@ function generateIcsContent(interview, options = {}) {
   const method = options.method || 'REQUEST';
   const status = options.status || (method === 'CANCEL' ? 'CANCELLED' : 'CONFIRMED');
   const sequence = options.sequence !== undefined ? options.sequence : (method === 'CANCEL' ? 2 : 0);
+  const joinUrl = options.joinUrl || interview.link_meeting || '';
 
   const cleanTitle = (interview.titul_pozicia || 'Online pohovor').replace(/[\r\n]+/g, ' ');
   const defaultDesc = method === 'CANCEL'
     ? `Online výberový pohovor na pozíciu ${cleanTitle} bol zrušený.\\n\\nKandidát: ${interview.meno_respondenta}\\nHR Konzultant: ${interview.meno_hr}`
-    : `Pozvánka na online výberový pohovor na pozíciu ${cleanTitle}.\\n\\nKandidát: ${interview.meno_respondenta}\\nHR Konzultant: ${interview.meno_hr}\\n\\nPripojenie na pohovor:\\n${interview.link_meeting}\\n\\nSystém automatickej multimodálnej analýzy pohovorov (FIIT STU).`;
+    : `Pozvánka na online výberový pohovor na pozíciu ${cleanTitle}.\\n\\nKandidát: ${interview.meno_respondenta}\\nHR Konzultant: ${interview.meno_hr}\\n\\nPripojenie na pohovor:\\n${joinUrl}\\n\\nSystém automatickej multimodálnej analýzy pohovorov (FIIT STU).`;
   
   const desc = options.description || defaultDesc;
   const summary = options.summary || (method === 'CANCEL' ? `ZRUŠENÉ: Online pohovor: ${cleanTitle}` : `Online pohovor: ${cleanTitle}`);
@@ -655,8 +656,8 @@ function generateIcsContent(interview, options = {}) {
     `DTEND:${dtEnd}`,
     `SUMMARY:${summary}`,
     `DESCRIPTION:${desc}`,
-    `LOCATION:${interview.link_meeting || 'Online'}`,
-    `URL:${interview.link_meeting || ''}`,
+    `LOCATION:${joinUrl || 'Online'}`,
+    `URL:${joinUrl}`,
     `STATUS:${status}`,
     `SEQUENCE:${sequence}`,
   ];
@@ -675,10 +676,142 @@ function generateIcsContent(interview, options = {}) {
   return lines.join('\r\n');
 }
 
+function getUserByEmail(email) {
+  const clean = String(email || '').trim().toLowerCase();
+  if (!clean || !clean.includes('@')) return null;
+  return db.prepare(`
+    SELECT id, username, meno, priezvisko, mail, ures_tag
+    FROM users
+    WHERE LOWER(TRIM(mail)) = ?
+    LIMIT 1
+  `).get(clean) || null;
+}
+
+function buildPersonalizedMeetingLink(baseUrl, email) {
+  const raw = String(baseUrl || '').trim();
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  if (!raw || !cleanEmail || !cleanEmail.includes('@')) return raw;
+  try {
+    const u = new URL(raw);
+    u.searchParams.set('invitee', cleanEmail);
+    return u.toString();
+  } catch (_) {
+    const cleanBase = raw.split('#')[0];
+    const sep = cleanBase.includes('?') ? '&' : '?';
+    return `${cleanBase}${sep}invitee=${encodeURIComponent(cleanEmail)}`;
+  }
+}
+
+function resolveMeetingParticipant(roomId, { authUser = null, inviteeEmail = '', autoJoin = false } = {}) {
+  const cleanInvitee = String(inviteeEmail || '').trim().toLowerCase();
+  const interview = roomId ? getInterviewByRoomId(roomId) : null;
+
+  const formatUserName = (u) => {
+    if (!u) return '';
+    const full = `${u.meno || ''} ${u.priezvisko || ''}`.trim();
+    return full || u.username || '';
+  };
+
+  // 1. HR alebo Superadmin klikol na "Vstúpiť" z administrácie (?autojoin=1)
+  if (autoJoin && authUser) {
+    const fullName = formatUserName(authUser);
+    const email = String(authUser.mail || '').trim();
+    return {
+      matched: !!fullName,
+      source: 'staff_autojoin',
+      autoJoin: true,
+      name: fullName,
+      email,
+      role: authUser.ures_tag || 'HR_ADMIN',
+    };
+  }
+
+  // 2. Účastník klikol na personalizovaný odkaz z e-mailu (?invitee=...)
+  if (cleanInvitee && cleanInvitee.includes('@')) {
+    const candEmail = interview ? String(interview.mail_respondenta || '').trim().toLowerCase() : '';
+    const candName = interview ? String(interview.meno_respondenta || '').trim() : '';
+    const isPlaceholderCandidate = !candName || candName === 'Kandidát' || (interview && interview.poznamky === 'Vytvorené priamym vstupom cez link');
+
+    // 2a) Uchádzač (meno a e-mail zo sekcie Meno respondenta)
+    if (interview && candEmail === cleanInvitee && !isPlaceholderCandidate) {
+      return {
+        matched: true,
+        source: 'candidate_invite',
+        autoJoin: false,
+        name: candName,
+        email: cleanInvitee,
+        role: 'candidate',
+      };
+    }
+
+    // 2b) Pozvaný kolega / HR s registrovaným účtom na stránke
+    const accountUser = getUserByEmail(cleanInvitee);
+    if (accountUser) {
+      return {
+        matched: true,
+        source: 'colleague_account',
+        autoJoin: false,
+        name: formatUserName(accountUser),
+        email: String(accountUser.mail || cleanInvitee).trim(),
+        role: accountUser.ures_tag || 'colleague',
+      };
+    }
+
+    // 2c) Externý kolega bez účtu na stránke - predvyplní sa aspoň jeho e-mail
+    return {
+      matched: true,
+      source: 'external_invitee',
+      autoJoin: false,
+      name: '',
+      email: cleanInvitee,
+      role: 'guest',
+    };
+  }
+
+  // 3. Prihlásený HR / Superadmin otvoril všeobecný link (bez autojoin a bez ?invitee=)
+  if (authUser) {
+    return {
+      matched: true,
+      source: 'staff_logged_in',
+      autoJoin: false,
+      name: formatUserName(authUser),
+      email: String(authUser.mail || '').trim(),
+      role: authUser.ures_tag || 'HR_ADMIN',
+    };
+  }
+
+  // 4. Neprihlásený účastník otvoril skopírovaný link k naplánovanému pohovoru
+  if (interview) {
+    const candName = String(interview.meno_respondenta || '').trim();
+    const candEmail = String(interview.mail_respondenta || '').trim();
+    const isPlaceholderCandidate = !candName || candName === 'Kandidát' || interview.poznamky === 'Vytvorené priamym vstupom cez link';
+    if (!isPlaceholderCandidate) {
+      return {
+        matched: true,
+        source: 'interview_candidate',
+        autoJoin: false,
+        name: candName,
+        email: candEmail,
+        role: 'candidate',
+      };
+    }
+  }
+
+  return {
+    matched: false,
+    source: 'anonymous',
+    autoJoin: false,
+    name: '',
+    email: '',
+    role: 'guest',
+  };
+}
+
 function generateInterviewInvitation(interview) {
   const formattedDatum = formatDateTimeSk(interview.datum);
   const title = interview.titul_pozicia || 'Online pohovor';
   const subject = `Pozvánka na online pohovor: ${title} – FIIT STU`;
+  const joinUrl = buildPersonalizedMeetingLink(interview.link_meeting, interview.mail_respondenta);
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -720,12 +853,12 @@ function generateInterviewInvitation(interview) {
       </div>
 
       <div class="btn-container">
-        <a href="${interview.link_meeting}" class="btn-join">Vstúpiť do virtuálnej miestnosti</a>
+        <a href="${joinUrl}" class="btn-join">Vstúpiť do virtuálnej miestnosti</a>
       </div>
 
       <p style="font-size: 13px; color: #475569; word-break: break-all;">
         Priamy odkaz na pripojenie k videohovoru:<br>
-        <a href="${interview.link_meeting}" style="color: #7c3aed;">${interview.link_meeting}</a>
+        <a href="${joinUrl}" style="color: #7c3aed;">${joinUrl}</a>
       </p>
 
       <div class="notice">
@@ -735,7 +868,7 @@ function generateInterviewInvitation(interview) {
         • Uistite sa, že máte funkčnú webkameru a mikrofón. Počas hovoru prebieha automatická analýza očného kontaktu a reči.
       </div>
     </div>
-    <div class="email-footer">
+    <div class="footer" style="background: #f8fafc; padding: 16px 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9;">
       Tento email bol vygenerovaný automatickým systémom správy pohovorov FIIT STU v Bratislave.<br>
       © ${new Date().getFullYear()} FIIT STU Bratislava · Všetky práva vyhradené.
     </div>
@@ -755,7 +888,7 @@ Pozývame Vás na online výberový pohovor na pozíciu: ${title}
 🔑 KÓD MIESTNOSTI: ${interview.room_id}
 
 ODKAZ NA PRIPOJENIE:
-${interview.link_meeting}
+${joinUrl}
 
 INŠTRUKCIE:
 - Pripojte sa prosím 5 minút vopred cez webový prehliadač.
@@ -767,7 +900,7 @@ ${interview.meno_hr}
 FIIT STU v Bratislave
   `.trim();
 
-  const ics = generateIcsContent(interview);
+  const ics = generateIcsContent(interview, { joinUrl });
 
   return {
     subject,
@@ -776,7 +909,7 @@ FIIT STU v Bratislave
     hrName: interview.meno_hr,
     datum: interview.datum,
     formattedDatum,
-    meetingUrl: interview.link_meeting,
+    meetingUrl: joinUrl,
     html: htmlContent,
     text: plainText,
     ics,
@@ -791,6 +924,9 @@ function generateColleagueInvitation(interview, options = {}) {
   const roleName = options.role || 'Pozorovateľ / Člen tímu';
   const customNote = options.note || 'Boli ste prizvaný ako člen tímu / pozorovateľ na tento online výberový pohovor, aby ste mohli sledovať odpovede a reakcie kandidáta.';
   const subject = `Pozvánka na online pohovor (Účasť tímu / Team Leader): ${title} – FIIT STU`;
+  const colleagueUser = options.recipientEmail ? getUserByEmail(options.recipientEmail) : null;
+  const colleagueName = colleagueUser ? `${colleagueUser.meno || ''} ${colleagueUser.priezvisko || ''}`.trim() : '';
+  const joinUrl = buildPersonalizedMeetingLink(interview.link_meeting, options.recipientEmail);
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -829,7 +965,7 @@ function generateColleagueInvitation(interview, options = {}) {
     </div>
     <div class="email-body">
       <div class="team-badge">👥 ÚČASŤ TÍMU / POZOROVATEĽ</div>
-      <div class="greeting">Dobrý deň,</div>
+      <div class="greeting">Dobrý deň${colleagueName ? ' ' + escapeHtml(colleagueName) : ''},</div>
       <p class="text-p">
         Boli ste prizvaný ako <strong>${escapeHtml(roleName)}</strong> na online výberový pohovor. Môžete sa pripojiť priamo cez odkaz nižšie, sledovať odpovede a reakcie kandidáta v reálnom čase a podieľať sa na vyhodnotení.
       </p>
@@ -863,10 +999,10 @@ function generateColleagueInvitation(interview, options = {}) {
       </div>
 
       <div class="btn-container">
-        <a href="${interview.link_meeting}" class="meeting-btn" target="_blank">
+        <a href="${joinUrl}" class="meeting-btn" target="_blank">
           Pripojiť sa k pohovoru
         </a>
-        <div class="link-fallback">${interview.link_meeting}</div>
+        <div class="link-fallback">${joinUrl}</div>
       </div>
 
       <p class="ics-hint">
@@ -885,7 +1021,7 @@ function generateColleagueInvitation(interview, options = {}) {
   const plainText = `
 Pozvánka na online pohovor (Účasť tímu / Team Leader)
 ======================================================
-Dobrý deň,
+Dobrý deň${colleagueName ? ' ' + colleagueName : ''},
 
 boli ste prizvaný ako ${roleName} na online výberový pohovor:
 
@@ -896,7 +1032,7 @@ boli ste prizvaný ako ${roleName} na online výberový pohovor:
 - Účel / Poznámka: ${customNote}
 
 Priamy odkaz na pripojenie k videohovoru:
-${interview.link_meeting}
+${joinUrl}
 Kód miestnosti: ${interview.room_id}
 
 V prílohe nájdete súbor .ics pre automatické pridanie do Vášho kalendára.
@@ -905,8 +1041,9 @@ Automatická analýza online pohovorov · FIIT STU
   `.trim();
 
   const ics = generateIcsContent(interview, {
+    joinUrl,
     summary: `Online pohovor (Tím): ${interview.titul_pozicia || 'Pohovor'} – ${interview.meno_respondenta}`,
-    description: `Online pohovor na pozíciu ${interview.titul_pozicia || 'Pohovor'}.\\nKandidát: ${interview.meno_respondenta} (${interview.mail_respondenta})\\nHR: ${interview.meno_hr}\\nRola: ${roleName}\\n\\nOdkaz na videohovor:\\n${interview.link_meeting}`,
+    description: `Online pohovor na pozíciu ${interview.titul_pozicia || 'Pohovor'}.\\nKandidát: ${interview.meno_respondenta} (${interview.mail_respondenta})\\nHR: ${interview.meno_hr}\\nRola: ${roleName}\\n\\nOdkaz na videohovor:\\n${joinUrl}`,
   });
 
   return {
@@ -922,7 +1059,7 @@ Automatická analýza online pohovorov · FIIT STU
   };
 }
 
-function generateInterviewReminder(interview) {
+function generateInterviewReminder(interview, options = {}) {
   const formattedDatum = formatDateTimeSk(interview.datum);
   const time = (() => {
     try {
@@ -934,7 +1071,16 @@ function generateInterviewReminder(interview) {
     }
   })();
   const title = interview.titul_pozicia || 'Online pohovor';
-  const subject = `Pripomienka: Zajtra o ${time} máte online pohovor – ${title}`;
+  const targetEmail = options.recipientEmail || interview.mail_respondenta;
+  const joinUrl = buildPersonalizedMeetingLink(interview.link_meeting, targetEmail);
+  const isColleague = !!options.isColleague;
+  const colleagueUser = isColleague && targetEmail ? getUserByEmail(targetEmail) : null;
+  const greetingName = isColleague
+    ? (colleagueUser ? `${colleagueUser.meno || ''} ${colleagueUser.priezvisko || ''}`.trim() : '')
+    : interview.meno_respondenta;
+  const subject = isColleague
+    ? `Pripomienka (Účasť tímu): Zajtra o ${time} je online pohovor – ${title}`
+    : `Pripomienka: Zajtra o ${time} máte online pohovor – ${title}`;
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -967,8 +1113,11 @@ function generateInterviewReminder(interview) {
       <div class="badge-tomorrow">⏰ Váš pohovor sa uskutoční ZAJTRA o ${escapeHtml(time)}</div>
     </div>
     <div class="email-body">
-      <p>Dobrý deň <strong>${escapeHtml(interview.meno_respondenta)}</strong>,</p>
-      <p>dovoľujeme si Vám pripomenúť, že <strong>zajtra o ${escapeHtml(time)}</strong> máte naplánovaný online výberový pohovor na pracovnú pozíciu <strong>${escapeHtml(title)}</strong>.</p>
+      <p>Dobrý deň${greetingName ? ` <strong>${escapeHtml(greetingName)}</strong>` : ''},</p>
+      <p>${isColleague
+        ? `pripomíname Vám, že <strong>zajtra o ${escapeHtml(time)}</strong> sa koná online výberový pohovor na pozíciu <strong>${escapeHtml(title)}</strong> (kandidát: <strong>${escapeHtml(interview.meno_respondenta)}</strong>), na ktorý ste prizvaný ako člen tímu.`
+        : `dovoľujeme si Vám pripomenúť, že <strong>zajtra o ${escapeHtml(time)}</strong> máte naplánovaný online výberový pohovor na pracovnú pozíciu <strong>${escapeHtml(title)}</strong>.`
+      }</p>
       
       <div class="info-box">
         <div class="info-row"><span class="info-label">📅 Dátum a čas:</span><span class="info-value">Zajtra (${escapeHtml(formattedDatum)})</span></div>
@@ -979,12 +1128,12 @@ function generateInterviewReminder(interview) {
       </div>
 
       <div class="btn-container">
-        <a href="${interview.link_meeting}" class="btn-join">Vstúpiť do virtuálnej miestnosti</a>
+        <a href="${joinUrl}" class="btn-join">Vstúpiť do virtuálnej miestnosti</a>
       </div>
 
       <p style="font-size: 13px; color: #475569; word-break: break-all;">
         Priamy odkaz na pripojenie k videohovoru:<br>
-        <a href="${interview.link_meeting}" style="color: #059669;">${interview.link_meeting}</a>
+        <a href="${joinUrl}" style="color: #059669;">${joinUrl}</a>
       </p>
 
       <div class="notice">
@@ -1004,9 +1153,9 @@ function generateInterviewReminder(interview) {
   `.trim();
 
   const plainText = `
-Dobrý deň ${interview.meno_respondenta},
+Dobrý deň${greetingName ? ' ' + greetingName : ''},
 
-Pripomíname Vám, že ZAJTRA o ${time} máte naplánovaný online výberový pohovor na pozíciu: ${title}
+Pripomíname Vám, že ZAJTRA o ${time} ${isColleague ? `sa koná online výberový pohovor (kandidát: ${interview.meno_respondenta})` : 'máte naplánovaný online výberový pohovor'} na pozíciu: ${title}
 
 📅 DÁTUM A ČAS: Zajtra (${formattedDatum})
 ⏰ ČAS POHOVORU: ${time}
@@ -1015,7 +1164,7 @@ Pripomíname Vám, že ZAJTRA o ${time} máte naplánovaný online výberový po
 🔑 ID MIESTNOSTI: ${interview.room_id}
 
 🌐 LINK NA PRIPOJENIE:
-${interview.link_meeting}
+${joinUrl}
 
 💡 ODPORÚČANIA:
 - Pripojte sa prosím 5 minút pred stanoveným časom (${time}).
@@ -1026,17 +1175,17 @@ Tím automatickej analýzy online pohovorov
 FIIT STU v Bratislave
   `.trim();
 
-  const ics = generateIcsContent(interview);
+  const ics = generateIcsContent(interview, { joinUrl });
 
   return {
     subject,
-    recipientEmail: interview.mail_respondenta,
-    recipientName: interview.meno_respondenta,
+    recipientEmail: targetEmail,
+    recipientName: greetingName || interview.meno_respondenta,
     hrName: interview.meno_hr,
     datum: interview.datum,
     formattedDatum,
     time,
-    meetingUrl: interview.link_meeting,
+    meetingUrl: joinUrl,
     html: htmlContent,
     text: plainText,
     ics,
@@ -1045,11 +1194,20 @@ FIIT STU v Bratislave
   };
 }
 
-function generateInterviewReschedule(interview, oldDatum, reason = '') {
+function generateInterviewReschedule(interview, oldDatum, reason = '', options = {}) {
   const formattedNewDatum = formatDateTimeSk(interview.datum);
   const formattedOldDatum = oldDatum ? formatDateTimeSk(oldDatum) : 'Pôvodný termín';
   const title = interview.titul_pozicia || 'Online pohovor';
-  const subject = `Zmena termínu online pohovoru: ${title} – FIIT STU`;
+  const targetEmail = options.recipientEmail || interview.mail_respondenta;
+  const joinUrl = buildPersonalizedMeetingLink(interview.link_meeting, targetEmail);
+  const isColleague = !!options.isColleague;
+  const colleagueUser = isColleague && targetEmail ? getUserByEmail(targetEmail) : null;
+  const greetingName = isColleague
+    ? (colleagueUser ? `${colleagueUser.meno || ''} ${colleagueUser.priezvisko || ''}`.trim() : '')
+    : interview.meno_respondenta;
+  const subject = isColleague
+    ? `Zmena termínu (Účasť tímu): ${title} – FIIT STU`
+    : `Zmena termínu online pohovoru: ${title} – FIIT STU`;
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -1083,8 +1241,8 @@ function generateInterviewReschedule(interview, oldDatum, reason = '') {
       <p>Automatická analýza pohovorov · FIIT Slovenská technická univerzita</p>
     </div>
     <div class="email-body">
-      <p>Dobrý deň <strong>${escapeHtml(interview.meno_respondenta)}</strong>,</p>
-      <p>informujeme Vás o zmene termínu Vášho online výberového pohovoru na pozíciu <strong>${escapeHtml(title)}</strong>.</p>
+      <p>Dobrý deň${greetingName ? ` <strong>${escapeHtml(greetingName)}</strong>` : ''},</p>
+      <p>informujeme Vás o zmene termínu online výberového pohovoru na pozíciu <strong>${escapeHtml(title)}</strong>${isColleague ? ` (kandidát: <strong>${escapeHtml(interview.meno_respondenta)}</strong>)` : ''}.</p>
 
       <div class="reschedule-box">
         <div class="info-row"><span class="info-label">📅 Nový termín:</span><span class="info-value new-date">${escapeHtml(formattedNewDatum)}</span></div>
@@ -1097,12 +1255,12 @@ function generateInterviewReschedule(interview, oldDatum, reason = '') {
       ${reason ? `<div class="reason-box"><strong>Dôvod zmeny termínu:</strong> ${escapeHtml(reason)}</div>` : ''}
 
       <div class="btn-container">
-        <a href="${interview.link_meeting}" class="btn-join">Vstúpiť do virtuálnej miestnosti</a>
+        <a href="${joinUrl}" class="btn-join">Vstúpiť do virtuálnej miestnosti</a>
       </div>
 
       <p style="font-size: 13px; color: #475569; word-break: break-all;">
         Odkaz na pripojenie zostáva nezmenený:<br>
-        <a href="${interview.link_meeting}" style="color: #0284c7;">${interview.link_meeting}</a>
+        <a href="${joinUrl}" style="color: #0284c7;">${joinUrl}</a>
       </p>
 
       <div class="notice">
@@ -1110,7 +1268,7 @@ function generateInterviewReschedule(interview, oldDatum, reason = '') {
         V prílohe tohto e-mailu nájdete aktualizovaný kalendárový súbor (.ics), ktorý automaticky aktualizuje termín vo Vašom kalendári. Deň pred novým termínom Vám zašleme krátku pripomienku.
       </div>
     </div>
-    <div class="email-footer">
+    <div class="footer" style="background: #f8fafc; padding: 16px 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9;">
       Bakalárska práca · FIIT STU v Bratislave · Systém automatickej analýzy online pohovorov
     </div>
   </div>
@@ -1119,9 +1277,9 @@ function generateInterviewReschedule(interview, oldDatum, reason = '') {
   `.trim();
 
   const plainText = `
-Dobrý deň ${interview.meno_respondenta},
+Dobrý deň${greetingName ? ' ' + greetingName : ''},
 
-Informujeme Vás o zmene termínu Vášho online výberového pohovoru na pozíciu: ${title}
+Informujeme Vás o zmene termínu online výberového pohovoru na pozíciu: ${title}
 
 📅 NOVÝ TERMÍN: ${formattedNewDatum}
 ⏳ PÔVODNÝ TERMÍN: ${formattedOldDatum}
@@ -1129,7 +1287,7 @@ Informujeme Vás o zmene termínu Vášho online výberového pohovoru na pozíc
 💼 PRACOVNÁ POZÍCIA: ${title}
 ${reason ? `💬 DÔVOD ZMENY: ${reason}\n` : ''}
 🌐 LINK NA PRIPOJENIE:
-${interview.link_meeting}
+${joinUrl}
 
 V prílohe nájdete aktualizovaný kalendárový súbor (.ics) s novým termínom.
 
@@ -1141,13 +1299,14 @@ FIIT STU v Bratislave
   const ics = generateIcsContent(interview, {
     method: 'REQUEST',
     sequence: 2,
+    joinUrl,
     summary: `Online pohovor: ${title} (Nový termín)`,
   });
 
   return {
     subject,
-    recipientEmail: interview.mail_respondenta,
-    recipientName: interview.meno_respondenta,
+    recipientEmail: targetEmail,
+    recipientName: greetingName || interview.meno_respondenta,
     newDatum: interview.datum,
     oldDatum,
     formattedNewDatum,
@@ -1637,6 +1796,7 @@ module.exports = {
   authenticateUser,
   createUser,
   getAllUsers,
+  getUserByEmail,
   deleteUser,
   getAllHrAdmins,
   getAllInterviews,
@@ -1644,6 +1804,8 @@ module.exports = {
   getInterviewByRoomId,
   getInterviewsByHr,
   parseEmailList,
+  buildPersonalizedMeetingLink,
+  resolveMeetingParticipant,
   generateInterviewInvitation,
   generateColleagueInvitation,
   generateInterviewReminder,

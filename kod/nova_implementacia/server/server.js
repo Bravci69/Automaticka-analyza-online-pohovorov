@@ -313,6 +313,22 @@ async function handleRequest(req, res) {
     }
 
     // ---- POHOVORY (interview & meetings) ----
+    // GET /api/meetings/:roomId/participant - Zistenie identity prihláseného HR alebo pozvaného účastníka z e-mailu
+    if (pathname.match(/^\/api\/meetings\/[^/]+\/participant$/) && req.method === 'GET') {
+      const rawRoom = pathname.split('/api/meetings/')[1].replace(/\/participant$/, '');
+      const roomId = decodeURIComponent(rawRoom).trim();
+      const authUser = getAuthUser(req);
+      const inviteeEmail = url.searchParams.get('invitee') || '';
+      const autoJoin = url.searchParams.get('autojoin') === '1';
+
+      const resolved = dbModule.resolveMeetingParticipant(roomId, {
+        authUser,
+        inviteeEmail,
+        autoJoin,
+      });
+      return sendJson(res, 200, resolved);
+    }
+
     // GET /api/interviews alebo /api/meetings
     if ((pathname === '/api/interviews' || pathname === '/api/meetings') && req.method === 'GET') {
       const caller = getAuthUser(req);

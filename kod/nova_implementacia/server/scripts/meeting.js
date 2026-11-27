@@ -117,14 +117,15 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
             document.getElementById('callSessionLabel').textContent = activeRoom;
             document.title = `${activeRoom} · Analýza Pohovorov`;
 
-            // Umožnenie rýchleho skopírovania odkazu na meeting
+            // Umožnenie rýchleho skopírovania čistého odkazu na meeting
+            const cleanShareUrl = `${window.location.origin}${window.location.pathname}`;
             const lobbyChip = document.getElementById('roomChip');
             if (lobbyChip) {
                 lobbyChip.style.cursor = 'pointer';
                 lobbyChip.title = 'Kliknutím skopírujete priamy odkaz na meeting';
                 lobbyChip.onclick = async () => {
                     try {
-                        await navigator.clipboard.writeText(window.location.href);
+                        await navigator.clipboard.writeText(cleanShareUrl);
                         const lbl = document.getElementById('roomNameLabel');
                         const orig = lbl.textContent;
                         lbl.textContent = '✓ Odkaz skopírovaný!';
@@ -139,7 +140,7 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
                 headerChip.title = 'Kliknutím skopírujete priamy odkaz na meeting';
                 headerChip.onclick = async () => {
                     try {
-                        await navigator.clipboard.writeText(window.location.href);
+                        await navigator.clipboard.writeText(cleanShareUrl);
                         const orig = headerChip.textContent;
                         headerChip.textContent = '✓ Odkaz skopírovaný!';
                         setTimeout(() => headerChip.textContent = orig, 2000);
@@ -148,16 +149,68 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
             }
 
             const nameInput = document.getElementById('candidateName');
+            const emailInput = document.getElementById('candidateEmail');
             nameInput.focus();
             nameInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') enterRoom();
             });
+            if (emailInput) {
+                emailInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') enterRoom();
+                });
+            }
 
             // Overenie zabezpečeného kontextu (HTTPS)
             checkSecureContext();
 
-            // Spustenie kamery pre náhľad v lobby s detekciou natívneho rozlíšenia senzora
-            await initLocalCameraStream();
+            // Paralelne zistíme identitu účastníka (HR/Superadmin relácia alebo ?invitee= z e-mailu) a spustíme kameru
+            const identityPromise = resolveParticipantIdentity();
+            const cameraPromise = initLocalCameraStream();
+
+            const resolved = await identityPromise;
+            if (resolved) {
+                if (resolved.name && !nameInput.value.trim()) {
+                    nameInput.value = resolved.name;
+                }
+                if (emailInput && resolved.email && !emailInput.value.trim()) {
+                    emailInput.value = resolved.email;
+                }
+                if (nameInput.value.trim() && emailInput && !emailInput.value.trim()) {
+                    emailInput.focus();
+                }
+            }
+
+            await cameraPromise;
+
+            // Ak vstúpil HR alebo Superadmin tlačidlom "Vstúpiť" (?autojoin=1), pripojíme ho rovno do Jitsi
+            if (resolved && resolved.autoJoin && resolved.name) {
+                await enterRoom();
+            }
+        }
+
+        async function resolveParticipantIdentity() {
+            const token = localStorage.getItem('bp_token');
+            const invitee = (urlParams.get('invitee') || '').trim();
+            const autojoin = urlParams.get('autojoin') === '1';
+
+            const query = new URLSearchParams();
+            if (invitee) query.set('invitee', invitee);
+            if (autojoin) query.set('autojoin', '1');
+
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            try {
+                const qs = query.toString();
+                const res = await fetch(`/api/meetings/${encodeURIComponent(activeRoom)}/participant${qs ? '?' + qs : ''}`, {
+                    headers
+                });
+                if (!res.ok) return null;
+                return await res.json();
+            } catch (err) {
+                console.warn('Nepodarilo sa načítať identitu účastníka:', err);
+                return null;
+            }
         }
 
         async function initLocalCameraStream() {
@@ -243,6 +296,8 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
         // =================================================================
         async function enterRoom() {
             const name = document.getElementById('candidateName').value.trim();
+            const emailEl = document.getElementById('candidateEmail');
+            const email = emailEl ? emailEl.value.trim() : '';
             if (!name) {
                 const el = document.getElementById('candidateName');
                 el.focus();
@@ -265,15 +320,17 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
                 }
             }
 
-            // Štart Jitsi videohovoru
-            startJitsi(name);
+            // Štart Jitsi videohovoru s menom a e-mailom účastníka
+            startJitsi(name, email);
 
             // Štart MediaPipe Eye-Trackingu
             initRealEyeTracking();
         }
 
-        function startJitsi(userName) {
+        function startJitsi(userName, userEmail = '') {
             const container = document.getElementById('jitsi-mount');
+            const userInfo = { displayName: userName };
+            if (userEmail) userInfo.email = userEmail;
 
             const options = {
                 roomName: activeRoom,
@@ -281,7 +338,7 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
                 width: '100%',
                 height: '100%',
                 lang: 'sk',
-                userInfo: { displayName: userName },
+                userInfo,
                 // HTML5 sandbox bráni nechcenému presmerovaniu top okna
                 sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-presentation',
                 configOverwrite: {
@@ -336,6 +393,12 @@ const JITSI_SERVER = urlParams.get('server') || 'jitsi.riot.im';
 
                 jitsiClient.addEventListener('videoConferenceJoined', () => {
                     document.getElementById('stageLoader').classList.add('hidden');
+                    try {
+                        if (userName) jitsiClient.executeCommand('displayName', userName);
+                        if (userEmail) jitsiClient.executeCommand('email', userEmail);
+                    } catch (cmdErr) {
+                        console.warn('Nepodarilo sa nastaviť identitu v Jitsi:', cmdErr);
+                    }
                 });
 
                 jitsiClient.addEventListener('videoConferenceLeft', () => {

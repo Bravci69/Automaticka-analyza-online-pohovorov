@@ -367,13 +367,23 @@ async function sendInterviewReminder(interviewOrId) {
       const colleagues = dbModule.parseEmailList(interview.dalsie_maily);
       for (const cEmail of colleagues) {
         try {
+          const colleagueReminder = dbModule.generateInterviewReminder(interview, {
+            recipientEmail: cEmail,
+            isColleague: true,
+          });
           await transporter.sendMail({
             from: cfg.from,
             to: cEmail,
-            subject: `Pripomienka (Účasť tímu): Zajtra o ${reminder.time} je online pohovor – ${interview.titul_pozicia || 'Pohovor'}`,
-            text: `Dobrý deň,\n\npripomíname Vám, že zajtra o ${reminder.time} sa koná online výberový pohovor, na ktorý ste boli prizvaný ako člen tímu.\n\nKandidát: ${interview.meno_respondenta} (${interview.mail_respondenta})\nPracovná pozícia: ${interview.titul_pozicia || 'Pohovor'}\nHR Konzultant: ${interview.meno_hr}\n\nPriamy odkaz na pripojenie:\n${interview.link_meeting}\nKód miestnosti: ${interview.room_id}\n\nV prílohe nájdete kalendárový záznam (.ics).`,
-            html: reminder.html,
-            attachments: mailOptions.attachments,
+            subject: colleagueReminder.subject,
+            text: colleagueReminder.text,
+            html: colleagueReminder.html,
+            attachments: [
+              {
+                filename: `pripomienka-${interview.room_id || interview.id}.ics`,
+                content: colleagueReminder.ics,
+                contentType: 'text/calendar; charset=utf-8; method=REQUEST',
+              },
+            ],
           });
           console.log(`[Mailer] 🔔 Pripomienka odoslaná aj kolegovi: ${cEmail}`);
         } catch (cErr) {
@@ -441,13 +451,23 @@ async function sendInterviewRescheduled(interviewOrId, oldDatum, reason = '') {
       const colleagues = dbModule.parseEmailList(interview.dalsie_maily);
       for (const cEmail of colleagues) {
         try {
+          const colleagueMail = dbModule.generateInterviewReschedule(interview, oldDatum, reason, {
+            recipientEmail: cEmail,
+            isColleague: true,
+          });
           await transporter.sendMail({
             from: cfg.from,
             to: cEmail,
-            subject: `Zmena termínu (Účasť tímu): ${rescheduled.subject}`,
-            text: rescheduled.text,
-            html: rescheduled.html,
-            attachments: mailOptions.attachments,
+            subject: colleagueMail.subject,
+            text: colleagueMail.text,
+            html: colleagueMail.html,
+            attachments: [
+              {
+                filename: `novy-termin-${interview.room_id || interview.id}.ics`,
+                content: colleagueMail.ics,
+                contentType: 'text/calendar; charset=utf-8; method=REQUEST',
+              },
+            ],
           });
           console.log(`[Mailer] 🗓️ Informácia o presune termínu odoslaná aj kolegovi: ${cEmail}`);
         } catch (cErr) {

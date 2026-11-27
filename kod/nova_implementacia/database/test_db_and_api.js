@@ -428,6 +428,59 @@ async function runTests() {
   }
   console.log(`   ✅ Kontrola zákazu samopozvania overená pre: ${adminSelfMail}`);
 
+  // 15.6 Test personalizovaných odkazov z e-mailu a automatickej identity účastníkov
+  console.log('   ⭐ Test personalizácie linkov a resolveMeetingParticipant...');
+  const candPersonalizedUrl = dbModule.buildPersonalizedMeetingLink(teamInterview.link_meeting, teamInterview.mail_respondenta);
+  if (!candPersonalizedUrl.startsWith(teamInterview.link_meeting) || !candPersonalizedUrl.includes('invitee=kandidat.tim%40example.com')) {
+    throw new Error(`❌ buildPersonalizedMeetingLink nevygenerovala očakávaný URL: ${candPersonalizedUrl}`);
+  }
+  if (!colleagueMail.html.includes('invitee=teamleader%40firma.sk')) {
+    throw new Error('❌ generateColleagueInvitation neobsahuje personalizovaný parameter ?invitee=!');
+  }
+
+  const expectedAdminName = `${testAdminUser.meno} ${testAdminUser.priezvisko}`.trim();
+  const staffAuto = dbModule.resolveMeetingParticipant(teamInterview.room_id, {
+    authUser: testAdminUser,
+    autoJoin: true,
+  });
+  if (!staffAuto.autoJoin || staffAuto.name !== expectedAdminName || staffAuto.email !== testAdminUser.mail || staffAuto.source !== 'staff_autojoin') {
+    throw new Error(`❌ resolveMeetingParticipant zlyhal pre staff_autojoin: ${JSON.stringify(staffAuto)}`);
+  }
+
+  const candResolved = dbModule.resolveMeetingParticipant(teamInterview.room_id, {
+    authUser: testAdminUser,
+    inviteeEmail: 'kandidat.tim@example.com',
+    autoJoin: false,
+  });
+  if (candResolved.autoJoin || candResolved.name !== 'Kandidát s tímom' || candResolved.email !== 'kandidat.tim@example.com' || candResolved.source !== 'candidate_invite') {
+    throw new Error(`❌ resolveMeetingParticipant zlyhal pre candidate_invite: ${JSON.stringify(candResolved)}`);
+  }
+
+  const registeredColleague = dbModule.resolveMeetingParticipant(teamInterview.room_id, {
+    inviteeEmail: testAdminUser.mail,
+    autoJoin: false,
+  });
+  if (registeredColleague.autoJoin || registeredColleague.name !== expectedAdminName || registeredColleague.email !== testAdminUser.mail || registeredColleague.source !== 'colleague_account') {
+    throw new Error(`❌ resolveMeetingParticipant zlyhal pre colleague_account: ${JSON.stringify(registeredColleague)}`);
+  }
+
+  const externalColleague = dbModule.resolveMeetingParticipant(teamInterview.room_id, {
+    inviteeEmail: 'teamleader@firma.sk',
+    autoJoin: false,
+  });
+  if (externalColleague.autoJoin || externalColleague.name !== '' || externalColleague.email !== 'teamleader@firma.sk' || externalColleague.source !== 'external_invitee') {
+    throw new Error(`❌ resolveMeetingParticipant zlyhal pre external_invitee: ${JSON.stringify(externalColleague)}`);
+  }
+
+  const anonAuto = dbModule.resolveMeetingParticipant(teamInterview.room_id, {
+    authUser: null,
+    autoJoin: true,
+  });
+  if (anonAuto.autoJoin) {
+    throw new Error('❌ resolveMeetingParticipant povolil autoJoin neprihlásenému používateľovi!');
+  }
+  console.log('   ✅ Personalizácia linkov a automatické načítanie mena/e-mailu (HR/Superadmin, kandidát, kolega s účtom aj hosť) prešli na 100%.');
+
   // Upratanie tímového testovacieho pohovoru
   dbModule.deleteInterview(teamInterview.id, 'admin');
 

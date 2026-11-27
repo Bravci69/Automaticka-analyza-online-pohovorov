@@ -892,7 +892,7 @@ let currentUser = null;
                         </div>
 
                         <div class="schedule-actions">
-                            <button type="button" class="btn-primary" style="padding: 7px 14px; font-size: 0.82rem;" onclick="window.open('${getMeetingUrl(item)}', '_blank')" title="Otvoriť videohovor">
+                            <button type="button" class="btn-primary" style="padding: 7px 14px; font-size: 0.82rem;" onclick="window.open('${getMeetingUrl(item, { autoJoin: true })}', '_blank')" title="Otvoriť videohovor">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                                     <polyline points="15 3 21 3 21 9"/>
@@ -989,7 +989,7 @@ let currentUser = null;
                         </div>
 
                         <div class="schedule-actions">
-                            <button type="button" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.open('${getMeetingUrl(item)}', '_blank')">
+                            <button type="button" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.open('${getMeetingUrl(item, { autoJoin: true })}', '_blank')">
                                 Vstúpiť
                             </button>
                             <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; color: #a78bfa;" onclick="openInviteColleagueModal(${item.id})" title="Poslať pozvánku ďalším zamestnancom / teamleaderovi">
@@ -1305,7 +1305,7 @@ let currentUser = null;
                                 </svg>
                                 Link
                             </button>
-                            <button class="btn-secondary" style="padding: 5px 8px;" onclick="window.open('${getMeetingUrl(item)}', '_blank')" title="Vstúpiť do videohovoru">
+                            <button class="btn-secondary" style="padding: 5px 8px;" onclick="window.open('${getMeetingUrl(item, { autoJoin: true })}', '_blank')" title="Vstúpiť do videohovoru">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                                     <polyline points="15 3 21 3 21 9"/>
@@ -1800,17 +1800,29 @@ let currentUser = null;
             }
         }
 
-        function getMeetingUrl(item) {
+        function getMeetingUrl(item, { autoJoin = false } = {}) {
             if (!item) return '';
+            let baseUrl = '';
             if (item.room_id) {
-                return `${window.location.origin}/meeting/${encodeURIComponent(item.room_id)}`;
+                baseUrl = `${window.location.origin}/meeting/${encodeURIComponent(item.room_id)}`;
+            } else {
+                baseUrl = item.link_meeting || '';
             }
-            return item.link_meeting || '';
+            if (!baseUrl || !autoJoin) return baseUrl;
+            const sep = baseUrl.includes('?') ? '&' : '?';
+            return `${baseUrl}${sep}autojoin=1`;
         }
 
         function openDirectMeeting() {
+            if (lastCreatedInterview) {
+                window.open(getMeetingUrl(lastCreatedInterview, { autoJoin: true }), '_blank');
+                return;
+            }
             const url = document.getElementById('resultUrl').value;
-            if (url) window.open(url, '_blank');
+            if (url) {
+                const sep = url.includes('?') ? '&' : '?';
+                window.open(`${url}${sep}autojoin=1`, '_blank');
+            }
         }
 
         async function copyAnyLink(link) {
