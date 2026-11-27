@@ -2085,13 +2085,15 @@
 
         /* Top HUD Bar */
         .call-header {
-            height: 52px;
+            min-height: 52px;
             background: rgba(9, 11, 16, 0.95);
             border-bottom: 1px solid var(--border-subtle);
-            padding: 0 20px;
+            padding: 6px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px 12px;
             z-index: 40;
             backdrop-filter: blur(12px);
         }
@@ -2099,7 +2101,7 @@
         .header-left {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
         }
 
         .call-brand {
@@ -2124,7 +2126,10 @@
         .header-center {
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-width: 0;
         }
 
         /* Real-time Eye-tracking HUD Pill */
@@ -2235,6 +2240,9 @@
             font-weight: 600;
             color: var(--text-muted);
             white-space: nowrap;
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
             transition: all 0.2s ease;
         }
 
