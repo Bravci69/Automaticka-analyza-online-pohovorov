@@ -154,6 +154,23 @@ function generateRoomId() {
   return 'bp-' + segments.join('-');
 }
 
+function resolveMeetingHost(req) {
+  const reqHost = (req.headers.host || '').trim();
+  const isLoopbackIp = /^127\.0\.0\.1(:\d+)?$/i.test(reqHost);
+  if (isLoopbackIp && HOST && !/^(0\.0\.0\.0|127\.0\.0\.1|localhost)$/i.test(HOST)) {
+    return `${HOST}:${PORT}`;
+  }
+  return reqHost || `${HOST}:${PORT}`;
+}
+
+function isAutomatedProbeRequest(req) {
+  const reqHost = (req.headers.host || '').trim();
+  const ua = (req.headers['user-agent'] || '').toLowerCase();
+  if (/^127\.0\.0\.1(:\d+)?$/i.test(reqHost)) return true;
+  if (!ua || /(curl|wget|python-requests|powershell|invoke-webrequest|healthcheck)/i.test(ua)) return true;
+  return false;
+}
+
 // =============================================================================
 // Hlavný request handler
 // =============================================================================
@@ -328,7 +345,7 @@ async function handleRequest(req, res) {
 
       const roomId = body.roomId || body.room_id || generateRoomId();
       const protocol = isHttps ? 'https' : 'http';
-      const host = req.headers.host || `${HOST}:${PORT}`;
+      const host = resolveMeetingHost(req);
       const link_meeting = body.link_meeting || `${protocol}://${host}/meeting/${roomId}`;
 
       // PRIRAĎOVANIE HR:
@@ -766,13 +783,13 @@ async function handleRequest(req, res) {
 
     // Meeting stránka: /meeting/:roomId
     if (pathname.startsWith('/meeting/')) {
-      const roomId = pathname.split('/meeting/')[1];
-      if (roomId) {
+      const roomId = decodeURIComponent(pathname.split('/meeting/')[1] || '').split('/')[0].trim();
+      if (roomId && !isAutomatedProbeRequest(req)) {
         const existing = dbModule.getInterviewByRoomId(roomId);
         if (!existing) {
           const adminUser = dbModule.getAllUsers()[0];
           const protocol = isHttps ? 'https' : 'http';
-          const host = req.headers.host || `${HOST}:${PORT}`;
+          const host = resolveMeetingHost(req);
           const link_meeting = `${protocol}://${host}/meeting/${roomId}`;
           try {
             dbModule.createInterview(

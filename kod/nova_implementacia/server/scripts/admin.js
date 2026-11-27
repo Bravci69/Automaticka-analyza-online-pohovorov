@@ -730,7 +730,7 @@ let currentUser = null;
                         </div>
 
                         <div class="schedule-actions">
-                            <button type="button" class="btn-primary" style="padding: 7px 14px; font-size: 0.82rem;" onclick="window.open('${item.link_meeting}', '_blank')" title="Otvoriť videohovor">
+                            <button type="button" class="btn-primary" style="padding: 7px 14px; font-size: 0.82rem;" onclick="window.open('${getMeetingUrl(item)}', '_blank')" title="Otvoriť videohovor">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                                     <polyline points="15 3 21 3 21 9"/>
@@ -739,7 +739,7 @@ let currentUser = null;
                                 Vstúpiť
                             </button>
 
-                            <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem;" onclick="copyAnyLink('${item.link_meeting}')" title="Kopírovať odkaz pre uchádzača">
+                            <button type="button" class="btn-secondary" style="padding: 7px 10px; font-size: 0.82rem;" onclick="copyAnyLink('${getMeetingUrl(item)}')" title="Kopírovať odkaz pre uchádzača">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                                     <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
@@ -827,7 +827,7 @@ let currentUser = null;
                         </div>
 
                         <div class="schedule-actions">
-                            <button type="button" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.open('${item.link_meeting}', '_blank')">
+                            <button type="button" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.open('${getMeetingUrl(item)}', '_blank')">
                                 Vstúpiť
                             </button>
                             <button type="button" class="btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; color: #a78bfa;" onclick="openInviteColleagueModal(${item.id})" title="Poslať pozvánku ďalším zamestnancom / teamleaderovi">
@@ -1141,14 +1141,14 @@ let currentUser = null;
                             </select>
                         </td>
                         <td style="text-align: right; white-space: nowrap;">
-                            <button class="btn-secondary" style="padding: 5px 8px;" onclick="copyAnyLink('${item.link_meeting}')" title="Kopírovať odkaz pre uchádzača">
+                            <button class="btn-secondary" style="padding: 5px 8px;" onclick="copyAnyLink('${getMeetingUrl(item)}')" title="Kopírovať odkaz pre uchádzača">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
                                     <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
                                 </svg>
                                 Link
                             </button>
-                            <button class="btn-secondary" style="padding: 5px 8px;" onclick="window.open('${item.link_meeting}', '_blank')" title="Vstúpiť do videohovoru">
+                            <button class="btn-secondary" style="padding: 5px 8px;" onclick="window.open('${getMeetingUrl(item)}', '_blank')" title="Vstúpiť do videohovoru">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                                     <polyline points="15 3 21 3 21 9"/>
@@ -1472,7 +1472,7 @@ let currentUser = null;
                 const alertText = document.getElementById('invitationAlertText');
 
                 panel.classList.add('active');
-                urlInput.value = data.meetingUrl;
+                urlInput.value = getMeetingUrl(data);
                 meta.textContent = `Miestnosť: ${data.room_id} · Respondent: ${respondentName} · HR: ${data.hrName || ''}`;
                 document.getElementById('copyBtnText').textContent = 'Kopírovať odkaz';
 
@@ -1641,6 +1641,14 @@ let currentUser = null;
                 input.select();
                 document.execCommand('copy');
             }
+        }
+
+        function getMeetingUrl(item) {
+            if (!item) return '';
+            if (item.room_id) {
+                return `${window.location.origin}/meeting/${encodeURIComponent(item.room_id)}`;
+            }
+            return item.link_meeting || '';
         }
 
         function openDirectMeeting() {
